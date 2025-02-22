@@ -13,6 +13,6 @@ class Category(
     @Column(nullable = false, length = 50)
     val categoryName: String,
 
-    @OneToMany(mappedBy = "category", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "categoryId", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     val auctions: List<Auction>
 )

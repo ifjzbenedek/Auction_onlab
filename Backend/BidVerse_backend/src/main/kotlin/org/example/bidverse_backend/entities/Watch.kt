@@ -11,8 +11,8 @@ class Watch(
     val id: WatchId,
 
     @ManyToOne
-    @MapsId("itemId")
-    @JoinColumn(name= "itemId", nullable = false)
+    @MapsId("auctionId")
+    @JoinColumn(name= "auctionId", nullable = false)
     val itemId: Auction,
 
     @ManyToOne

@@ -15,16 +15,16 @@ class Auction(
 
     @ManyToOne
     @JoinColumn(name= "userId", nullable = false)
-    val ownerId: User,
+    val userId: User,
 
     @ManyToOne
     @JoinColumn(name= "categoryId", nullable = false)
     val categoryId: Category,
 
-    @OneToMany(mappedBy = "auction", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "itemId", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     val bids: List<Bid>,
 
-    @OneToMany(mappedBy = "auction", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "itemId", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     val watchedAuctions: List<Watch>,
 
     @Column(nullable = false, length = 50)
