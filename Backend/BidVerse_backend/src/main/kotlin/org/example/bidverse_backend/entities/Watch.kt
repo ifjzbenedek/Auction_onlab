@@ -1,0 +1,23 @@
+package org.example.bidverse_backend.entities
+
+import jakarta.persistence.*
+import org.example.bidverse_backend.Keys.WatchId
+
+@Entity
+@Table(name = "Watch")
+class Watch(
+
+    @EmbeddedId
+    val id: WatchId,
+
+    @ManyToOne
+    @MapsId("itemId")
+    @JoinColumn(name= "itemId", nullable = false)
+    val itemId: Auction,
+
+    @ManyToOne
+    @MapsId("userId")
+    @JoinColumn(name= "userId", nullable = false)
+    val userId: User
+)
+
