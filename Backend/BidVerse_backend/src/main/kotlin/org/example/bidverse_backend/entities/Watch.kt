@@ -4,14 +4,14 @@ import jakarta.persistence.*
 import org.example.bidverse_backend.Keys.WatchId
 
 @Entity
-@Table(name = "Watch")
+@Table(name = "Watch", schema="dbo")
 class Watch(
 
     @EmbeddedId
     val id: WatchId,
 
     @ManyToOne
-    @MapsId("auctionId")
+    @MapsId("itemId")
     @JoinColumn(name= "auctionId", nullable = false)
     val itemId: Auction,
 

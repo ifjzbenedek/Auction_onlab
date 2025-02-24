@@ -5,7 +5,7 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 
 @Entity
-@Table(name = "Bid")
+@Table(name = "Bid", schema="dbo")
 class Bid(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

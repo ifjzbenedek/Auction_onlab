@@ -5,7 +5,7 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 
 @Entity
-@Table(name="Auction")
+@Table(name="Auction", schema="dbo")
 class Auction(
 
     @Id

@@ -3,7 +3,7 @@ package org.example.bidverse_backend.entities
 import jakarta.persistence.*
 
 @Entity
-@Table(name = "User")
+@Table(name = "User", schema="dbo")
 class User(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
