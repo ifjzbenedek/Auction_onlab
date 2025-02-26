@@ -29,7 +29,7 @@ components:
         id:
           type: integer
           format: int64
-          description: "The unique identifier of Auctions."
+          description: "The unique identifier of Auctions"
         userId:
           type: integer
           format: int64
@@ -42,7 +42,7 @@ components:
           type: array
           items: 
             $ref: "#/components/schemas/Bid"
-          description: "The offered Bids for the Auction."
+          description: "The offered Bids for the Auction"
         watchedAuctions:
           type: array
           items:
@@ -98,5 +98,106 @@ components:
           description: "Minimum increment step for Bids"
     User:
       type: object
-      propereties:
+      properties:
+        id: 
+          type: integer
+          format: int64
+          description: "The unique identifier of Users"
+        auctions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Auction"
+          description: "List of Auctions, the User is taking part in"
+        bids:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bid"
+          description: "List of Bids the User has offered"
+        watches:
+          type: array
+          items:
+            $ref: "#/components/schemas/Watch"
+          description: "List of Auctions watched by the User"
+        userName:
+          type: string
+          maxLength: 25
+          description: "The name of the User"
+        passwordHash:
+          type: string
+          maxLength: 255
+          description: "The password of the User"
+        emailAddress:
+          type: string
+          maxLength: 50
+          description: "The email of the User"
+        phoneNumber:
+          type: string
+          maxLength: 16
+          description: "The phone number of the User"
+    Bid:
+      type: object
+      properties:
+        id: 
+          type: integer
+          format: int64
+          description: "The unique identifier of Bids"
+        itemId:
+          type: integer
+          format: int64
+          description: "The id of the Auctionitem"
+        userId:
+          type: integer
+          format: int64
+          description: "The id of the User, who made the Bid"
+        value:
+          type: number
+          format: double
+          description: "The money offer in dollars"
+        timeStamp:
+          type: string
+          format: date-time
+          description: "The time, when the Bid was offered"
+        isWinning:
+          type: boolean
+          description: "True if this Bid is winning the Auction"
+    Category:
+      type: object
+      properties:
+        id: 
+          type: integer
+          format: int64
+          description: "The unique identifier of Categories"
+        auctions: 
+          type: array
+          items:
+            $ref: "#/components/schemas/Auction"          
+            description: "The Auctions that fit into this Category"
+        categoryName: 
+          type: string
+          maxLength: 50
+          description: "The name of the Category"
+    WatchId:
+      type: object
+      properties:
+        auctionId:
+          type: integer
+          format: int64
+          description: "The Auction part of the WatchId"
+        userId:
+          type: integer
+          format: int64
+          description: "The User part of the WatchId"
+    Watch:
+      type: object
+      properties:
         id:
+          $ref: "#/components/schemas/WatchId"
+          description: "The unique identifier of Bids"
+        auctionId:
+          type: integer
+          format: int64
+          description: "The Auctions that are being watched by the User"
+        userId:
+          type: integer
+          format: int64
+          description: "The Users watching the Auction"
