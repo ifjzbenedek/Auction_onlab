@@ -14,7 +14,7 @@ class Auction(
     val id: Int,
 
     @ManyToOne
-    @JoinColumn(name= "userId", nullable = false)
+    @JoinColumn(name= "ownerId", nullable = false)
     val userId: User,
 
     @ManyToOne
