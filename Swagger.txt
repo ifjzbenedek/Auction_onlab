@@ -104,6 +104,314 @@ paths:
                 $ref: "#/components/schemas/UserBasic"
         400:
           description: "Invalid request data"
+          
+          
+  /auctions:
+    get:
+      summary: "Get all auctions with optional filtering"
+      description: "Returns all auctions in AuctionCard format, with optional filtering by status and category."
+      tags:
+        - "Auction"
+      parameters:
+        - name: status
+          in: query
+          description: "Filter auctions by status (e.g., ACTIVE, CLOSED)"
+          required: false
+          schema:
+            type: string
+        - name: category
+          in: query
+          description: "Filter auctions by category (e.g., Electronics, Vehicles, Furniture). Multiple categories can be provided, separated by commas."
+          required: false
+          schema:
+            type: string
+            example: "Electronics,Furniture"
+      responses:
+        200:
+          description: "List of auctions"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuctionCard"
+    post:
+      summary: "Create a new auction"
+      description: "Creates a new auction for the authenticated user."
+      operationId: "createAuction"
+      tags:
+        - "Auction"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuctionBasic"
+      responses:
+        201:
+          description: "Auction successfully created"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuctionBasic"
+        400:
+          description: "Invalid request data"
+        401:
+          description: "Unauthorized"
+    
+  /auctions/{auctionId}:
+    get:
+      summary: "Get auction details by ID"
+      description: "Returns basic information about a specific auction."
+      tags:
+        - "Auction"
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          description: "ID of the auction to retrieve"
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Auction details retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuctionBasic"
+        404:
+          description: "Auction not found"
+    put:
+      summary: "Update auction details by ID"
+      description: "Update the details of a specific auction."
+      tags:
+        - "Auction"
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          description: "ID of the auction to update"
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuctionBasic"
+      responses:
+        200:
+          description: "Auction details updated successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuctionBasic"
+        400:
+          description: "Invalid data provided"
+        404:
+          description: "Auction not found"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized access"
+
+    delete:
+      summary: "Delete auction by ID"
+      description: "Delete a specific auction by its ID."
+      tags:
+        - "Auction"
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          description: "ID of the auction to update"
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Auction deleted successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Auction successfully deleted."
+        404:
+          description: "Auction not found"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized access"
+  /auctions/my/createdAuctions:
+    get:
+      summary: "Get auctions created by the user"
+      description: "Returns all auctions that the authenticated user has created."
+      tags:
+        - "Auction"
+      responses:
+        200:
+          description: "List of auctions created by the user"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuctionBasic"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized access"
+        404:
+          description: "No auctions found"
+
+  /auctions/my/biddedAuctions:
+    get:
+      summary: "Get auctions the user has bid on"
+      description: "Returns all auctions the authenticated user has placed a bid on."
+      tags:
+        - "Auction"
+      responses:
+        200:
+          description: "List of auctions the user has bid on"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuctionBasic"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized access"
+        404:
+          description: "No auctions found"
+
+  /auctions/my/followedAuctions:
+    get:
+      summary: "Get auctions followed by the user"
+      description: "Returns all auctions the authenticated user is following."
+      tags:
+        - "Auction"
+      responses:
+        200:
+          description: "List of auctions the user is following"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuctionBasic"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized access"
+        404:
+          description: "No auctions found"
+  
+  /auctions/{auctionId}/bids:
+    get:
+      summary: "Get all bids for a specific auction"
+      description: "Returns a list of all bids placed on a specific auction."
+      tags:
+        - "Auction"
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          description: "ID of the auction to retrieve bids for"
+          schema:
+            type: string
+      responses:
+        200:
+          description: "List of bids for the auction"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bid"
+        404:
+          description: "Auction not found"
+    post:
+      summary: "Place a bid on an auction"
+      description: "Allows a user to place a bid on a specific auction."
+      tags:
+        - "Auction"
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          description: "ID of the auction to place the bid on"
+          schema:
+            type: string
+      requestBody:
+        description: "Bid details"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Bid"
+      responses:
+        201:
+          description: "Bid placed successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bid"
+        400:
+          description: "Invalid bid or auction"
+        404:
+          description: "Auction not found"
+  
+  
+  /categories:
+    get:
+      summary: "Get all categories"
+      description: "Returns a list of all available categories."
+      tags:
+        - "Category"
+      responses:
+        200:
+          description: "List of all categories"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+        500:
+          description: "Internal server error"
 
 
 components:
@@ -181,6 +489,94 @@ components:
           type: integer
           nullable: true
           description: "Minimum increment step for Bids"
+    AuctionBasic:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: "The unique identifier of Auctions"
+        userId:
+          type: integer
+          format: int64
+          description: "The user who created the Auction"
+        categoryId:
+          type: integer
+          format: int64
+          description: "The category of the Auction"
+        itemName:
+          type: string
+          maxLength: 50
+          description: "Name of the Auction item"
+        minimumPrice:
+          type: number
+          format: double
+          description: "Minimum selling price of the item"
+        status:
+          type: string
+          maxLength: 20
+          description: "Current status of the Auction (e.g., active, closed)"
+        createDate:
+          type: string
+          format: date-time
+          description: "Date and time when the Auction was created"
+        expiredDate:
+          type: string
+          format: date-time
+          description: "Date and time when the Auction expires"
+        lastBid:
+          type: number
+          format: double
+          nullable: true
+          description: "Latest Bid amount, if any"
+        description:
+          type: string
+          description: "Detailed description of the item"
+        type:
+          type: string
+          maxLength: 20
+          description: "Type of the Auction (e.g., timed, restarting)"
+        extraTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Extra time added to the auction if it's a restarting one"
+        itemState:
+          type: string
+          maxLength: 20
+          description: "State of the item (e.g., new, used)"
+        tags:
+          type: string
+          description: "Keywords associated with the Auction item"
+        minStep:
+          type: integer
+          nullable: true
+          description: "Minimum increment step for Bids"
+    AuctionCard:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: "The unique identifier of Auctions"
+        itemName:
+          type: string
+          maxLength: 50
+          description: "Name of the Auction item"
+        createDate:
+          type: string
+          format: date-time
+          description: "Date and time when the Auction was created"
+        expiredDate:
+          type: string
+          format: date-time
+          description: "Date and time when the Auction expires"
+        lastBid:
+          type: number
+          format: double
+          nullable: true
+          description: "Latest Bid amount, if any"
+
     User:
       type: object
       properties:
