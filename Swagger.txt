@@ -19,7 +19,92 @@ tags:
   - name: Watch
     description: "Tracking watched auctions"
     
-paths: {}
+paths:
+  /users/me:
+    put:
+      summary: "Update a user's email and phone number"
+      description: "Allows updating only the email address and phone number of a user."
+      operationId: "updateUserContact"
+      tags:
+        - "User"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserBasic"
+      responses:
+        200:
+          description: "User successfully updated"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserBasic"
+        400:
+          description: "Invalid request data"
+        404:
+          description: "User not found"
+          
+    delete:
+      summary: "Delete a user"
+      description: "Removes a user from the system."
+      operationId: "deleteUser"
+      tags:
+        - "User"
+      responses:
+        204:
+          description: "User successfully deleted"
+        404:
+          description: "User not found"
+    get:
+      summary: "Get basic user profile (excluding bids, auctions, watches)"
+      tags: 
+        - "User"
+      responses:
+        200:
+          description: "User's basic information"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserBasic"
+        404:
+          description: "User not found"
+  /users/profile:
+    get:
+      summary: "Get username and password hash by user ID"
+      tags:
+        - "User"
+      responses:
+        200:
+          description: "User credentials"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserCredentials"
+        401:
+          description: "Unauthorized"
+    post:
+      summary: "Create a new user"
+      description: "Registers a new user in the system."
+      operationId: "createUser"
+      tags:
+        - "User"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCredentials"
+      responses:
+        201:
+          description: "User successfully created"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserBasic"
+        400:
+          description: "Invalid request data"
+
 
 components:
   schemas:
@@ -134,6 +219,33 @@ components:
           type: string
           maxLength: 16
           description: "The phone number of the User"
+          
+    UserBasic:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userName:
+          type: string
+          maxLength: 25
+        emailAddress:
+          type: string
+          maxLength: 50
+        phoneNumber:
+          type: string
+          maxLength: 16
+          
+    UserCredentials:
+      type: object
+      properties:
+        userName:
+          type: string
+          maxLength: 25
+        passwordHash:
+          type: string
+          maxLength: 255
+        
     Bid:
       type: object
       properties:
