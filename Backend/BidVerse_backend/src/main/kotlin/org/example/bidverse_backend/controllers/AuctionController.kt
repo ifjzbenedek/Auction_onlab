@@ -9,8 +9,4 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/auctions")
 class AuctionController(private val auctionService: AuctionService) {
 
-    @GetMapping
-    fun getAuctions(@RequestParam status: String): List<Auction> {
-        return auctionService.getAuctionsByStatus(status)
-    }
 }
