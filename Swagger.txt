@@ -12,12 +12,8 @@ tags:
     description: "Operations related to auctions"
   - name: User
     description: "User account management"
-  - name: Bid
-    description: "Operations related to bidding"
   - name: Category
     description: "Auction category management (Auction has a Category)"
-  - name: Watch
-    description: "Tracking watched auctions"
     
 paths:
   /users/me:
@@ -69,20 +65,7 @@ paths:
                 $ref: "#/components/schemas/UserBasic"
         404:
           description: "User not found"
-  /users/profile:
-    get:
-      summary: "Get username and password hash by user ID"
-      tags:
-        - "User"
-      responses:
-        200:
-          description: "User credentials"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserCredentials"
-        401:
-          description: "Unauthorized"
+  /users/register:
     post:
       summary: "Create a new user"
       description: "Registers a new user in the system."
@@ -105,7 +88,33 @@ paths:
         400:
           description: "Invalid request data"
           
-          
+  /users/login:
+    post:
+      summary: "User login"
+      description: "Validates a username and password."
+      tags:
+        - "User"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCredentials"
+      responses:
+        200:
+          description: "Login successful"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Login successful"
+        400:
+          description: "Invalid request data"
+        401:
+          description: "Unauthorized - incorrect username or password"        
   /auctions:
     get:
       summary: "Get all auctions with optional filtering"

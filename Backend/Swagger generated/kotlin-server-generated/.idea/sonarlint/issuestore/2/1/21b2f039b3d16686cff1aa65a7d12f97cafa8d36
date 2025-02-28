@@ -1,0 +1,20 @@
+
+2kotlin:S1128"Remove this unused import.(¤‘™á
+7kotlin:S1128"Remove this unused import.(¬ş’†şÿÿÿÿ
+2kotlin:S1128"Remove this unused import.(ÔàÊ¾
+2kotlin:S1128"Remove this unused import.(ØÇşÔ
+7kotlin:S1128"Remove this unused import.(æáé—ûÿÿÿÿ
+2kotlin:S1128"Remove this unused import.(¼©¹í
+7kotlin:S1128"Remove this unused import.(şµšæùÿÿÿÿ
+1kotlin:S1128""Remove this unused import.(¢¥õy
+2kotlin:S1128%"Remove this unused import.(€øåö
+2kotlin:S1128&"Remove this unused import.(¥‰¬Ô
+2kotlin:S1128'"Remove this unused import.(ØÌÜ
+ikotlin:S1192."QDefine a constant instead of duplicating this literal "application/json" 8 times.(ÊÈıã
+Ìkotlin:S1192/"®Define a constant instead of duplicating this literal "{
+  "emailAddress" : "emailAddress",
+  "phoneNumber" : "phoneNumber",
+  "id" : 0,
+  "userName" : "userName"
+}" 3 times.(±çİÛùÿÿÿÿ
+hkotlin:S11928"PDefine a constant instead of duplicating this literal "application/xml" 4 times.(•¿Ë’
