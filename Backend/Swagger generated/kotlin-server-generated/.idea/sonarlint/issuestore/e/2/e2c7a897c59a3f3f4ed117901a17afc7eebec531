@@ -1,0 +1,17 @@
+
+rkotlin:S101'"[Rename class "auctionsAuctionIdBidsGet" to match the regular expression ^[A-Z][a-zA-Z0-9]*$(ëêß
+xkotlin:S101/"\Rename class "auctionsAuctionIdBidsPost" to match the regular expression ^[A-Z][a-zA-Z0-9]*$(¨¬×Øúÿÿÿÿ
+qkotlin:S1016"ZRename class "auctionsAuctionIdDelete" to match the regular expression ^[A-Z][a-zA-Z0-9]*$(‡µ‘Å
+skotlin:S101="WRename class "auctionsAuctionIdGet" to match the regular expression ^[A-Z][a-zA-Z0-9]*$(à•„–øÿÿÿÿ
+skotlin:S101E"WRename class "auctionsAuctionIdPut" to match the regular expression ^[A-Z][a-zA-Z0-9]*$(öš€÷şÿÿÿÿ
+jkotlin:S101M"NRename class "auctionsGet" to match the regular expression ^[A-Z][a-zA-Z0-9]*$(»öè½şÿÿÿÿ
+zkotlin:S101S"^Rename class "auctionsMyBiddedAuctionsGet" to match the regular expression ^[A-Z][a-zA-Z0-9]*$(äŒšüÿÿÿÿ
+vkotlin:S101Y"_Rename class "auctionsMyCreatedAuctionsGet" to match the regular expression ^[A-Z][a-zA-Z0-9]*$(¤Ş¿Õ
+|kotlin:S101_"`Rename class "auctionsMyFollowedAuctionsGet" to match the regular expression ^[A-Z][a-zA-Z0-9]*$(ğ…±´úÿÿÿÿ
+lkotlin:S101f"PRename class "createAuction" to match the regular expression ^[A-Z][a-zA-Z0-9]*$(ÿÀúÿÿÿÿ
+fkotlin:S101l"PRename class "categoriesGet" to match the regular expression ^[A-Z][a-zA-Z0-9]*$(ÁĞÀD
+ikotlin:S101s"MRename class "createUser" to match the regular expression ^[A-Z][a-zA-Z0-9]*$(¦®Û–úÿÿÿÿ
+ikotlin:S101y"MRename class "deleteUser" to match the regular expression ^[A-Z][a-zA-Z0-9]*$(îÜÚÍùÿÿÿÿ
+qkotlin:S101€"TRename class "updateUserContact" to match the regular expression ^[A-Z][a-zA-Z0-9]*$(ã¹Ÿªÿÿÿÿÿ
+ikotlin:S101‡"QRename class "usersLoginPost" to match the regular expression ^[A-Z][a-zA-Z0-9]*$(ĞŒä£
+jkotlin:S101"MRename class "usersMeGet" to match the regular expression ^[A-Z][a-zA-Z0-9]*$(½ö¿½ıÿÿÿÿ

@@ -2,6 +2,7 @@ package org.example.bidverse_backend.extensions
 
 import org.example.bidverse_backend.DTOs.UserDTOs.UserBasicDTO
 import org.example.bidverse_backend.DTOs.UserDTOs.UserCredentialsDTO
+import org.example.bidverse_backend.DTOs.UserDTOs.UserRegistrationDTO
 import org.example.bidverse_backend.entities.User
 
 fun User.toUserBasicDTO(): UserBasicDTO {
@@ -16,6 +17,15 @@ fun User.toUserBasicDTO(): UserBasicDTO {
 fun User.toUserCredentialsDTO(): UserCredentialsDTO {
     return UserCredentialsDTO(
         userName = this.userName,
-        passwordHash = this.passwordHash // Password should be handled separately
+        password = this.passwordHash
+    )
+}
+
+fun User.toUserRegistrationDTO(): UserRegistrationDTO {
+    return UserRegistrationDTO(
+        userName = this.userName,
+        emailAddress = this.emailAddress,
+        rePassword = this.phoneNumber,
+        password = this.passwordHash
     )
 }

@@ -17,3 +17,17 @@ a
 1src/main/kotlin/io/swagger/server/apis/UserApi.kt,2\1\21b2f039b3d16686cff1aa65a7d12f97cafa8d36
 n
 >src/main/kotlin/io/swagger/server/infrastructure/ApiKeyAuth.kt,2\2\22a0e84728b59964c5ff7011c2c49657cacfde00
+Z
+*src/main/kotlin/io/swagger/server/Paths.kt,e\2\e2c7a897c59a3f3f4ed117901a17afc7eebec531
+b
+2src/main/kotlin/io/swagger/server/Configuration.kt,9\8\983f95bdb0dd5b152a4ba3abc6b62580e6a0f59c
+a
+1src/main/kotlin/io/swagger/server/models/Watch.kt,2\e\2e2e3b4dfb95f318282596d07a9a4b9b2be51986
+`
+0src/main/kotlin/io/swagger/server/models/User.kt,a\8\a8902ab8a9e8da94a715db686d94bd7d2cc305fa
+d
+4src/main/kotlin/io/swagger/server/models/Category.kt,b\f\bf939341ca5a7cf9c09fd742a1fa890a7dec2270
+_
+/src/main/kotlin/io/swagger/server/models/Bid.kt,6\9\691c89ae45ae12f6be96065964f690e14593009d
+e
+5src/main/kotlin/io/swagger/server/models/UserBasic.kt,1\5\15cc8687d68b5eda1028e55df9c3063a997df419
