@@ -11,52 +11,52 @@ class Auction(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "itemId", nullable = false)
-    val id: Int,
+    var id: Int,
 
     @ManyToOne
     @JoinColumn(name= "ownerId", nullable = false)
-    val userId: User,
+    var userId: User,
 
     @ManyToOne
     @JoinColumn(name= "categoryId", nullable = false)
-    val categoryId: Category,
+    var categoryId: Category,
 
     @OneToMany(mappedBy = "itemId", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    val bids: List<Bid>,
+    var bids: List<Bid>,
 
     @OneToMany(mappedBy = "itemId", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    val watchedAuctions: List<Watch>,
+    var watchedAuctions: List<Watch>,
 
     @Column(nullable = false, length = 50)
-    val itemName: String,
+    var itemName: String,
 
     @Column(nullable = false, precision = 12, scale = 2)
-    val minimumPrice: BigDecimal,
+    var minimumPrice: BigDecimal,
 
     @Column(nullable = false, length = 20)
-    val status: String,
+    var status: String,
 
     @Column(nullable = false)
-    val createDate: LocalDateTime,
+    var createDate: LocalDateTime,
 
     @Column(nullable = false)
-    val expiredDate: LocalDateTime,
+    var expiredDate: LocalDateTime,
 
     @Column(precision = 12, scale = 2)
-    val lastBid: BigDecimal?,
+    var lastBid: BigDecimal?,
 
     @Column(nullable = false)
-    val description: String,
+    var description: String,
 
     @Column(nullable = false, length = 20)
-    val type: String,
+    var type: String,
 
-    val extraTime: LocalDateTime?,
+    var extraTime: LocalDateTime?,
 
     @Column(nullable = false, length = 20)
-    val itemState: String,
+    var itemState: String,
 
-    val tags: String,
+    var tags: String,
 
-    val minStep: Int?
+    var minStep: Int?
 )

@@ -14,27 +14,43 @@ import org.springframework.web.bind.annotation.*
 class UserController(private val userService: UserService) {
 
     @PutMapping("/me")
-    fun updateUserContact(@RequestBody userBasic: UserBasicDTO): ResponseEntity<UserBasicDTO> {
-        val user = userService.updateUserContact(userBasic)
-        return ResponseEntity.ok(user.toUserBasicDTO()) // `200 OK`
+    fun updateUserContact(@RequestBody userBasic: UserBasicDTO): ResponseEntity<Any> {
+        return try {
+            val user = userService.updateUserContact(userBasic)
+            ResponseEntity.ok(user.toUserBasicDTO()) // `200 OK`
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message)
+        }
     }
 
     @DeleteMapping("/me")
-    fun deleteUser(): ResponseEntity<Unit> {
-        userService.deleteUser()
-        return ResponseEntity.noContent().build() // `204 No Content`, nincs visszatérő adat
-    }
+    fun deleteUser(): ResponseEntity<Any> {
+       return try{
+              userService.deleteUser()
+              ResponseEntity.ok().build() // `200 OK`
+         } catch (e: IllegalArgumentException) {
+              ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message)
+       }
+   }
 
     @GetMapping("/me")
-    fun getUserProfile(): ResponseEntity<UserBasicDTO> {
-        val user = userService.getUserProfile()
-        return ResponseEntity.ok(user.toUserBasicDTO()) // `200 OK`
+    fun getUserProfile(): ResponseEntity<Any> {
+        return try {
+            val user = userService.getUserProfile()
+            ResponseEntity.ok(user.toUserBasicDTO()) // `200 OK`
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message)
+        }
     }
 
     @PostMapping("/login")
-    fun loginUser(@RequestBody userCredentials: UserCredentialsDTO): ResponseEntity<UserBasicDTO> {
-        val user = userService.login(userCredentials)
-        return ResponseEntity.ok(user.toUserBasicDTO()) // `200 OK`
+    fun loginUser(@RequestBody userCredentials: UserCredentialsDTO): ResponseEntity<Any> {
+        return try {
+            val user = userService.login(userCredentials)
+            ResponseEntity.ok(user.toUserBasicDTO()) // `200 OK`
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(e.message)
+        }
     }
 
     @PostMapping("/register")

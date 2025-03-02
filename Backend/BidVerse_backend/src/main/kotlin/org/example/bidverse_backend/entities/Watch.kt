@@ -8,16 +8,16 @@ import org.example.bidverse_backend.Keys.WatchId
 class Watch(
 
     @EmbeddedId
-    val id: WatchId,
+    var id: WatchId,
 
     @ManyToOne
     @MapsId("itemId")
     @JoinColumn(name= "auctionId", nullable = false)
-    val itemId: Auction,
+    var itemId: Auction,
 
     @ManyToOne
     @MapsId("userId")
     @JoinColumn(name= "userId", nullable = false)
-    val userId: User
+    var userId: User
 )
 

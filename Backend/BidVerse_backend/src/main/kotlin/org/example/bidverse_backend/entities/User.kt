@@ -8,26 +8,26 @@ class User(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "userId", nullable = false)
-    val id: Int = -1,
+    var id: Int = -1,
 
     @OneToMany(mappedBy = "userId", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    val auctions: List<Auction>,
+    var auctions: List<Auction>,
 
     @OneToMany(mappedBy = "userId", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    val bids: List<Bid>,
+    var bids: List<Bid>,
 
     @OneToMany(mappedBy = "userId", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    val watches: List<Watch>,
+    var watches: List<Watch>,
 
     @Column(nullable = false, length = 25)
-    val userName: String,
+    var userName: String,
 
     @Column(nullable = false, length = 255)
-    val passwordHash: String,
+    var passwordHash: String,
 
     @Column(nullable = false, length = 50)
-    val emailAddress: String,
+    var emailAddress: String,
 
     @Column(nullable = false, length = 16)
-    val phoneNumber: String
+    var phoneNumber: String
 )

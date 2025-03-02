@@ -10,22 +10,22 @@ class Bid(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "bidId", nullable = false)
-    val id: Int,
+    var id: Int,
 
     @ManyToOne
     @JoinColumn(name= "auctionId", nullable = false)
-    val itemId: Auction,
+    var itemId: Auction,
 
     @ManyToOne
     @JoinColumn(name= "userId", nullable = false)
-    val userId: User,
+    var userId: User,
 
     @Column(name = "value", nullable = false, precision = 12, scale = 2)
-    val value: BigDecimal,
+    var value: BigDecimal,
 
     @Column(name = "timeStamp", nullable = false)
-    val timeStamp: LocalDateTime,
+    var timeStamp: LocalDateTime,
 
     @Column(name = "isWinning", nullable = false)
-    val isWinning: Boolean
+    var isWinning: Boolean
 )
