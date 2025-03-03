@@ -15,17 +15,17 @@ class Auction(
 
     @ManyToOne
     @JoinColumn(name= "ownerId", nullable = false)
-    var userId: User,
+    var owner: User,
 
     @ManyToOne
     @JoinColumn(name= "categoryId", nullable = false)
-    var categoryId: Category,
+    var category: Category,
 
-    @OneToMany(mappedBy = "itemId", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    var bids: List<Bid>,
+    @OneToMany(mappedBy = "auction", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    var bids: MutableList<Bid> = mutableListOf(),
 
-    @OneToMany(mappedBy = "itemId", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    var watchedAuctions: List<Watch>,
+    @OneToMany(mappedBy = "auction", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    var watchedAuctions: MutableList<Watch> = mutableListOf(),
 
     @Column(nullable = false, length = 50)
     var itemName: String,

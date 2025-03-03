@@ -13,6 +13,6 @@ class Category(
     @Column(nullable = false, length = 50)
     var categoryName: String,
 
-    @OneToMany(mappedBy = "categoryId", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    var auctions: List<Auction>
+    @OneToMany(mappedBy = "category", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    var auctions: MutableList<Auction> = mutableListOf()
 )

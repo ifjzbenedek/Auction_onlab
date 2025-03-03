@@ -10,14 +10,14 @@ class User(
     @Column(name = "userId", nullable = false)
     var id: Int = -1,
 
-    @OneToMany(mappedBy = "userId", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    var auctions: List<Auction>,
+    @OneToMany(mappedBy = "owner", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    var auctions: MutableList<Auction> = mutableListOf(),
 
-    @OneToMany(mappedBy = "userId", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    var bids: List<Bid>,
+    @OneToMany(mappedBy = "bidder", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    var bids: MutableList<Bid> = mutableListOf(),
 
-    @OneToMany(mappedBy = "userId", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    var watches: List<Watch>,
+    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    var watches: MutableList<Watch> = mutableListOf(),
 
     @Column(nullable = false, length = 25)
     var userName: String,
@@ -29,5 +29,8 @@ class User(
     var emailAddress: String,
 
     @Column(nullable = false, length = 16)
-    var phoneNumber: String
+    var phoneNumber: String,
+
+    @Column(nullable = false, length = 20)
+    var role: String = "USER"
 )

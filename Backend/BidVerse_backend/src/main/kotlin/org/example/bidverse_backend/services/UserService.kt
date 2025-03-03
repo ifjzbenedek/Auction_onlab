@@ -16,7 +16,7 @@ class UserService(private val userRepository: UserRepository) {
 
     fun updateUserContact(userBasic: UserBasicDTO): User {
         // Megkeressük a bejelentkezett felhasználót
-        val user = userRepository.findById(Global.loggedInUserId.toLong())
+        val user = userRepository.findById(Global.loggedInUserId)
             .orElseThrow { IllegalArgumentException("User not found.") }
 
         // Frissítjük a felhasználó adatait
@@ -26,9 +26,22 @@ class UserService(private val userRepository: UserRepository) {
 
         return userRepository.save(user)
     }
+    fun deleteUserAsAdmin(userId: Int) {
+        val adminUser = userRepository.findById(Global.loggedInUserId).orElseThrow {
+            IllegalArgumentException("Current user not found.")
+        }
 
+        if (adminUser.role != "ADMIN") {
+            throw SecurityException("You do not have permission to delete this user.")
+        }
+
+        val user = userRepository.findById(userId).orElseThrow {
+            IllegalArgumentException("User not found.")
+        }
+        userRepository.delete(user)
+    }
     fun deleteUser() {
-        val user = userRepository.findById(Global.loggedInUserId.toLong())
+        val user = userRepository.findById(Global.loggedInUserId)
             .orElseThrow { IllegalArgumentException("User not found.") }
 
         userRepository.delete(user)
@@ -36,21 +49,21 @@ class UserService(private val userRepository: UserRepository) {
 
     fun getUserProfile(): User {
         // Megkeressük a bejelentkezett felhasználót
-        return userRepository.findById(Global.loggedInUserId.toLong())
+        return userRepository.findById(Global.loggedInUserId)
             .orElseThrow { IllegalArgumentException("User not found.") }
     }
 
     fun register(userRegistrationDTO: UserRegistrationDTO): User {
         // Ellenőrizzük, hogy a jelszavak megegyeznek-e
-        require(userRegistrationDTO.password != userRegistrationDTO.rePassword) {
+        require(userRegistrationDTO.password == userRegistrationDTO.rePassword) {
             throw IllegalArgumentException("Passwords don't match.")
         }
 
         // Ellenőrizzük, hogy az email vagy a felhasználónév már foglalt-e
-        require(userRepository.existsByEmailAddress(userRegistrationDTO.emailAddress)){
+        require(!userRepository.existsByEmailAddress(userRegistrationDTO.emailAddress)){
                 throw IllegalArgumentException("Email address already in use.")}
 
-        require (userRepository.existsByUserName(userRegistrationDTO.userName)) {
+        require (!userRepository.existsByUserName(userRegistrationDTO.userName)) {
             throw IllegalArgumentException("Username already in use.")
         }
 
@@ -59,9 +72,9 @@ class UserService(private val userRepository: UserRepository) {
             emailAddress = userRegistrationDTO.emailAddress,
             phoneNumber = "", // Opcionális érték
             passwordHash = userRegistrationDTO.password ,
-            auctions = emptyList(),
-            bids = emptyList(),
-            watches = emptyList()
+            auctions = mutableListOf(),
+            bids = mutableListOf(),
+            watches = mutableListOf()
         )
 
         return userRepository.save(user)
@@ -75,7 +88,7 @@ class UserService(private val userRepository: UserRepository) {
 
         // Ellenőrizzük a jelszót, hogy megegyezik-e a tárolttal
         // Egyelőre még csak átmeneti, nincs átalakítás
-        require (user.passwordHash != userCredentials.password) {
+        require (user.passwordHash == userCredentials.password) {
             throw IllegalArgumentException("Invalid password.")
         }
 

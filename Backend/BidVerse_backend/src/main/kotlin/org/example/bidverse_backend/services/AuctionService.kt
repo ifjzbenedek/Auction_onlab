@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service
 @Service
 class AuctionService(private val auctionRepository: AuctionRepository) {
     fun getAuctions() = auctionRepository.findAll()
-    fun getAuctionById(id: Long) = auctionRepository.findById(id)
+    fun getAuctionById(id: Int) = auctionRepository.findById(id)
 
     fun getAuctionsByStatus(status: String): List<Auction> {
         return auctionRepository.findByStatus(status)

@@ -5,13 +5,13 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import java.time.LocalDateTime
 
-interface AuctionRepository : JpaRepository<Auction, Long>{
+interface AuctionRepository : JpaRepository<Auction, Int>{
 
     fun findByStatus(status: String): List<Auction>
 
-    fun findByCategoryIdIn(category: List<Category>): List<Auction>
+    fun findByCategoryIn(category: List<Category>): List<Auction>
 
-    fun findByUserId(user: User): List<Auction>
+    fun findByOwner(user: User): List<Auction>
 
     fun findByStatusAndExpiredDate(status: String, date: LocalDateTime): List<Auction>
 

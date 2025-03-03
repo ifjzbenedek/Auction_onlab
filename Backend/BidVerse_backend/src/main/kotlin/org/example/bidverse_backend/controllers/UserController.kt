@@ -27,7 +27,7 @@ class UserController(private val userService: UserService) {
     fun deleteUser(): ResponseEntity<Any> {
        return try{
               userService.deleteUser()
-              ResponseEntity.ok().build() // `200 OK`
+              ResponseEntity.noContent().build() // `204 No Content`
          } catch (e: IllegalArgumentException) {
               ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message)
        }
@@ -65,4 +65,17 @@ class UserController(private val userService: UserService) {
                 .body("Hiba történt a regisztráció során.")
         }
     }
+
+    @DeleteMapping("/{id}")
+    fun deleteUserByAdmin(@PathVariable id: Int): ResponseEntity<Any> {
+        return try {
+            userService.deleteUserAsAdmin(id)
+            ResponseEntity.noContent().build() // 204 No Content
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message)
+        } catch (e: SecurityException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).body("You do not have permission to delete this user.")
+        }
+    }
+
 }

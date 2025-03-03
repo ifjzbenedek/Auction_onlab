@@ -5,7 +5,7 @@ import org.example.bidverse_backend.entities.Bid
 import org.example.bidverse_backend.entities.User
 import org.springframework.data.jpa.repository.JpaRepository
 
-interface BidRepository : JpaRepository<Bid, Long> {
-    fun findByItemId(itemId: Auction): List<Bid>
-    fun findByUserId(userId: User): List<Bid>
+interface BidRepository : JpaRepository<Bid, Int> {
+    fun findByAuction(itemId: Auction): List<Bid>
+    fun findByBidder(userId: User): List<Bid>
 }

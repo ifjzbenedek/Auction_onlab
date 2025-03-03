@@ -17,8 +17,8 @@ fun Auction.toAuctionCardDTO(): AuctionCardDTO {
 fun Auction.toAuctionBasicDTO(): AuctionBasicDTO {
     return AuctionBasicDTO(
         id = this.id,
-        userId = this.userId.id,
-        categoryId = this.categoryId.id,
+        userId = this.owner.id,
+        categoryId = this.category.id,
         itemName = this.itemName,
         minimumPrice = this.minimumPrice,
         status = this.status,

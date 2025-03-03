@@ -13,11 +13,11 @@ class Watch(
     @ManyToOne
     @MapsId("itemId")
     @JoinColumn(name= "auctionId", nullable = false)
-    var itemId: Auction,
+    var auction: Auction,
 
     @ManyToOne
     @MapsId("userId")
     @JoinColumn(name= "userId", nullable = false)
-    var userId: User
+    var user: User
 )
 

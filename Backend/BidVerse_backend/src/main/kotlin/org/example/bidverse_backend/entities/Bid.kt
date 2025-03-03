@@ -14,11 +14,11 @@ class Bid(
 
     @ManyToOne
     @JoinColumn(name= "auctionId", nullable = false)
-    var itemId: Auction,
+    var auction: Auction,
 
     @ManyToOne
     @JoinColumn(name= "userId", nullable = false)
-    var userId: User,
+    var bidder: User,
 
     @Column(name = "value", nullable = false, precision = 12, scale = 2)
     var value: BigDecimal,
