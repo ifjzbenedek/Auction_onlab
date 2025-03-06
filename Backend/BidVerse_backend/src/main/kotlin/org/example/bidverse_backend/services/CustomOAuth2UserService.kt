@@ -34,7 +34,6 @@ class CustomOAuth2UserService(
             userName = userName,
             emailAddress = email,
             phoneNumber = "", // Ha szükséges, ide is hozzáadhatjuk
-            passwordHash = "", // OAuth esetén nem szükséges jelszó
             auctions = mutableListOf(),
             bids = mutableListOf(),
             watches = mutableListOf()

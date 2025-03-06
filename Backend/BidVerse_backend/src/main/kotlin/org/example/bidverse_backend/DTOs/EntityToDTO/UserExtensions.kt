@@ -17,7 +17,6 @@ fun User.toUserBasicDTO(): UserBasicDTO {
 fun User.toUserCredentialsDTO(): UserCredentialsDTO {
     return UserCredentialsDTO(
         userName = this.userName,
-        password = this.passwordHash
     )
 }
 
@@ -25,7 +24,6 @@ fun User.toUserRegistrationDTO(): UserRegistrationDTO {
     return UserRegistrationDTO(
         userName = this.userName,
         emailAddress = this.emailAddress,
-        rePassword = this.phoneNumber,
-        password = this.passwordHash
+
     )
 }

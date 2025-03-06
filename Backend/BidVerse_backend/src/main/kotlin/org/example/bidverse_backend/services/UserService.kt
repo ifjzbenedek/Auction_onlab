@@ -9,6 +9,7 @@ import org.example.bidverse_backend.extensions.toUserBasicDTO
 import org.example.bidverse_backend.repositories.UserRepository
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service
@@ -16,7 +17,7 @@ class UserService(private val userRepository: UserRepository) {
 
     fun updateUserContact(userBasic: UserBasicDTO): User {
         // Megkeressük a bejelentkezett felhasználót
-        val user = userRepository.findById(Global.loggedInUserId)
+        val user = userRepository.findById(getCurrentUserId())
             .orElseThrow { IllegalArgumentException("User not found.") }
 
         // Frissítjük a felhasználó adatait
@@ -27,7 +28,7 @@ class UserService(private val userRepository: UserRepository) {
         return userRepository.save(user)
     }
     fun deleteUserAsAdmin(userId: Int) {
-        val adminUser = userRepository.findById(Global.loggedInUserId).orElseThrow {
+        val adminUser = userRepository.findById(getCurrentUserId()).orElseThrow {
             IllegalArgumentException("Current user not found.")
         }
 
@@ -40,8 +41,9 @@ class UserService(private val userRepository: UserRepository) {
         }
         userRepository.delete(user)
     }
+
     fun deleteUser() {
-        val user = userRepository.findById(Global.loggedInUserId)
+        val user = userRepository.findById(getCurrentUserId())
             .orElseThrow { IllegalArgumentException("User not found.") }
 
         userRepository.delete(user)
@@ -49,10 +51,10 @@ class UserService(private val userRepository: UserRepository) {
 
     fun getUserProfile(): User {
         // Megkeressük a bejelentkezett felhasználót
-        return userRepository.findById(Global.loggedInUserId)
+        return userRepository.findById(getCurrentUserId())
             .orElseThrow { IllegalArgumentException("User not found.") }
     }
-
+/*
     fun register(userRegistrationDTO: UserRegistrationDTO): User {
         // Ellenőrizzük, hogy a jelszavak megegyeznek-e
         require(userRegistrationDTO.password == userRegistrationDTO.rePassword) {
@@ -71,7 +73,6 @@ class UserService(private val userRepository: UserRepository) {
             userName = userRegistrationDTO.userName,
             emailAddress = userRegistrationDTO.emailAddress,
             phoneNumber = "", // Opcionális érték
-            passwordHash = userRegistrationDTO.password ,
             auctions = mutableListOf(),
             bids = mutableListOf(),
             watches = mutableListOf()
@@ -86,12 +87,17 @@ class UserService(private val userRepository: UserRepository) {
         val user = userRepository.findByUserName(userCredentials.userName)
             ?: throw IllegalArgumentException("User not found.")
 
-        // Ellenőrizzük a jelszót, hogy megegyezik-e a tárolttal
-        // Egyelőre még csak átmeneti, nincs átalakítás
-        require (user.passwordHash == userCredentials.password) {
-            throw IllegalArgumentException("Invalid password.")
-        }
-
         return user
+    }
+*/
+    fun getCurrentUserId(): Int {
+        val authentication = SecurityContextHolder.getContext().authentication
+        if (authentication != null && authentication.isAuthenticated) {
+            val principal = authentication.principal
+            if (principal is User) { // Tételezzük fel, hogy a `User` entitás implementálja a `UserDetails`-t
+                return principal.id
+            }
+        }
+        throw SecurityException("User not authenticated.")
     }
 }

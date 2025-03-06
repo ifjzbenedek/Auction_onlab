@@ -22,9 +22,6 @@ class User(
     @Column(nullable = false, length = 25)
     var userName: String,
 
-    @Column(nullable = false, length = 255)
-    var passwordHash: String,
-
     @Column(nullable = false, length = 50)
     var emailAddress: String,
 
