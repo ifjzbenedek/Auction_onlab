@@ -18,15 +18,11 @@ class SecurityConfig(private val customOAuth2UserService: CustomOAuth2UserServic
             .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/users/register").permitAll() // A regisztráció engedélyezett
-                    .requestMatchers("/oauth2/**").permitAll() // Engedélyezzük az OAuth2 útvonalait
+                    .requestMatchers("login/oauth2/code/google").permitAll() // Engedélyezzük az OAuth2 útvonalait
                     .anyRequest().authenticated() // Minden más endpointhoz hitelesítés kell
             }
             .oauth2Login { oauth2 ->
                 oauth2
-                    .userInfoEndpoint { userInfo ->
-                        userInfo.userService(customOAuth2UserService) // Az egyéni OAuth2UserService használata
-                    }
                     .defaultSuccessUrl("/users/me", true) // Sikeres bejelentkezés után ide irányít
             }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) }
