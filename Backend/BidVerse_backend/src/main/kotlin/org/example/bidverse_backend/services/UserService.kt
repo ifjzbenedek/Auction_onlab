@@ -61,7 +61,7 @@ class UserService(private val userRepository: UserRepository) {
 
         // Ellenőrizzük, hogy az email vagy a felhasználónév már foglalt-e
         require(!userRepository.existsByEmailAddress(userRegistrationDTO.emailAddress)){
-                throw IllegalArgumentException("Email address already in use.")}
+            throw IllegalArgumentException("Email address already in use.")}
 
         require (!userRepository.existsByUserName(userRegistrationDTO.userName)) {
             throw IllegalArgumentException("Username already in use.")
