@@ -1,14 +1,11 @@
 package org.example.bidverse_backend.services
 
+import org.example.bidverse_backend.AuthenticationException
 import org.example.bidverse_backend.DTOs.UserDTOs.UserBasicDTO
-import org.example.bidverse_backend.DTOs.UserDTOs.UserCredentialsDTO
-import org.example.bidverse_backend.DTOs.UserDTOs.UserRegistrationDTO
-import org.example.bidverse_backend.Global
+import org.example.bidverse_backend.PermissionDeniedException
+import org.example.bidverse_backend.UserNotFoundException
 import org.example.bidverse_backend.entities.User
-import org.example.bidverse_backend.extensions.toUserBasicDTO
 import org.example.bidverse_backend.repositories.UserRepository
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
@@ -18,7 +15,7 @@ class UserService(private val userRepository: UserRepository) {
     fun updateUserContact(userBasic: UserBasicDTO): User {
         // Megkeressük a bejelentkezett felhasználót
         val user = userRepository.findById(getCurrentUserId())
-            .orElseThrow { IllegalArgumentException("User not found.") }
+            .orElseThrow { UserNotFoundException("User not found.") }
 
         // Frissítjük a felhasználó adatait
         user.userName = userBasic.userName
@@ -29,22 +26,22 @@ class UserService(private val userRepository: UserRepository) {
     }
     fun deleteUserAsAdmin(userId: Int) {
         val adminUser = userRepository.findById(getCurrentUserId()).orElseThrow {
-            IllegalArgumentException("Current user not found.")
+            UserNotFoundException("Admin user not found.")
         }
 
         if (adminUser.role != "ADMIN") {
-            throw SecurityException("You do not have permission to delete this user.")
+            throw PermissionDeniedException("You do not have permission to delete this user.")
         }
 
         val user = userRepository.findById(userId).orElseThrow {
-            IllegalArgumentException("User not found.")
+            UserNotFoundException("User not found.")
         }
         userRepository.delete(user)
     }
 
     fun deleteUser() {
         val user = userRepository.findById(getCurrentUserId())
-            .orElseThrow { IllegalArgumentException("User not found.") }
+            .orElseThrow { UserNotFoundException("User not found.") }
 
         userRepository.delete(user)
     }
@@ -52,7 +49,7 @@ class UserService(private val userRepository: UserRepository) {
     fun getUserProfile(): User {
         // Megkeressük a bejelentkezett felhasználót
         return userRepository.findById(getCurrentUserId())
-            .orElseThrow { IllegalArgumentException("User not found.") }
+            .orElseThrow { UserNotFoundException("User not found.") }
     }
 /*
     fun register(userRegistrationDTO: UserRegistrationDTO): User {
@@ -98,6 +95,6 @@ class UserService(private val userRepository: UserRepository) {
                 return principal.id
             }
         }
-        throw SecurityException("User not authenticated.")
+        throw AuthenticationException("User not authenticated.")
     }
 }

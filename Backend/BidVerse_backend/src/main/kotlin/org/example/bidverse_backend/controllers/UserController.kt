@@ -3,6 +3,8 @@ package org.example.bidverse_backend.controllers
 import org.example.bidverse_backend.DTOs.UserDTOs.UserBasicDTO
 import org.example.bidverse_backend.DTOs.UserDTOs.UserCredentialsDTO
 import org.example.bidverse_backend.DTOs.UserDTOs.UserRegistrationDTO
+import org.example.bidverse_backend.PermissionDeniedException
+import org.example.bidverse_backend.UserNotFoundException
 import org.example.bidverse_backend.extensions.toUserBasicDTO
 import org.example.bidverse_backend.services.UserService
 import org.springframework.http.HttpStatus
@@ -20,7 +22,7 @@ class UserController(private val userService: UserService) {
         return try {
             val user = userService.updateUserContact(userBasic)
             ResponseEntity.ok(user.toUserBasicDTO()) // `200 OK`
-        } catch (e: IllegalArgumentException) {
+        } catch (e: UserNotFoundException) {
             ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message)
         }
     }
@@ -30,7 +32,7 @@ class UserController(private val userService: UserService) {
        return try{
               userService.deleteUser()
               ResponseEntity.noContent().build() // `204 No Content`
-         } catch (e: IllegalArgumentException) {
+         } catch (e: UserNotFoundException) {
               ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message)
        }
    }
@@ -63,13 +65,14 @@ class UserController(private val userService: UserService) {
         return try {
             userService.deleteUserAsAdmin(id)
             ResponseEntity.noContent().build() // 204 No Content
-        } catch (e: IllegalArgumentException) {
+        } catch (e: UserNotFoundException) {
             ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message)
-        } catch (e: SecurityException) {
-            ResponseEntity.status(HttpStatus.FORBIDDEN).body("You do not have permission to delete this user.")
+        } catch (e: PermissionDeniedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.message)
         }
     }
 
+    //Teszteléshez
     @GetMapping("/register")
     fun registerForm(): ResponseEntity<String> {
         return ResponseEntity.ok("Registration page")
@@ -80,7 +83,7 @@ class UserController(private val userService: UserService) {
         return try {
             val user = userService.getUserProfile()
             ResponseEntity.ok(user.toUserBasicDTO()) // `200 OK`
-        } catch (e: IllegalArgumentException) {
+        } catch (e: UserNotFoundException) {
             ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message)
         }
     }
