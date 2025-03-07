@@ -1,16 +1,12 @@
 package org.example.bidverse_backend.controllers
 
 import org.example.bidverse_backend.DTOs.UserDTOs.UserBasicDTO
-import org.example.bidverse_backend.DTOs.UserDTOs.UserCredentialsDTO
-import org.example.bidverse_backend.DTOs.UserDTOs.UserRegistrationDTO
-import org.example.bidverse_backend.PermissionDeniedException
-import org.example.bidverse_backend.UserNotFoundException
+import org.example.bidverse_backend.Exceptions.PermissionDeniedException
+import org.example.bidverse_backend.Exceptions.UserNotFoundException
 import org.example.bidverse_backend.extensions.toUserBasicDTO
 import org.example.bidverse_backend.services.UserService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.web.bind.annotation.*
 
 @RestController

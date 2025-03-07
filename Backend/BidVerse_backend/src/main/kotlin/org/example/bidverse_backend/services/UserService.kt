@@ -1,9 +1,9 @@
 package org.example.bidverse_backend.services
 
-import org.example.bidverse_backend.AuthenticationException
+import org.example.bidverse_backend.Exceptions.AuthenticationException
 import org.example.bidverse_backend.DTOs.UserDTOs.UserBasicDTO
-import org.example.bidverse_backend.PermissionDeniedException
-import org.example.bidverse_backend.UserNotFoundException
+import org.example.bidverse_backend.Exceptions.PermissionDeniedException
+import org.example.bidverse_backend.Exceptions.UserNotFoundException
 import org.example.bidverse_backend.entities.User
 import org.example.bidverse_backend.repositories.UserRepository
 import org.springframework.security.core.context.SecurityContextHolder
