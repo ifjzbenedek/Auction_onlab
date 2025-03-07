@@ -1,6 +1,8 @@
 package org.example.bidverse_backend.controllers
 
+import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionBasicDTO
 import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionCardDTO
+import org.example.bidverse_backend.Exceptions.UserNotFoundException
 import org.example.bidverse_backend.entities.*
 import org.example.bidverse_backend.services.*
 import org.springframework.http.HttpStatus
@@ -22,6 +24,18 @@ class AuctionController(private val auctionService: AuctionService) {
             ResponseEntity.ok(auctions)
         } catch (e: Exception) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
+        }
+    }
+
+    @PostMapping
+    fun createAuction(@RequestBody auctionBasic: AuctionBasicDTO): ResponseEntity<Any> {
+        return try {
+            val auction = auctionService.createAuction(auctionBasic)
+            ResponseEntity.status(HttpStatus.CREATED).body(auction)
+        } catch (e: UserNotFoundException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message)
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating auction.")
         }
     }
 }
