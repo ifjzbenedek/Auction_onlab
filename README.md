@@ -21,3 +21,9 @@ Ezután Swagger Editorban megírtam a kéréseket, viszont legeneráláskor töb
 Így is hasznát tudtam venni mint terv. Először megírtam a DTO-kat, majd az extension function-öket az átalakításhoz az Entityk és a DTo-k között.
 Ezután pedig a UserControllert alakítgattam, ez elég nehézkesen ment eleinte, mert kevés official kidolgozott megoldást találtam, ami komplexebben belemenne a dologba.
 Végül egészen sikerült megértenem és elkészítettem a UserControllert.
+
+4.hét
+Ezen a héten az authentikáció volt az elsődleges feladat, illetve a hétfőn megbeszélt kódtisztítások és javítások integrálása.
+Először is az Entitásoknál javítottam a neveket és a mappeléseket. Bevezettem saját kivételeket, és átírtam, hogy a Servicek és Controllerek ezeket használják.
+Az autentikációnál először sima JWT tokennel próbálkoztam, de átálltam OAuth2 típusúra, amely a google-t használja Autentikációs Szerver gyanánt.
+Még nem működik jól az autentikáció. Az AuctionController és AuctionService-be is belekezdtem. Kivettem a jelszótHash-t az adatbáézisból mert nem lesz rá szükség ha nem JWT token alapú autentikációt használok.
