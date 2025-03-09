@@ -27,6 +27,7 @@ class AuctionController(private val auctionService: AuctionService) {
         }
     }
 
+    /*
     @PostMapping
     fun createAuction(@RequestBody auctionBasic: AuctionBasicDTO): ResponseEntity<Any> {
         return try {
@@ -38,4 +39,6 @@ class AuctionController(private val auctionService: AuctionService) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating auction.")
         }
     }
+    
+     */
 }

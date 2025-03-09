@@ -28,7 +28,7 @@ class AuctionService(
                     (category == null || auction.category.categoryName == category) // Szűrés kategória neve alapján
         }.map { it.toAuctionCardDTO() }
     }
-
+ /*
     fun createAuction(auctionBasic: AuctionBasicDTO, userId: Int): AuctionBasicDTO {
         val user = userRepository.findById(getCurrentUserId())
             .orElseThrow { UserNotFoundException("User not found.") }
@@ -53,5 +53,7 @@ class AuctionService(
 
         return auctionRepository.save(auction).toAuctionBasicDTO()
     }
+    */
+
 }
 

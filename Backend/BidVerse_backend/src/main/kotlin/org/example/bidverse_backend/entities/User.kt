@@ -8,7 +8,7 @@ class User(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "userId", nullable = false)
-    var id: Int = -1,
+    var id: Int? = null,
 
     @OneToMany(mappedBy = "owner", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     var auctions: MutableList<Auction> = mutableListOf(),

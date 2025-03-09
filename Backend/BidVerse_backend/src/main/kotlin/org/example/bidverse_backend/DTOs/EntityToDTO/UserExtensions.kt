@@ -7,7 +7,7 @@ import org.example.bidverse_backend.entities.User
 
 fun User.toUserBasicDTO(): UserBasicDTO {
     return UserBasicDTO(
-        id = this.id,
+        id = this.id!!,
         userName = this.userName,
         emailAddress = this.emailAddress,
         phoneNumber = this.phoneNumber

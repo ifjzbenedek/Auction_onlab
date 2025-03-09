@@ -1,6 +1,7 @@
 package org.example.bidverse_backend.controllers
 
 import org.example.bidverse_backend.DTOs.UserDTOs.UserBasicDTO
+import org.example.bidverse_backend.DTOs.UserDTOs.UserRegistrationDTO
 import org.example.bidverse_backend.Exceptions.PermissionDeniedException
 import org.example.bidverse_backend.Exceptions.UserNotFoundException
 import org.example.bidverse_backend.extensions.toUserBasicDTO
@@ -42,6 +43,7 @@ class UserController(private val userService: UserService) {
             ResponseEntity.badRequest().body(e.message)
         }
     }
+*/
 
     @PostMapping("/register")
     fun register(@RequestBody userRegistrationDTO: UserRegistrationDTO): ResponseEntity<Any> {
@@ -52,10 +54,10 @@ class UserController(private val userService: UserService) {
             ResponseEntity.badRequest().body(e.message)
         } catch (e: Exception) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Hiba történt a regisztráció során.")
+                .body("Hiba történt a regisztráció során!!!")
         }
     }
-*/
+
     @DeleteMapping("/{id}")
     fun deleteUserByAdmin(@PathVariable id: Int): ResponseEntity<Any> {
         return try {

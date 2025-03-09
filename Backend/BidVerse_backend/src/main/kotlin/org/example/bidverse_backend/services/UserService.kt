@@ -2,6 +2,7 @@ package org.example.bidverse_backend.services
 
 import org.example.bidverse_backend.Exceptions.AuthenticationException
 import org.example.bidverse_backend.DTOs.UserDTOs.UserBasicDTO
+import org.example.bidverse_backend.DTOs.UserDTOs.UserRegistrationDTO
 import org.example.bidverse_backend.Exceptions.PermissionDeniedException
 import org.example.bidverse_backend.Exceptions.UserNotFoundException
 import org.example.bidverse_backend.entities.User
@@ -51,12 +52,13 @@ class UserService(private val userRepository: UserRepository) {
         return userRepository.findById(getCurrentUserId())
             .orElseThrow { UserNotFoundException("User not found.") }
     }
-/*
+
     fun register(userRegistrationDTO: UserRegistrationDTO): User {
         // Ellenőrizzük, hogy a jelszavak megegyeznek-e
+        /*
         require(userRegistrationDTO.password == userRegistrationDTO.rePassword) {
             throw IllegalArgumentException("Passwords don't match.")
-        }
+        }*/
 
         // Ellenőrizzük, hogy az email vagy a felhasználónév már foglalt-e
         require(!userRepository.existsByEmailAddress(userRegistrationDTO.emailAddress)){
@@ -77,7 +79,7 @@ class UserService(private val userRepository: UserRepository) {
 
         return userRepository.save(user)
     }
-
+/*
     fun login(userCredentials: UserCredentialsDTO): User {
 
         // Előkeressük a megfelelő felhasználót
@@ -92,7 +94,7 @@ class UserService(private val userRepository: UserRepository) {
         if (authentication != null && authentication.isAuthenticated) {
             val principal = authentication.principal
             if (principal is User) { // Tételezzük fel, hogy a `User` entitás implementálja a `UserDetails`-t
-                return principal.id
+                return principal.id!!
             }
         }
         throw AuthenticationException("User not authenticated.")
