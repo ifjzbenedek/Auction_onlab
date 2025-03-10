@@ -70,12 +70,6 @@ class UserController(private val userService: UserService) {
         }
     }
 
-    //Teszteléshez
-    @GetMapping("/register")
-    fun registerForm(): ResponseEntity<String> {
-        return ResponseEntity.ok("Registration page")
-    }
-
     @GetMapping("/me")
     fun getUserProfile(): ResponseEntity<Any> {
         return try {
