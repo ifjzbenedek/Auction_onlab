@@ -18,9 +18,8 @@ class SecurityConfig(private val customOAuth2UserService: CustomOAuth2UserServic
             .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
                 auth
-                    //.requestMatchers("login/oauth2/code/google").permitAll() // Engedélyezzük az OAuth2 útvonalait
-                    .requestMatchers("users/register", "/users/login", "/oauth2/**").permitAll()
-                    .anyRequest().authenticated() // Minden más endpointhoz hitelesítés kell
+                    .requestMatchers("/users/register", "/users/login", "/oauth2/**").permitAll()
+                    .anyRequest().authenticated()
             }
             .oauth2Login { oauth2 ->
                 oauth2

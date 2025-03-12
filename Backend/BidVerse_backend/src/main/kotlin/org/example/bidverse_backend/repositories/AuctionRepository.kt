@@ -13,8 +13,6 @@ interface AuctionRepository : JpaRepository<Auction, Int>{
 
     fun findByOwner(user: User): List<Auction>
 
-    fun findByStatusAndExpiredDate(status: String, date: LocalDateTime): List<Auction>
-
     /*
     @Query(value = """
         SELECT a.*

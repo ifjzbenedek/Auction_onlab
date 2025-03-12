@@ -5,6 +5,7 @@ import org.example.bidverse_backend.DTOs.UserDTOs.UserBasicDTO
 import org.example.bidverse_backend.DTOs.UserDTOs.UserRegistrationDTO
 import org.example.bidverse_backend.Exceptions.PermissionDeniedException
 import org.example.bidverse_backend.Exceptions.UserNotFoundException
+import org.example.bidverse_backend.Security.SecurityUtils.getCurrentUserId
 import org.example.bidverse_backend.entities.User
 import org.example.bidverse_backend.repositories.UserRepository
 import org.springframework.security.core.context.SecurityContextHolder
@@ -48,8 +49,8 @@ class UserService(private val userRepository: UserRepository) {
     }
 
     fun getUserProfile(): User {
-        // Megkeressük a bejelentkezett felhasználót
-        return userRepository.findById(getCurrentUserId())
+        val userId = getCurrentUserId()
+        return userRepository.findById(userId)
             .orElseThrow { UserNotFoundException("User not found.") }
     }
 
@@ -79,24 +80,5 @@ class UserService(private val userRepository: UserRepository) {
 
         return userRepository.save(user)
     }
-/*
-    fun login(userCredentials: UserCredentialsDTO): User {
 
-        // Előkeressük a megfelelő felhasználót
-        val user = userRepository.findByUserName(userCredentials.userName)
-            ?: throw IllegalArgumentException("User not found.")
-
-        return user
-    }
-*/
-    fun getCurrentUserId(): Int {
-        val authentication = SecurityContextHolder.getContext().authentication
-        if (authentication != null && authentication.isAuthenticated) {
-            val principal = authentication.principal
-            if (principal is User) { // Tételezzük fel, hogy a `User` entitás implementálja a `UserDetails`-t
-                return principal.id!!
-            }
-        }
-        throw AuthenticationException("User not authenticated.")
-    }
 }

@@ -10,7 +10,7 @@ class Bid(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "bidId", nullable = false)
-    var id: Int,
+    var id: Int? = 0,
 
     @ManyToOne
     @JoinColumn(name= "auctionId", nullable = false)

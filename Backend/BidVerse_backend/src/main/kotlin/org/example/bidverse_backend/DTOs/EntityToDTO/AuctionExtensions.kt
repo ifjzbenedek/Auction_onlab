@@ -6,7 +6,7 @@ import org.example.bidverse_backend.entities.Auction
 
 fun Auction.toAuctionCardDTO(): AuctionCardDTO {
     return AuctionCardDTO(
-        id = this.id,
+        id = this.id!!,
         itemName = this.itemName,
         createDate = this.createDate,
         expiredDate = this.expiredDate,
@@ -16,9 +16,9 @@ fun Auction.toAuctionCardDTO(): AuctionCardDTO {
 
 fun Auction.toAuctionBasicDTO(): AuctionBasicDTO {
     return AuctionBasicDTO(
-        id = this.id,
-        userId = this.owner.id!!,
-        categoryId = this.category.id,
+        id = this.id!!,
+        user = this.owner,
+        category = this.category,
         itemName = this.itemName,
         minimumPrice = this.minimumPrice,
         status = this.status,
