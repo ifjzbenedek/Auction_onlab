@@ -54,7 +54,7 @@ class UserController(private val userService: UserService) {
             ResponseEntity.badRequest().body(e.message)
         } catch (e: Exception) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Hiba történt a regisztráció során!!!")
+                .body("Error during registration!")
         }
     }
 
