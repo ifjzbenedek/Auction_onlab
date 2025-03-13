@@ -24,7 +24,7 @@ const App: React.FC = () => {
           </Button>
         </Toolbar>
       </AppBar>
-      <Routes>v 
+      <Routes>
         <Route path="/users" element={<Home />} />
         <Route path="/users/me" element={<Profile />} />
         <Route path="/users/login" element={<Login />} />
