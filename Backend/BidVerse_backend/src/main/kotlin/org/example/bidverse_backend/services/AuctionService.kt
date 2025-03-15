@@ -5,7 +5,7 @@ import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionCardDTO
 import org.example.bidverse_backend.DTOs.EntityToDTO.toAuctionBasicDTO
 import org.example.bidverse_backend.DTOs.EntityToDTO.toAuctionCardDTO
 import org.example.bidverse_backend.Exceptions.*
-import org.example.bidverse_backend.Security.SecurityUtils.getCurrentUserId
+import org.example.bidverse_backend.Security.SecurityUtils
 import org.example.bidverse_backend.entities.Auction
 import org.example.bidverse_backend.entities.Bid
 import org.example.bidverse_backend.repositories.*
@@ -19,7 +19,9 @@ class AuctionService(
     private val userRepository: UserRepository,
     private val bidRepository: BidRepository,
     private val categoryRepository: CategoryRepository,
-    private val watchRepository: WatchRepository
+    private val watchRepository: WatchRepository,
+    private val securityUtils: SecurityUtils
+
 ) {
     fun getAllAuctions(status: String?, category: String?): List<AuctionCardDTO> {
         return auctionRepository.findAll().filter { auction ->
@@ -29,7 +31,7 @@ class AuctionService(
     }
 
     fun createAuction(auctionBasic: AuctionBasicDTO): AuctionBasicDTO {
-        val user = userRepository.findById(getCurrentUserId())
+        val user = userRepository.findById(securityUtils.getCurrentUserId())
             .orElseThrow { UserNotFoundException("User not found.") }
 
         val categoryId = auctionBasic.category.id ?: throw IllegalArgumentException("Category ID must not be null.")
@@ -69,7 +71,7 @@ class AuctionService(
         val auction = auctionRepository.findById(auctionId)
             .orElseThrow{ AuctionNotFoundException("Auction not found.") }
 
-        if(auction.owner.id != getCurrentUserId())
+        if(auction.owner.id != securityUtils.getCurrentUserId())
             throw PermissionDeniedException("Permission denied.")
 
         auction.expiredDate = auctionBasic.expiredDate
@@ -83,7 +85,7 @@ class AuctionService(
         val auction = auctionRepository.findById(auctionId)
             .orElseThrow { AuctionNotFoundException("Auction not found.") }
 
-        if (auction.owner.id != getCurrentUserId()) {
+        if (auction.owner.id != securityUtils.getCurrentUserId()) {
             throw PermissionDeniedException("You do not have permission to delete this auction.")
         }
 
@@ -91,14 +93,14 @@ class AuctionService(
     }
 
     fun getCreatedAuctions(): List<AuctionBasicDTO> {
-        val user = userRepository.findById(getCurrentUserId())
+        val user = userRepository.findById(securityUtils.getCurrentUserId())
             .orElseThrow { UserNotFoundException("User not found.") }
 
         return auctionRepository.findByOwner(user).map { it.toAuctionBasicDTO() }
     }
 
     fun getWatchedAuctions(): List<AuctionCardDTO> {
-        val user = userRepository.findById(getCurrentUserId())
+        val user = userRepository.findById(securityUtils.getCurrentUserId())
             .orElseThrow { UserNotFoundException("User not found.") }
 
         val watchedAuctions = watchRepository.findByUserId(user.id!!) // Nem lehet null, mert autogenerált az id a Userhez, és már megtaláltuk a usert
@@ -109,7 +111,7 @@ class AuctionService(
 
     fun getBiddedAuctions(): List<AuctionBasicDTO>
     {
-        val user = userRepository.findById(getCurrentUserId())
+        val user = userRepository.findById(securityUtils.getCurrentUserId())
             .orElseThrow { UserNotFoundException("User not found.") }
 
         val biddedAuctions = bidRepository.findByBidderId(user.id!!)
@@ -134,7 +136,7 @@ class AuctionService(
             throw InvalidAuctionDataException("Auction is not active.")
         }
 
-        val currentUserId = getCurrentUserId()
+        val currentUserId = securityUtils.getCurrentUserId()
         if (auction.owner.id == currentUserId) {
             throw InvalidBidException("You cannot bid on your own auction.")
         }

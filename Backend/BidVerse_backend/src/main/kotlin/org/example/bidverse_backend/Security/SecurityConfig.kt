@@ -23,7 +23,7 @@ class SecurityConfig(private val customOAuth2UserService: CustomOAuth2UserServic
             }
             .oauth2Login { oauth2 ->
                 oauth2
-                    .defaultSuccessUrl("http://localhost:5173", true) // Sikeres bejelentkezés után ide irányít
+                    .defaultSuccessUrl("http://localhost:5173/", true) // Sikeres bejelentkezés után ide irányít
             }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) }
 
