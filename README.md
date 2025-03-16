@@ -27,3 +27,8 @@ Ezen a héten az authentikáció volt az elsődleges feladat, illetve a hétfőn
 Először is az Entitásoknál javítottam a neveket és a mappeléseket. Bevezettem saját kivételeket, és átírtam, hogy a Servicek és Controllerek ezeket használják.
 Az autentikációnál először sima JWT tokennel próbálkoztam, de átálltam OAuth2 típusúra, amely a google-t használja Autentikációs Szerver gyanánt.
 Még nem működik jól az autentikáció. Az AuctionController és AuctionService-be is belekezdtem. Kivettem a jelszótHash-t az adatbáézisból mert nem lesz rá szükség ha nem JWT token alapú autentikációt használok.
+
+5.hét
+Erre a hétre az OAuth-os autentikáció kijavítása és a maradék controller és service osztályok megírása volt a cél.
+Az autentikációnál ZeroSSL segítségével kreáltam egy ssl certificate-et, viszont ezt követően is folyton azt kaptam az email cím megadása után, hogy Sikertelen bejelentkezés. Próbálgatás után rájöttem, hogy a vscode-ban indított böngésző nem támogatja az oauth-os bejelentkezést, például a gmail fiókomba sem tudtam bejelentkezni. Asztalból indított böngészőben már működött a dolog, miután javítottam a backendben a konverziót a saját Entity-m és a oauth által használt user közt.
+Eközben elkészítettem a maradék Service és Controller osztályokat a backendben.
