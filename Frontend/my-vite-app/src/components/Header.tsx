@@ -605,5 +605,5 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onNewAuction 
   )
 }
 
-export default Header
+export default Header;
 
