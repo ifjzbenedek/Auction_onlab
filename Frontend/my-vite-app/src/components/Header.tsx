@@ -73,19 +73,19 @@ const ProfileMenuItem = styled(ListItem)(() => ({
   },
 }))
 
-const CategorySearchInput = styled(InputBase)({
+const CategorySearchInput = styled(InputBase)(() => ({
   padding: "4px 8px",
   width: "100%",
   fontSize: "0.875rem",
-})
+}))
 
 interface HeaderProps {
-  onFilterChange?: (filters: string[]) => void
-  onSearch?: (term: string, isImageSearch: boolean) => void
-  onNewAuction?: () => void
+  onFilterChange: (newFilters: string[]) => void;
+  onSearch: (term: string, imageSearch: boolean) => void;
+  onNewAuction?: () => void; 
 }
 
-const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onNewAuction }) => {
+const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch }) => {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState("")
   const [isImageSearch, setIsImageSearch] = useState(false)
@@ -175,8 +175,15 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onNewAuction 
     } else if (action === "logout") {
       // Handle logout
       console.log("Logging out...")
+      // Egyszerűsített logout - valós alkalmazásban API hívás lenne
+      navigate("/users/login")
+    } else if (action === "myAuctions") {
+      navigate("/my-auctions")
+    } else if (action === "myBids") {
+      navigate("/my-auctions?tab=bids")
+    } else if (action === "favorites") {
+      navigate("/my-auctions?tab=followed")
     }
-    // Handle other actions...
   }
 
   const handleCategoryClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -188,6 +195,10 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onNewAuction 
     setCategorySearchTerm("")
   }
 
+  const handleNewAuctionClick = () => {
+    console.log("Navigating to upload auction")
+    navigate("/upload-auction")
+  }
 
   return (
     <Box
@@ -218,7 +229,10 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onNewAuction 
             gap: 1,
             cursor: "pointer",
           }}
-          onClick={() => navigate("/")}
+          onClick={() => {
+            console.log("Navigating to home")
+            navigate("/")
+          }}
         >
           <Box
             sx={{
@@ -499,7 +513,7 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onNewAuction 
             alignSelf: { xs: "flex-start", md: "center" },
           }}
           endIcon={<Plus size={16} />}
-          onClick={onNewAuction}
+          onClick={handleNewAuctionClick}
         >
           New auction
         </Button>

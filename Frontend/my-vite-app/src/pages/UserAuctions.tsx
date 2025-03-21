@@ -86,6 +86,7 @@ const UserAuctions: React.FC = () => {
   }
 
   const handleCreateAuction = () => {
+    console.log("Navigating to /upload-auction");
     navigate("/upload-auction")
   }
 
