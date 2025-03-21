@@ -3,12 +3,13 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { X } from "lucide-react"
-import { Box, Typography, Grid, Paper, type Theme } from "@mui/material"
+import { Box, Typography, Grid, Paper } from "@mui/material"
 import { styled } from "@mui/material/styles"
+import { useNavigate } from "react-router-dom" // Importáljuk a useNavigate hookot
 import Header from "../components/Header"
 
 // Custom styled components with proper theme typing
-const AuctionCard = styled(Paper)(({ theme }: { theme: Theme }) => ({
+const AuctionCard = styled(Paper)({
   display: "flex",
   flexDirection: "column",
   borderRadius: 0,
@@ -20,7 +21,7 @@ const AuctionCard = styled(Paper)(({ theme }: { theme: Theme }) => ({
     transform: "translateY(-5px)",
     boxShadow: "0 10px 20px rgba(0,0,0,0.1)",
   },
-}))
+});
 
 interface Auction {
   id: number
@@ -35,6 +36,7 @@ const BidVerseLanding: React.FC = () => {
   const [filters, setFilters] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isImageSearch, setIsImageSearch] = useState(false)
+  const navigate = useNavigate() // Inicializáljuk a navigate függvényt
 
   // Mock fetch auctions - in a real app, this would call your backend API
   useEffect(() => {
@@ -105,7 +107,7 @@ const BidVerseLanding: React.FC = () => {
         <Grid container spacing={1}>
           {filteredAuctions.map((auction) => (
             <Grid item xs={12} sm={6} md={4} key={auction.id}>
-              <AuctionCard>
+              <AuctionCard onClick={() => navigate(`/auction/${auction.id}`)}> {/* Navigáció hozzáadva */}
                 <Box sx={{ position: "relative" }}>
                   <Box
                     sx={{
@@ -158,4 +160,3 @@ const BidVerseLanding: React.FC = () => {
 }
 
 export default BidVerseLanding
-
