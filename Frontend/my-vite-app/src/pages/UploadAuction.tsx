@@ -16,8 +16,12 @@ import {
   StepLabel,
   Alert,
   CircularProgress,
+  useTheme,
+  alpha,
+  Chip,
 } from "@mui/material"
-import { X, Upload, Plus, ArrowRight, Sparkles } from "lucide-react"
+import { styled } from "@mui/material/styles"
+import { Upload, Plus, ArrowRight, Sparkles, X, ImageIcon, FileText, Camera, Info } from "lucide-react"
 
 interface UploadedImage {
   id: string
@@ -25,8 +29,111 @@ interface UploadedImage {
   preview: string
 }
 
+// Styled components
+const PageContainer = styled(Box)(({ theme }) => ({
+  backgroundColor: theme.palette.background.default,
+  minHeight: "100vh",
+  paddingBottom: theme.spacing(5),
+}))
+
+const StepContainer = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(4),
+  borderRadius: theme.shape.borderRadius * 2,
+  boxShadow: "0 8px 30px rgba(0, 0, 0, 0.06)",
+  marginBottom: theme.spacing(4),
+  position: "relative",
+  overflow: "hidden",
+}))
+
+const StepTitle = styled(Typography)(({ theme }) => ({
+  marginBottom: theme.spacing(3),
+  position: "relative",
+  display: "inline-block",
+  fontWeight: "bold",
+  "&:after": {
+    content: '""',
+    position: "absolute",
+    bottom: -8,
+    left: 0,
+    width: 40,
+    height: 4,
+    backgroundColor: theme.palette.primary.main,
+    borderRadius: 2,
+  },
+}))
+
+const UploadBox = styled(Box)(({ theme }) => ({
+  border: `2px dashed ${alpha(theme.palette.primary.main, 0.3)}`,
+  borderRadius: theme.shape.borderRadius * 2,
+  padding: theme.spacing(3),
+  textAlign: "center",
+  backgroundColor: alpha(theme.palette.primary.main, 0.03),
+  transition: "all 0.2s ease",
+  cursor: "pointer",
+  "&:hover": {
+    backgroundColor: alpha(theme.palette.primary.main, 0.05),
+    borderColor: alpha(theme.palette.primary.main, 0.5),
+  },
+}))
+
+const ImagePreviewContainer = styled(Box)(({ theme }) => ({
+  border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+  borderRadius: theme.shape.borderRadius,
+  padding: theme.spacing(2),
+}))
+
+const ImagePreview = styled(Box)(({ theme }) => ({
+  position: "relative",
+  width: "100%",
+  height: 100,
+  borderRadius: theme.shape.borderRadius,
+  overflow: "hidden",
+}))
+
+const AddImageBox = styled(Box)(({ theme }) => ({
+  width: "100%",
+  height: 100,
+  border: `1px dashed ${alpha(theme.palette.primary.main, 0.4)}`,
+  borderRadius: theme.shape.borderRadius,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  backgroundColor: alpha(theme.palette.primary.main, 0.03),
+  transition: "all 0.2s ease",
+  "&:hover": {
+    backgroundColor: alpha(theme.palette.primary.main, 0.05),
+    borderColor: alpha(theme.palette.primary.main, 0.6),
+  },
+}))
+
+const ActionButton = styled(Button)(({ theme }) => ({
+  borderRadius: 30,
+  padding: theme.spacing(1.2, 3),
+  textTransform: "none",
+  fontWeight: 600,
+  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+  transition: "transform 0.2s ease",
+  "&:hover": {
+    transform: "translateY(-2px)",
+    boxShadow: "0 6px 16px rgba(0, 0, 0, 0.15)",
+  },
+}))
+
+const StepIcon = styled(Box)(({ theme }) => ({
+  position: "absolute",
+  top: -15,
+  right: -15,
+  width: 80,
+  height: 80,
+  opacity: 0.07,
+  zIndex: 0,
+  color: theme.palette.primary.main,
+}))
+
 const UploadAuction: React.FC = () => {
   const navigate = useNavigate()
+  const theme = useTheme()
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
   const [description, setDescription] = useState("")
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false)
@@ -97,15 +204,39 @@ const UploadAuction: React.FC = () => {
   }
 
   return (
-    <Box sx={{ bgcolor: "#333", minHeight: "100vh", pb: 5 }}>
-      <Box sx={{ bgcolor: "#000", color: "white", p: 2, mb: 3 }}>
-        <Typography variant="h5" fontWeight="bold">
-          Creating an auction - Step 1
-        </Typography>
-      </Box>
+    <PageContainer>
+      <Box sx={{ maxWidth: 1000, mx: "auto", px: { xs: 2, md: 4 }, py: 4 }}>
+        <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Typography variant="h4" fontWeight="bold" color="text.primary">
+            Create New Auction
+          </Typography>
+          <Chip
+            label="Step 1 of 2"
+            color="primary"
+            sx={{
+              borderRadius: 5,
+              fontWeight: "medium",
+              px: 1,
+              backgroundColor: alpha(theme.palette.primary.main, 0.1),
+              color: theme.palette.primary.main,
+            }}
+          />
+        </Box>
 
-      <Box sx={{ maxWidth: 800, mx: "auto", px: 2 }}>
-        <Stepper activeStep={0} sx={{ mb: 4, display: { xs: "none", md: "flex" } }}>
+        <Stepper
+          activeStep={0}
+          sx={{
+            mb: 4,
+            display: { xs: "none", md: "flex" },
+            "& .MuiStepLabel-label": {
+              fontWeight: "medium",
+            },
+            "& .MuiStepLabel-active": {
+              fontWeight: "bold",
+              color: theme.palette.primary.main,
+            },
+          }}
+        >
           <Step>
             <StepLabel>Upload & Describe</StepLabel>
           </Step>
@@ -114,32 +245,33 @@ const UploadAuction: React.FC = () => {
           </Step>
         </Stepper>
 
-        {/* Step 1: Upload photos and description */}
-        <Typography variant="h6" sx={{ color: "white", borderBottom: "1px solid #555", pb: 1, mb: 3 }}>
-          Upload photos
-        </Typography>
+        {/* Step 1: Upload photos */}
+        <StepContainer>
+          <StepIcon>
+            <Camera size={80} />
+          </StepIcon>
 
-        <Paper sx={{ p: 3, mb: 4, bgcolor: "#444", borderRadius: 3 }}>
-          <Box
-            sx={{
-              border: "2px dashed #666",
-              borderRadius: 2,
-              p: 3,
-              textAlign: "center",
-              mb: 2,
-            }}
-          >
+          <StepTitle variant="h5">Upload Photos</StepTitle>
+
+          <UploadBox onClick={() => fileInputRef.current?.click()}>
             <Box
               sx={{
                 width: "100%",
                 height: 200,
                 display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
                 mb: 2,
               }}
             >
-              <X size={80} color="#999" />
+              <ImageIcon size={60} color={alpha(theme.palette.primary.main, 0.7)} />
+              <Typography variant="h6" color="primary" sx={{ mt: 2, fontWeight: "medium" }}>
+                Drag & Drop your images here
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                or click to browse your files
+              </Typography>
             </Box>
 
             <input
@@ -151,133 +283,119 @@ const UploadAuction: React.FC = () => {
               onChange={handleFileSelect}
             />
 
-            <Button
+            <ActionButton
               variant="outlined"
-              onClick={() => fileInputRef.current?.click()}
-              sx={{
-                color: "white",
-                borderColor: "white",
-                mb: 2,
-              }}
-            >
-              Choose file
-            </Button>
-
-            <Button
-              variant="contained"
-              fullWidth
+              color="primary"
               startIcon={<Upload size={18} />}
-              onClick={() => fileInputRef.current?.click()}
-              sx={{
-                bgcolor: "#000",
-                color: "white",
-                "&:hover": {
-                  bgcolor: "#222",
-                },
+              onClick={(e) => {
+                e.stopPropagation()
+                fileInputRef.current?.click()
               }}
             >
-              Upload
-            </Button>
-          </Box>
+              Select Files
+            </ActionButton>
+          </UploadBox>
 
-          <Typography variant="subtitle1" sx={{ color: "white", mb: 2, mt: 3 }}>
-            Uploaded photos
-          </Typography>
-
-          <Box sx={{ border: "1px dashed #666", p: 2, borderRadius: 1 }}>
-            <Typography variant="body2" sx={{ color: "#ccc", mb: 2, fontSize: "0.8rem" }}>
-              You need to upload AT LEAST 5, and maximum 10 photos of your product. Please try to take the pictures from
-              different angles, so that the product is showcased.
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="h6" fontWeight="medium" sx={{ mb: 2 }}>
+              Uploaded Photos ({uploadedImages.length})
             </Typography>
 
-            <Grid container spacing={2}>
-              {uploadedImages.map((img) => (
-                <Grid item xs={4} key={img.id}>
-                  <Box sx={{ position: "relative" }}>
-                    <Box
-                      component="img"
-                      src={img.preview}
-                      alt="Uploaded preview"
-                      sx={{
-                        width: "100%",
-                        height: 100,
-                        objectFit: "cover",
-                        borderRadius: 1,
-                      }}
-                    />
-                    <IconButton
-                      size="small"
-                      onClick={() => handleRemoveImage(img.id)}
-                      sx={{
-                        position: "absolute",
-                        top: -8,
-                        right: -8,
-                        bgcolor: "rgba(0,0,0,0.7)",
-                        color: "white",
-                        "&:hover": {
-                          bgcolor: "rgba(0,0,0,0.9)",
-                        },
-                      }}
-                    >
-                      <X size={14} />
-                    </IconButton>
-                  </Box>
-                </Grid>
-              ))}
+            <ImagePreviewContainer>
+              <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+                <Info size={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
+                You need to upload at least 1 photo of your item. High-quality images from multiple angles will attract
+                more bidders.
+              </Typography>
 
-              {uploadedImages.length < 10 && (
-                <Grid item xs={4}>
-                  <Box
-                    sx={{
-                      width: "100%",
-                      height: 100,
-                      border: "1px dashed #666",
-                      borderRadius: 1,
-                      display: "flex",
+              <Grid container spacing={2}>
+                {uploadedImages.map((img) => (
+                  <Grid item xs={6} sm={4} md={3} key={img.id}>
+                    <ImagePreview>
+                      <Box
+                        component="img"
+                        src={img.preview || "/placeholder.svg"}
+                        alt="Uploaded preview"
+                        sx={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                      <IconButton
+                        size="small"
+                        onClick={() => handleRemoveImage(img.id)}
+                        sx={{
+                          position: "absolute",
+                          top: 4,
+                          right: 4,
+                          bgcolor: "rgba(255,255,255,0.9)",
+                          color: theme.palette.error.main,
+                          "&:hover": {
+                            bgcolor: "rgba(255,255,255,1)",
+                          },
+                          width: 24,
+                          height: 24,
+                        }}
+                      >
+                        <X size={14} />
+                      </IconButton>
+                    </ImagePreview>
+                  </Grid>
+                ))}
+
+                {uploadedImages.length < 10 && (
+                  <Grid item xs={6} sm={4} md={3}>
+                    <AddImageBox onClick={() => fileInputRef.current?.click()}>
+                      <Plus size={24} color={alpha(theme.palette.primary.main, 0.7)} />
+                    </AddImageBox>
+                  </Grid>
+                )}
+              </Grid>
+
+              {uploadedImages.length < 1 && (
+                <Alert
+                  severity="warning"
+                  sx={{
+                    mt: 2,
+                    borderRadius: 2,
+                    "& .MuiAlert-icon": {
                       alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                      "&:hover": {
-                        bgcolor: "rgba(255,255,255,0.05)",
-                      },
-                    }}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Plus size={24} color="#999" />
-                  </Box>
-                </Grid>
+                    },
+                  }}
+                >
+                  Please upload at least 1 photo to continue
+                </Alert>
               )}
-            </Grid>
-
-            {uploadedImages.length < 1 && (
-              <Alert severity="warning" sx={{ mt: 2 }}>
-                Please upload at least 1 photo to continue
-              </Alert>
-            )}
+            </ImagePreviewContainer>
           </Box>
-        </Paper>
+        </StepContainer>
 
-        <Typography variant="h6" sx={{ color: "white", borderBottom: "1px solid #555", pb: 1, mb: 3 }}>
-          Description
-        </Typography>
+        {/* Step 2: Description */}
+        <StepContainer>
+          <StepIcon>
+            <FileText size={80} />
+          </StepIcon>
 
-        <Paper sx={{ p: 3, mb: 4, bgcolor: "#444", borderRadius: 3 }}>
+          <StepTitle variant="h5">Item Description</StepTitle>
+
           <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-            <Button
+            <ActionButton
               variant="contained"
-              startIcon={<Sparkles size={18} />}
+              color="primary"
+              startIcon={
+                isGeneratingDescription ? <CircularProgress size={18} color="inherit" /> : <Sparkles size={18} />
+              }
               onClick={handleAutogenerateDescription}
               disabled={isGeneratingDescription || uploadedImages.length === 0}
-              sx={{
-                bgcolor: "#000",
-                color: "white",
-                "&:hover": {
-                  bgcolor: "#222",
-                },
-              }}
+              sx={{ mr: 2 }}
             >
-              {isGeneratingDescription ? <CircularProgress size={20} sx={{ color: "white", mr: 1 }} /> : "Autogenerate"}
-            </Button>
+              {isGeneratingDescription ? "Generating..." : "Auto-Generate Description"}
+            </ActionButton>
+
+            <Typography variant="body2" color="text.secondary">
+              Let AI create a description based on your photos
+            </Typography>
           </Box>
 
           <TextField
@@ -286,52 +404,45 @@ const UploadAuction: React.FC = () => {
             fullWidth
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe your item in detail..."
+            placeholder="Describe your item in detail. Include condition, features, history, and any other relevant information that would interest potential buyers."
             sx={{
-              bgcolor: "#222",
-              borderRadius: 1,
               "& .MuiOutlinedInput-root": {
-                color: "white",
-              },
-              "& .MuiInputBase-input::placeholder": {
-                color: "#999",
-                opacity: 1,
+                borderRadius: 2,
               },
             }}
           />
 
           {description.trim().length === 0 && (
-            <Alert severity="warning" sx={{ mt: 2 }}>
-              Please provide a description to continue
+            <Alert
+              severity="info"
+              sx={{
+                mt: 2,
+                borderRadius: 2,
+                "& .MuiAlert-icon": {
+                  alignItems: "center",
+                },
+              }}
+            >
+              A detailed description helps buyers understand what you're selling and increases your chances of a
+              successful auction
             </Alert>
           )}
-        </Paper>
+        </StepContainer>
 
         <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-          <Button
+          <ActionButton
             variant="contained"
+            color="primary"
             endIcon={<ArrowRight size={18} />}
             onClick={handleContinue}
             disabled={uploadedImages.length < 1 || description.trim().length === 0}
-            sx={{
-              bgcolor: "white",
-              color: "black",
-              borderRadius: 20,
-              px: 3,
-              "&:hover": {
-                bgcolor: "#eee",
-              },
-              "&.Mui-disabled": {
-                bgcolor: "#555",
-                color: "#999",
-              },
-            }}
+            size="large"
           >
-            Continue
-          </Button>
+            Continue to Details
+          </ActionButton>
         </Box>
       </Box>
-    </Box>
+    </PageContainer>
   )
 }
 

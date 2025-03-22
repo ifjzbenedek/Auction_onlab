@@ -3,12 +3,98 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Box, Typography, Button, Paper, Stepper, Step, StepLabel, Alert } from "@mui/material"
-import { ArrowLeft } from "lucide-react"
+import {
+  Box,
+  Typography,
+  Button,
+  Paper,
+  Stepper,
+  Step,
+  StepLabel,
+  Alert,
+  Grid,
+  useTheme,
+  alpha,
+  Chip,
+  Divider,
+} from "@mui/material"
+import { styled } from "@mui/material/styles"
+import { ArrowLeft, Check, Clock, Tag, Settings, UploadIcon, AlertCircle } from "lucide-react"
 import AuctionDetailsForm from "../components/AuctionDetailsForm"
+
+// Styled components
+const PageContainer = styled(Box)(({ theme }) => ({
+  backgroundColor: theme.palette.background.default,
+  minHeight: "100vh",
+  paddingBottom: theme.spacing(5),
+}))
+
+const StepContainer = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(4),
+  borderRadius: theme.shape.borderRadius * 2,
+  boxShadow: "0 8px 30px rgba(0, 0, 0, 0.06)",
+  marginBottom: theme.spacing(4),
+  position: "relative",
+  overflow: "hidden",
+}))
+
+const StepTitle = styled(Typography)(({ theme }) => ({
+  marginBottom: theme.spacing(3),
+  position: "relative",
+  display: "inline-block",
+  fontWeight: "bold",
+  "&:after": {
+    content: '""',
+    position: "absolute",
+    bottom: -8,
+    left: 0,
+    width: 40,
+    height: 4,
+    backgroundColor: theme.palette.primary.main,
+    borderRadius: 2,
+  },
+}))
+
+const ActionButton = styled(Button)(({ theme }) => ({
+  borderRadius: 30,
+  padding: theme.spacing(1.2, 3),
+  textTransform: "none",
+  fontWeight: 600,
+  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+  transition: "transform 0.2s ease",
+  "&:hover": {
+    transform: "translateY(-2px)",
+    boxShadow: "0 6px 16px rgba(0, 0, 0, 0.15)",
+  },
+}))
+
+const AuctionTypeCard = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  borderRadius: theme.shape.borderRadius * 2,
+  cursor: "pointer",
+  transition: "all 0.2s ease",
+  height: "100%",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  textAlign: "center",
+}))
+
+const StepIcon = styled(Box)(({ theme }) => ({
+  position: "absolute",
+  top: -15,
+  right: -15,
+  width: 80,
+  height: 80,
+  opacity: 0.07,
+  zIndex: 0,
+  color: theme.palette.primary.main,
+}))
 
 const SetDetailsAuction: React.FC = () => {
   const navigate = useNavigate()
+  const theme = useTheme()
   const [auctionType, setAuctionType] = useState<"fixed" | "extended" | null>(null)
   const [formValid, setFormValid] = useState(false)
   const [detailsData, setDetailsData] = useState({
@@ -34,12 +120,19 @@ const SetDetailsAuction: React.FC = () => {
     setAuctionType(type)
   }
 
-  const handleDetailsChange = (data: { name: string; status: string; condition: number; category: string }) => {
+  const handleDetailsChange = (data: DetailsData) => {
     setDetailsData(data)
     validateForm(data)
   }
 
-  const validateForm = (data: { name: string; status: string; condition: number; category: string }) => {
+  interface DetailsData {
+    name: string;
+    status: string;
+    condition: number;
+    category: string;
+  }
+
+  const validateForm = (data: DetailsData) => {
     const isValid =
       data.name.trim().length > 0 &&
       data.status.trim().length > 0 &&
@@ -85,15 +178,39 @@ const SetDetailsAuction: React.FC = () => {
   }
 
   return (
-    <Box sx={{ bgcolor: "#333", minHeight: "100vh", pb: 5 }}>
-      <Box sx={{ bgcolor: "#000", color: "white", p: 2, mb: 3 }}>
-        <Typography variant="h5" fontWeight="bold">
-          Creating an auction - Step 2
-        </Typography>
-      </Box>
+    <PageContainer>
+      <Box sx={{ maxWidth: 1000, mx: "auto", px: { xs: 2, md: 4 }, py: 4 }}>
+        <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Typography variant="h4" fontWeight="bold" color="text.primary">
+            Create New Auction
+          </Typography>
+          <Chip
+            label="Step 2 of 2"
+            color="primary"
+            sx={{
+              borderRadius: 5,
+              fontWeight: "medium",
+              px: 1,
+              backgroundColor: alpha(theme.palette.primary.main, 0.1),
+              color: theme.palette.primary.main,
+            }}
+          />
+        </Box>
 
-      <Box sx={{ maxWidth: 800, mx: "auto", px: 2 }}>
-        <Stepper activeStep={1} sx={{ mb: 4, display: { xs: "none", md: "flex" } }}>
+        <Stepper
+          activeStep={1}
+          sx={{
+            mb: 4,
+            display: { xs: "none", md: "flex" },
+            "& .MuiStepLabel-label": {
+              fontWeight: "medium",
+            },
+            "& .MuiStepLabel-active": {
+              fontWeight: "bold",
+              color: theme.palette.primary.main,
+            },
+          }}
+        >
           <Step>
             <StepLabel>Upload & Describe</StepLabel>
           </Step>
@@ -102,109 +219,204 @@ const SetDetailsAuction: React.FC = () => {
           </Step>
         </Stepper>
 
-        {/* Step 2: Choose auction type and details */}
-        <Paper sx={{ p: 4, mb: 4, bgcolor: "#000", color: "white", borderRadius: 3 }}>
-          <Typography variant="h5" sx={{ textAlign: "center", mb: 3 }}>
-            Choose auction type
-          </Typography>
+        {/* Auction Type Selection */}
+        <StepContainer>
+          <StepIcon>
+            <Clock size={80} />
+          </StepIcon>
 
-          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
-            <Button
-              variant={auctionType === "fixed" ? "contained" : "outlined"}
-              fullWidth
-              onClick={() => handleAuctionTypeSelect("fixed")}
+          <StepTitle variant="h5">Choose Auction Type</StepTitle>
+
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <AuctionTypeCard
+                elevation={auctionType === "fixed" ? 4 : 1}
+                onClick={() => handleAuctionTypeSelect("fixed")}
+                sx={{
+                  border: auctionType === "fixed" ? `2px solid ${theme.palette.primary.main}` : "none",
+                  backgroundColor:
+                    auctionType === "fixed" ? alpha(theme.palette.primary.main, 0.05) : theme.palette.background.paper,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: "50%",
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    mb: 2,
+                    color: theme.palette.primary.main,
+                  }}
+                >
+                  <Clock size={30} />
+                </Box>
+                <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
+                  Fixed Time Auction
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Auction ends at a specific time regardless of bidding activity
+                </Typography>
+                {auctionType === "fixed" && (
+                  <Chip
+                    icon={<Check size={16} />}
+                    label="Selected"
+                    color="primary"
+                    size="small"
+                    sx={{ borderRadius: 5 }}
+                  />
+                )}
+              </AuctionTypeCard>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <AuctionTypeCard
+                elevation={auctionType === "extended" ? 4 : 1}
+                onClick={() => handleAuctionTypeSelect("extended")}
+                sx={{
+                  border: auctionType === "extended" ? `2px solid ${theme.palette.primary.main}` : "none",
+                  backgroundColor:
+                    auctionType === "extended"
+                      ? alpha(theme.palette.primary.main, 0.05)
+                      : theme.palette.background.paper,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: "50%",
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    mb: 2,
+                    color: theme.palette.primary.main,
+                  }}
+                >
+                  <Settings size={30} />
+                </Box>
+                <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
+                  Auto-Extended Auction
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Time extends automatically when bids are placed near the end
+                </Typography>
+                {auctionType === "extended" && (
+                  <Chip
+                    icon={<Check size={16} />}
+                    label="Selected"
+                    color="primary"
+                    size="small"
+                    sx={{ borderRadius: 5 }}
+                  />
+                )}
+              </AuctionTypeCard>
+            </Grid>
+          </Grid>
+
+          {!auctionType && (
+            <Alert
+              severity="info"
               sx={{
-                borderRadius: 20,
-                py: 1.5,
-                borderColor: "white",
-                color: auctionType === "fixed" ? "black" : "white",
-                bgcolor: auctionType === "fixed" ? "white" : "transparent",
-                "&:hover": {
-                  bgcolor: auctionType === "fixed" ? "#eee" : "rgba(255,255,255,0.1)",
-                  borderColor: "white",
+                mt: 3,
+                borderRadius: 2,
+                "& .MuiAlert-icon": {
+                  alignItems: "center",
                 },
               }}
             >
-              Fixed time auction
-            </Button>
+              Please select an auction type to continue
+            </Alert>
+          )}
+        </StepContainer>
 
-            <Button
-              variant={auctionType === "extended" ? "contained" : "outlined"}
-              fullWidth
-              onClick={() => handleAuctionTypeSelect("extended")}
+        {/* Item Details */}
+        <StepContainer>
+          <StepIcon>
+            <Tag size={80} />
+          </StepIcon>
+
+          <StepTitle variant="h5">Item Details</StepTitle>
+
+          <AuctionDetailsForm onChange={handleDetailsChange} />
+        </StepContainer>
+
+        {/* Summary */}
+        <StepContainer>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+            <Box
               sx={{
-                borderRadius: 20,
-                py: 1.5,
-                borderColor: "white",
-                color: auctionType === "extended" ? "black" : "white",
-                bgcolor: auctionType === "extended" ? "white" : "transparent",
-                "&:hover": {
-                  bgcolor: auctionType === "extended" ? "#eee" : "rgba(255,255,255,0.1)",
-                  borderColor: "white",
-                },
+                width: 40,
+                height: 40,
+                borderRadius: "50%",
+                backgroundColor: formValid ? "success.light" : "warning.light",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mr: 2,
+                color: formValid ? "success.dark" : "warning.dark",
               }}
             >
-              Auto extended auction
-            </Button>
+              {formValid ? <Check size={24} /> : <AlertCircle size={24} />}
+            </Box>
+            <Box>
+              <Typography variant="h6" fontWeight="medium">
+                {formValid ? "Ready to Upload" : "Complete Required Fields"}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {formValid
+                  ? "Your auction is ready to be published"
+                  : "Please complete all required fields before uploading"}
+              </Typography>
+            </Box>
           </Box>
-        </Paper>
 
-        <Typography variant="h6" sx={{ color: "white", borderBottom: "1px solid #555", pb: 1, mb: 3 }}>
-          Details
-        </Typography>
+          <Divider sx={{ my: 2 }} />
 
-        <AuctionDetailsForm onChange={handleDetailsChange} />
+          {!formValid && (
+            <Alert
+              severity="warning"
+              sx={{
+                mb: 3,
+                borderRadius: 2,
+                "& .MuiAlert-icon": {
+                  alignItems: "center",
+                },
+              }}
+            >
+              Please select an auction type and complete all required fields
+            </Alert>
+          )}
+        </StepContainer>
 
-        {!auctionType && (
-          <Alert severity="info" sx={{ mt: 3 }}>
-            Please select an auction type
-          </Alert>
-        )}
-
-        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
-          <Button
+        <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+          <ActionButton
             variant="outlined"
+            color="primary"
             startIcon={<ArrowLeft size={18} />}
             onClick={handleBackToUpload}
-            sx={{
-              borderColor: "white",
-              color: "white",
-              borderRadius: 20,
-              px: 3,
-              "&:hover": {
-                borderColor: "#ccc",
-                bgcolor: "rgba(255,255,255,0.05)",
-              },
-            }}
           >
-            Back
-          </Button>
+            Back to Photos
+          </ActionButton>
 
-          <Button
+          <ActionButton
             variant="contained"
+            color="primary"
+            endIcon={<UploadIcon size={18} />}
             onClick={handleUploadAuction}
             disabled={!formValid}
-            sx={{
-              bgcolor: "white",
-              color: "black",
-              borderRadius: 20,
-              px: 3,
-              "&:hover": {
-                bgcolor: "#eee",
-              },
-              "&.Mui-disabled": {
-                bgcolor: "#555",
-                color: "#999",
-              },
-            }}
+            size="large"
           >
-            Upload auction
-          </Button>
+            Publish Auction
+          </ActionButton>
         </Box>
       </Box>
-    </Box>
+    </PageContainer>
   )
 }
 
-export default SetDetailsAuction
+export default SetDetailsAuction;
 

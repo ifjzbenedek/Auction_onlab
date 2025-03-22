@@ -1,6 +1,5 @@
 import type React from "react"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
-import Home from "./pages/Home.tsx"
 import Profile from "./pages/Profile.tsx"
 import Login from "./pages/Login.tsx"
 import BidVerseLanding from "./pages/BidVerseLanding.tsx"
@@ -18,7 +17,6 @@ const App: React.FC = () => {
         <Route path="/upload-auction" element={<UploadAuction />} />
         <Route path="/set-details-auction" element={<SetDetailsAuction />} />
         <Route path="/my-auctions" element={<UserAuctions />} />
-        <Route path="/users" element={<Home />} />
         <Route path="/users/me" element={<Profile />} />
         <Route path="/users/login" element={<Login />} />
       </Routes>

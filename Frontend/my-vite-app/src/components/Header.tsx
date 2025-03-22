@@ -2,6 +2,8 @@
 
 import type React from "react"
 import { useState } from "react"
+import TollIcon from "@mui/icons-material/Toll"
+import AccountCircleIcon from "@mui/icons-material/AccountCircle"
 import { Search, Plus, X, ChevronDown, RefreshCw, Image, User, LogOut, Package, DollarSign, Heart } from "lucide-react"
 import {
   Box,
@@ -16,6 +18,7 @@ import {
   ListItemIcon,
   ListItemText,
   InputBase,
+  Switch,
   type Theme,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
@@ -246,7 +249,7 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch }) => {
               color: "#5b7c99",
             }}
           >
-            <X size={20} />
+            <TollIcon style={{ fontSize: "20px" }} />
           </Box>
           <Typography variant="h6" fontWeight="bold" sx={{ color: "#2c3e50" }}>
             BidVerse
@@ -313,16 +316,11 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch }) => {
             <Typography variant="body2" sx={{ fontSize: 12, color: "#5b7c99" }}>
               Smart search
             </Typography>
-            <Checkbox
+            <Switch
               checked={smartSearch}
               onChange={() => setSmartSearch(!smartSearch)}
               size="small"
-              sx={{
-                color: "#5b7c99",
-                "&.Mui-checked": {
-                  color: "#5b7c99",
-                },
-              }}
+              color="primary"
             />
           </Box>
         </Box>
@@ -355,7 +353,7 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch }) => {
             }}
             onClick={handleProfileClick}
           >
-            <X size={20} />
+            <AccountCircleIcon style={{ fontSize: "40px" }} />          
           </Box>
           <Popover
             open={profileMenuOpen}

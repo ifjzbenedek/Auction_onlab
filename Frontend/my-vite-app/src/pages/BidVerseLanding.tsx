@@ -13,13 +13,13 @@ const AuctionCard = styled(Paper)({
   display: "flex",
   flexDirection: "column",
   borderRadius: 0,
-  boxShadow: "none",
+  boxShadow: "0 5px 10px rgba(0,0,0,0.2)",
   overflow: "hidden",
   height: "100%",
   transition: "all 0.3s ease",
   "&:hover": {
     transform: "translateY(-5px)",
-    boxShadow: "0 10px 20px rgba(0,0,0,0.1)",
+    boxShadow: "0 10px 20px rgba(0,0,0,0.5)",
   },
 });
 
@@ -68,11 +68,6 @@ const BidVerseLanding: React.FC = () => {
     setIsImageSearch(imageSearch)
   }
 
-  const handleNewAuction = () => {
-    console.log("Create new auction")
-    // This would navigate to a new auction creation page or open a modal
-  }
-
   // Filter auctions based on selected filters
   const filteredAuctions =
     filters.length > 0 ? auctions.filter((auction) => filters.includes(auction.status)) : auctions
@@ -93,7 +88,7 @@ const BidVerseLanding: React.FC = () => {
   return (
     <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh" }}>
       {/* Header Component */}
-      <Header onFilterChange={handleFilterChange} onSearch={handleSearch} onNewAuction={handleNewAuction} />
+      <Header onFilterChange={handleFilterChange} onSearch={handleSearch} />
 
       {/* Auction grid */}
       <Box
@@ -159,4 +154,4 @@ const BidVerseLanding: React.FC = () => {
   )
 }
 
-export default BidVerseLanding
+export default BidVerseLanding;

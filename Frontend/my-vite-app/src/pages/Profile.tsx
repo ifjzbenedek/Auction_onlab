@@ -2,7 +2,8 @@
 
 import type React from "react"
 import { useEffect, useState } from "react"
-import { Box, Typography, Paper, CircularProgress } from "@mui/material"
+import { Box, Typography, Paper, CircularProgress, useTheme } from "@mui/material"
+import { styled } from "@mui/material/styles"
 
 interface User {
   userName: string
@@ -10,9 +11,22 @@ interface User {
   phoneNumber: string
 }
 
+// Styled Paper komponens animációval és árnyékkal
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(4),
+  borderRadius: theme.shape.borderRadius * 2,
+  boxShadow: theme.shadows[4],
+  transition: "transform 0.3s ease, box-shadow 0.3s ease",
+  "&:hover": {
+    transform: "translateY(-5px)",
+    boxShadow: theme.shadows[8],
+  },
+}))
+
 const Profile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const theme = useTheme()
 
   useEffect(() => {
     // Felhasználó adatainak lekérése a backendtől
@@ -34,32 +48,79 @@ const Profile: React.FC = () => {
   }, [])
 
   return (
-    <Box>
-      <Box sx={{ maxWidth: 1200, mx: "auto", p: 2 }}>
+    <Box sx={{ bgcolor: theme.palette.background.default, minHeight: "100vh", py: 4 }}>
+      <Box sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, md: 4 }, py: 2 }}>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-            <CircularProgress />
+          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
+            <CircularProgress size={60} />
           </Box>
         ) : user ? (
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h4" sx={{ mb: 2 }}>
+          <StyledPaper>
+            <Typography
+              variant="h4"
+              sx={{
+                mb: 3,
+                fontWeight: "bold",
+                color: theme.palette.text.primary,
+                userSelect: "none", // Letiltjuk a szöveg kijelölését
+              }}
+            >
               Profile
             </Typography>
-            <Typography variant="body1" sx={{ mb: 1 }}>
-              Username: {user.userName}
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 1 }}>
-              Email: {user.emailAddress}
-            </Typography>
-            <Typography variant="body1">Phone: {user.phoneNumber}</Typography>
-          </Paper>
+            <Box sx={{ mb: 2 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{ color: theme.palette.text.secondary, mb: 1, userSelect: "none" }}
+              >
+                Username
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{ fontWeight: "medium", color: theme.palette.text.primary, userSelect: "none" }}
+              >
+                {user.userName}
+              </Typography>
+            </Box>
+            <Box sx={{ mb: 2 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{ color: theme.palette.text.secondary, mb: 1, userSelect: "none" }}
+              >
+                Email
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{ fontWeight: "medium", color: theme.palette.text.primary, userSelect: "none" }}
+              >
+                {user.emailAddress}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography
+                variant="subtitle1"
+                sx={{ color: theme.palette.text.secondary, mb: 1, userSelect: "none" }}
+              >
+                Phone
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{ fontWeight: "medium", color: theme.palette.text.primary, userSelect: "none" }}
+              >
+                {user.phoneNumber}
+              </Typography>
+            </Box>
+          </StyledPaper>
         ) : (
-          <Typography>User not found</Typography>
+          <Typography
+            variant="h6"
+            sx={{ textAlign: "center", color: theme.palette.error.main, userSelect: "none" }}
+          >
+            User not found
+          </Typography>
         )}
       </Box>
     </Box>
   )
 }
 
-export default Profile
-
+export default Profile;
