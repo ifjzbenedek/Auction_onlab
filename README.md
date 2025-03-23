@@ -32,3 +32,8 @@ Még nem működik jól az autentikáció. Az AuctionController és AuctionServi
 Erre a hétre az OAuth-os autentikáció kijavítása és a maradék controller és service osztályok megírása volt a cél.
 Az autentikációnál ZeroSSL segítségével kreáltam egy ssl certificate-et, viszont ezt követően is folyton azt kaptam az email cím megadása után, hogy Sikertelen bejelentkezés. Próbálgatás után rájöttem, hogy a vscode-ban indított böngésző nem támogatja az oauth-os bejelentkezést, például a gmail fiókomba sem tudtam bejelentkezni. Asztalból indított böngészőben már működött a dolog, miután javítottam a backendben a konverziót a saját Entity-m és a oauth által használt user közt.
 Eközben elkészítettem a maradék Service és Controller osztályokat a backendben.
+
+6.hét
+Ezen a héten a frontend kialalakítása volt a feladatom.
+A frontend elkészítése során Material UI-t és React Routert használtam a dizájn és az oldalak közti váltás könnyítésére.
+v0.dev segítségével elkészítettem a korábban JustInMind-ban elkészített vázlatok alapján az alapvető oldalakat. Egyelőre csak Mock-olva vannak a backendet érintő hívások, jövőhéten az a célom, hogy ezek működjenek.
