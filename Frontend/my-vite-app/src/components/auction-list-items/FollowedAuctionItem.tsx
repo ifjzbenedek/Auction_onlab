@@ -18,7 +18,7 @@ interface FollowedAuctionItemProps {
 
 const FollowedAuctionItem: React.FC<FollowedAuctionItemProps> = ({ auction, onView, onUnfollow }) => {
   return (
-    <TableRow hover>
+    <TableRow hover sx={{ "& .MuiTableCell-root": { userSelect: "none" } }}>
       <TableCell>
         <Box
           component="img"
@@ -29,11 +29,12 @@ const FollowedAuctionItem: React.FC<FollowedAuctionItemProps> = ({ auction, onVi
             height: 60,
             objectFit: "cover",
             border: "1px solid #eee",
+            cursor: "pointer",
           }}
         />
       </TableCell>
       <TableCell>
-        <Typography variant="body1" fontWeight="medium">
+        <Typography variant="body1" fontWeight="medium" sx={{ userSelect: "none", cursor: "pointer" }}>
           {auction.name}
         </Typography>
       </TableCell>

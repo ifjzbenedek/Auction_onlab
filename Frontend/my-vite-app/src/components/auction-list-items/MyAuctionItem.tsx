@@ -30,11 +30,12 @@ const MyAuctionItem: React.FC<MyAuctionItemProps> = ({ auction, onView, onEdit, 
             height: 60,
             objectFit: "cover",
             border: "1px solid #eee",
+            cursor: "pointer",
           }}
         />
       </TableCell>
       <TableCell>
-        <Typography variant="body1" fontWeight="medium">
+        <Typography variant="body1" fontWeight="medium" sx={{ cursor: "pointer" }}>
           {auction.name}
         </Typography>
       </TableCell>
@@ -63,5 +64,5 @@ const MyAuctionItem: React.FC<MyAuctionItemProps> = ({ auction, onView, onEdit, 
   )
 }
 
-export default MyAuctionItem
+export default MyAuctionItem;
 

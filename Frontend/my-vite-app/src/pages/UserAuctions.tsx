@@ -104,7 +104,7 @@ const UserAuctions: React.FC = () => {
   }
 
   return (
-    <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh" }}>
+    <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh", userSelect: "none" }}>
       <Header
         onFilterChange={(filter) => console.log("Filter changed:", filter)}
         onSearch={(query) => console.log("Search query:", query)}
@@ -142,7 +142,7 @@ const UserAuctions: React.FC = () => {
         <TableContainer component={Paper} sx={{ boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: "#f5f5f5" }}>
+              <TableRow sx={{ bgcolor: "#f5f5f5", userSelect: "none" }}>
                 <TableCell width="50"></TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell>Remaining time</TableCell>

@@ -37,3 +37,5 @@ Eközben elkészítettem a maradék Service és Controller osztályokat a backen
 Ezen a héten a frontend kialalakítása volt a feladatom.
 A frontend elkészítése során Material UI-t és React Routert használtam a dizájn és az oldalak közti váltás könnyítésére.
 v0.dev segítségével elkészítettem a korábban JustInMind-ban elkészített vázlatok alapján az alapvető oldalakat. Egyelőre csak Mock-olva vannak a backendet érintő hívások, jövőhéten az a célom, hogy ezek működjenek.
+
+7.hét

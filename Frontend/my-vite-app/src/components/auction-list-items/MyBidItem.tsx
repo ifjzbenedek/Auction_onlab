@@ -29,11 +29,12 @@ const MyBidItem: React.FC<MyBidItemProps> = ({ auction, onView }) => {
             height: 60,
             objectFit: "cover",
             border: "1px solid #eee",
+            cursor: "pointer",
           }}
         />
       </TableCell>
       <TableCell>
-        <Typography variant="body1" fontWeight="medium">
+        <Typography variant="body1" fontWeight="medium" sx={{ cursor: "pointer" }}>
           {auction.name}
         </Typography>
       </TableCell>
@@ -66,5 +67,5 @@ const MyBidItem: React.FC<MyBidItemProps> = ({ auction, onView }) => {
   )
 }
 
-export default MyBidItem
+export default MyBidItem;
 
