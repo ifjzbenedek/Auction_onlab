@@ -86,15 +86,18 @@ interface HeaderProps {
   onFilterChange: (newFilters: string[]) => void;
   onSearch: (term: string, imageSearch: boolean) => void;
   onNewAuction?: () => void; 
+  onCategoryChange?: (category: string | null) => void;
+  categories?: string[];
 }
 
-const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch }) => {
+const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryChange,
+  categories  }) => {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState("")
   const [isImageSearch, setIsImageSearch] = useState(false)
   const [smartSearch, setSmartSearch] = useState(true)
   const [activeFilters, setActiveFilters] = useState<string[]>([])
-  const [selectedCategories, setSelectedCategories] = useState(["valaml1", "valaml2"])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
 
   // Profile menu state
   const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null)
@@ -105,25 +108,11 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch }) => {
   const categoryMenuOpen = Boolean(categoryAnchorEl)
   const [categorySearchTerm, setCategorySearchTerm] = useState("")
 
-  // Available categories (mock data)
-  const allCategories = [
-    "Electronics",
-    "Fashion",
-    "Home & Garden",
-    "Sports",
-    "Collectibles",
-    "Art",
-    "Vehicles",
-    "Toys",
-    "Books",
-    "Music",
-    "Movies",
-    "Jewelry",
-  ]
-
-  const filteredCategories = allCategories.filter(
-    (cat) => cat.toLowerCase().includes(categorySearchTerm.toLowerCase()) && !selectedCategories.includes(cat),
-  )
+  const filteredCategories = (categories || []).filter(
+    (cat) =>
+      cat.toLowerCase().includes(categorySearchTerm.toLowerCase()) && // cat már string
+      !selectedCategories.includes(cat)
+  );
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
@@ -152,15 +141,17 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch }) => {
   }
 
   const removeCategory = (category: string) => {
-    setSelectedCategories(selectedCategories.filter((c) => c !== category))
+    const newCategories = selectedCategories.filter(c => c !== category)
+    setSelectedCategories(newCategories)
+    onCategoryChange?.(newCategories.length > 0 ? newCategories.join(',') : null)
   }
 
   const addCategory = (category: string) => {
     if (!selectedCategories.includes(category)) {
-      setSelectedCategories([...selectedCategories, category])
+      const newCategories = [...selectedCategories, category]
+      setSelectedCategories(newCategories)
+      onCategoryChange?.(newCategories.join(','))
     }
-    setCategorySearchTerm("")
-    setCategoryAnchorEl(null)
   }
 
   const handleProfileClick = (event: React.MouseEvent<HTMLElement>) => {

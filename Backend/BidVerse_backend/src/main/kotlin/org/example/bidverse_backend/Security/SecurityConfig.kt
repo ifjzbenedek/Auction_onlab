@@ -7,6 +7,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 @EnableWebSecurity
@@ -15,19 +18,78 @@ class SecurityConfig(private val customOAuth2UserService: CustomOAuth2UserServic
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
+            .cors { it.configurationSource(corsConfigurationSource()) } // CORS beállítások
             .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/users/register", "/users/login", "/oauth2/**").permitAll()
+                    // Nyilvános végpontok
+                    .requestMatchers(
+                        "/",
+                        "/api-docs/**",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/auctions",
+                        "/auctions/**",
+                        "/users/register",
+                        "/users/login",
+                        "/oauth2/**",
+                        "/categories"
+                    ).permitAll()
+                    // Minden más végpont hitelesítést igényel
                     .anyRequest().authenticated()
             }
             .oauth2Login { oauth2 ->
                 oauth2
-                    .defaultSuccessUrl("http://localhost:5173/", true) // Sikeres bejelentkezés után ide irányít
+                    .userInfoEndpoint { it.userService(customOAuth2UserService) }
+                    .defaultSuccessUrl("http://localhost:5173/", true)
             }
-            .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) }
+            .sessionManagement {
+                it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            }
+            .headers { headers ->
+                // Biztonsági fejlécek beállítása
+                headers
+                    .xssProtection { it.disable() }
+                    .contentSecurityPolicy { policy ->
+                        policy.policyDirectives("default-src 'self'")
+                    }
+            }
 
         return http.build()
     }
-}
 
+    @Bean
+    fun corsConfigurationSource(): CorsConfigurationSource {
+        val configuration = CorsConfiguration().apply {
+            allowedOrigins = listOf(
+                "http://localhost:5173",
+                "https://localhost:5173",
+                "http://127.0.0.1:5173"
+            )
+            allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
+            allowedHeaders = listOf(
+                "Authorization",
+                "Cache-Control",
+                "Content-Type",
+                "X-Requested-With",
+                "Accept",
+                "Origin",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers"
+            )
+            exposedHeaders = listOf(
+                "Access-Control-Allow-Origin",
+                "Access-Control-Allow-Credentials",
+                "Authorization",
+                "Set-Cookie"
+            )
+            allowCredentials = true
+            maxAge = 3600L
+        }
+
+        val source = UrlBasedCorsConfigurationSource()
+        source.registerCorsConfiguration("/**", configuration)
+        return source
+    }
+
+}
