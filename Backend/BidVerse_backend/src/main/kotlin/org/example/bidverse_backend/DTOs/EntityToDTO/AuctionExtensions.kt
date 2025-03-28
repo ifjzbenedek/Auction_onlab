@@ -2,7 +2,9 @@ package org.example.bidverse_backend.DTOs.EntityToDTO
 
 import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionBasicDTO
 import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionCardDTO
+
 import org.example.bidverse_backend.entities.Auction
+import org.example.bidverse_backend.extensions.toUserBasicDTO
 
 fun Auction.toAuctionCardDTO(): AuctionCardDTO {
     return AuctionCardDTO(
@@ -18,8 +20,8 @@ fun Auction.toAuctionCardDTO(): AuctionCardDTO {
 fun Auction.toAuctionBasicDTO(): AuctionBasicDTO {
     return AuctionBasicDTO(
         id = this.id!!,
-        user = this.owner,
-        category = this.category,
+        user = this.owner.toUserBasicDTO(),
+        category = this.category.ToCategoryDTO(),
         itemName = this.itemName,
         minimumPrice = this.minimumPrice,
         status = this.status,

@@ -1,14 +1,14 @@
 package org.example.bidverse_backend.DTOs.AuctionDTOs
 
-import org.example.bidverse_backend.entities.Category
-import org.example.bidverse_backend.entities.User
+import org.example.bidverse_backend.DTOs.CategoryDTOs.CategoryDTO
+import org.example.bidverse_backend.DTOs.UserDTOs.UserBasicDTO
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
 data class AuctionBasicDTO(
     val id: Int,
-    val user: User,
-    val category: Category,
+    val user: UserBasicDTO,
+    val category: CategoryDTO,
     val itemName: String,
     val minimumPrice: BigDecimal,
     val status: String,
