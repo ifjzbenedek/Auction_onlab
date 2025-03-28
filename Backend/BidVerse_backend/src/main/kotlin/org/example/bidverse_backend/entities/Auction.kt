@@ -58,5 +58,7 @@ class Auction(
 
     var tags: String?,
 
-    var minStep: Int?
+    var minStep: Int?,
+
+    var condition: Int
 )

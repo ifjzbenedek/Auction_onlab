@@ -62,7 +62,7 @@ const Profile: React.FC = () => {
                 mb: 3,
                 fontWeight: "bold",
                 color: theme.palette.text.primary,
-                userSelect: "none", // Letiltjuk a szöveg kijelölését
+                userSelect: "none", 
               }}
             >
               Profile
@@ -122,5 +122,5 @@ const Profile: React.FC = () => {
     </Box>
   )
 }
-
+ 
 export default Profile;

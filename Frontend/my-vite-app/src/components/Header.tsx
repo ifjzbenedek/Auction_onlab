@@ -131,14 +131,12 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
 
   const toggleFilter = (filter: string) => {
     const newFilters = activeFilters.includes(filter)
-      ? activeFilters.filter((f) => f !== filter)
-      : [...activeFilters, filter]
-
-    setActiveFilters(newFilters)
-    if (onFilterChange) {
-      onFilterChange(newFilters)
-    }
-  }
+      ? activeFilters.filter((f) => f !== filter) // Távolítsd el a szűrőt
+      : [...activeFilters, filter]; // Add hozzá a szűrőt
+  
+    setActiveFilters(newFilters);
+    onFilterChange(newFilters); // Küldd el a frissített szűrőket
+  };
 
   const removeCategory = (category: string) => {
     const newCategories = selectedCategories.filter(c => c !== category)
@@ -456,13 +454,13 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
         {/* Filter buttons */}
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
           {[
-            { id: "ending", label: "ending", color: "#f39c12" },
-            { id: "finished", label: "finished", color: "#e74c3c" },
-            { id: "upcoming", label: "upcoming", color: "#2ecc71" },
+            { id: "ACTIVE", label: "Ongoing", color: "#2ecc71" },   // Zöld
+            { id: "CLOSED", label: "Finished", color: "#e74c3c" },  // Piros
+            { id: "PENDING", label: "Upcoming", color: "#f39c12" }, // Narancs
           ].map((filter) => (
             <FilterButton
               key={filter.id}
-              onClick={() => toggleFilter(filter.id)}
+              onClick={() => toggleFilter(filter.id)} // Küldjük az "ACTIVE", "CLOSED", stb. értékeket
               active={activeFilters.includes(filter.id)}
               color={filter.color}
             >

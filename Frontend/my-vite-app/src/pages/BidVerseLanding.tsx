@@ -4,28 +4,22 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Box, Typography, Grid, CircularProgress, Alert } from "@mui/material"
 import Header from "../components/Header"
-import AuctionCard, { type AuctionCardProps } from "../components/AuctionCard"
+import AuctionCard from "../components/AuctionCard"
 import { auctionApi } from "../services/api.ts"
-
-interface AuctionResponse {
-  id: number
-  itemName: string
-  createDate: string
-  expiredDate: string
-  lastBid: number | null
-}
+import { AuctionCardDTO } from "../types/auction"
+import { CategoryDTO } from "../types/category"
 
 const BidVerseLanding: React.FC = () => {
-  const [auctions, setAuctions] = useState<AuctionCardProps[]>([])
+  const [auctions, setAuctions] = useState<AuctionCardDTO[]>([])
   const [filters, setFilters] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isImageSearch, setIsImageSearch] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [categories, setCategories] = useState<string[]>([])
+  const [categories, setCategories] = useState<CategoryDTO[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
-  // Fetch auctions from backend
+  // Aukciók lekérése
   useEffect(() => {
     const fetchAuctions = async () => {
       setLoading(true)
@@ -34,23 +28,20 @@ const BidVerseLanding: React.FC = () => {
       try {
         const params = {
           ...(filters.length > 0 && { status: filters.join(",") }),
-          ...(selectedCategory && { category: selectedCategory }),
-          ...(searchTerm && { search: searchTerm }),
+          category: selectedCategory || undefined,
+          search: searchTerm || undefined,
+          imageSearch: isImageSearch ? "true" : undefined,
         }
-  
-        const response = await auctionApi.getAuctions(params)
-  
-        const transformedAuctions = response.data.map((auction: AuctionResponse) => ({
-          id: auction.id,
-          itemName: auction.itemName,
-          createDate: auction.createDate,
-          expiredDate: auction.expiredDate,
-          lastBid: auction.lastBid,
-        }))
-  
-        setAuctions(transformedAuctions)
-      } catch {
-        // ... hibakezelés
+
+        const filteredParams = Object.fromEntries(
+          Object.entries(params).filter(([, value]) => value !== undefined)
+        );
+
+        const response = await auctionApi.getAuctions(filteredParams as Record<string, string | number>)
+        setAuctions(response.data)
+      } catch (err) {
+        setError("Failed to fetch auctions")
+        console.error("Error fetching auctions:", err)
       } finally {
         setLoading(false)
       }
@@ -59,53 +50,46 @@ const BidVerseLanding: React.FC = () => {
     fetchAuctions()
   }, [filters, searchTerm, isImageSearch, selectedCategory])
 
-  // Fetch categories for filtering
+  // Kategóriák lekérése
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await auctionApi.getCategories()
-        const categoryNames = response.data.map(
-          (cat: { categoryName: string }) => cat.categoryName
-        )
-        setCategories(categoryNames)
+        setCategories(response.data)
       } catch (err) {
-        console.error("Error fetching categories:", err)
+        console.error("Hiba a kategóriák lekérésekor:", err)
         setCategories([])
       }
     }
     fetchCategories()
   }, [])
 
+  // Szűrők kezelése
   const handleFilterChange = (newFilters: string[]) => {
     setFilters(newFilters)
   }
 
+  // Keresés kezelése
   const handleSearch = (term: string, imageSearch: boolean) => {
     setSearchTerm(term)
     setIsImageSearch(imageSearch)
   }
 
+  // Kategória váltás
   const handleCategoryChange = (category: string | null) => {
     setSelectedCategory(category)
   }
 
-  // Filter auctions based on selected filters
-  const filteredAuctions =
-    filters.length > 0 ? auctions.filter((auction) => filters.includes(auction.status)) : auctions
-
   return (
     <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh" }}>
-      {/* Header Component */}
       <Header
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         onCategoryChange={handleCategoryChange}
-        categories={Array.isArray(categories) ? categories : []}
-        />
+        categories={categories.map(c => c.categoryName)}
+      />
 
-      {/* Auction grid */}
-      <Box
-        sx={{
+      <Box sx={{
           maxWidth: { xs: "100%", lg: "1400px" },
           mx: "auto",
           px: { xs: 2, sm: 3 },
@@ -120,18 +104,18 @@ const BidVerseLanding: React.FC = () => {
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
           </Alert>
-        ) : filteredAuctions.length === 0 ? (
+        ) : auctions.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 8 }}>
             <Typography variant="h5" color="text.secondary" gutterBottom>
-              No auctions found
+              Nincs találat
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Try adjusting your filters or search criteria
+              Próbálj más szűrőket vagy keresési feltételeket
             </Typography>
           </Box>
         ) : (
           <Grid container spacing={3}>
-            {filteredAuctions.map((auction) => (
+            {auctions.map((auction) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={auction.id}>
                 <AuctionCard {...auction} />
               </Grid>
@@ -144,4 +128,3 @@ const BidVerseLanding: React.FC = () => {
 }
 
 export default BidVerseLanding;
-

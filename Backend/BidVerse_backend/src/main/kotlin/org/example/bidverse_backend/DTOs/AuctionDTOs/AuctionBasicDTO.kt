@@ -20,5 +20,6 @@ data class AuctionBasicDTO(
     val extraTime: LocalDateTime?,
     val itemState: String,
     val tags: String?,
-    val minStep: Int?
+    val minStep: Int?,
+    val condition: Int
 )

@@ -8,5 +8,6 @@ data class AuctionCardDTO(
     val itemName: String,
     val createDate: LocalDateTime,
     val expiredDate: LocalDateTime,
-    val lastBid: BigDecimal?
+    val lastBid: BigDecimal?,
+    val status: String,
 )

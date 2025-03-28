@@ -10,7 +10,8 @@ fun Auction.toAuctionCardDTO(): AuctionCardDTO {
         itemName = this.itemName,
         createDate = this.createDate,
         expiredDate = this.expiredDate,
-        lastBid = this.lastBid
+        lastBid = this.lastBid,
+        status = this.status
     )
 }
 
@@ -26,6 +27,7 @@ fun Auction.toAuctionBasicDTO(): AuctionBasicDTO {
         expiredDate = this.expiredDate,
         lastBid = this.lastBid,
         description = this.description,
+        condition = this.condition,
         type = this.type,
         extraTime = this.extraTime,
         itemState = this.itemState,

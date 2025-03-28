@@ -23,10 +23,13 @@ class AuctionService(
     private val securityUtils: SecurityUtils
 
 ) {
-    fun getAllAuctions(status: String?, category: String?): List<AuctionCardDTO> {
+    fun getAllAuctions(statuses: String?, categories: String?): List<AuctionCardDTO> {
+        val statusList = statuses?.split(",") ?: emptyList()
+        val categoryList = categories?.split(",") ?: emptyList()
+
         return auctionRepository.findAll().filter { auction ->
-            (status == null || auction.status == status) && // Szűrés státusz alapján
-                    (category == null || auction.category.categoryName == category) // Szűrés kategória neve alapján
+            (statusList.isEmpty() || auction.status in statusList) &&
+                    (categoryList.isEmpty() || auction.category.categoryName in categoryList)
         }.map { it.toAuctionCardDTO() }
     }
 
@@ -53,7 +56,8 @@ class AuctionService(
             tags = auctionBasic.tags,
             minStep = auctionBasic.minStep,
             extraTime = auctionBasic.extraTime,
-            lastBid = auctionBasic.lastBid
+            lastBid = auctionBasic.lastBid,
+            condition = auctionBasic.condition
         )
 
         return auctionRepository.save(auction).toAuctionBasicDTO()

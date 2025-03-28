@@ -9,12 +9,18 @@ const Login: React.FC = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Redirect to Google login after a short delay
-    const timer = setTimeout(() => {
-      window.location.href = "https://localhost:8081/oauth2/authorization/google"
-    }, 1500)
+    const params = new URLSearchParams(window.location.hash.substr(1));
+    const token = params.get("access_token");
 
-    return () => clearTimeout(timer)
+    if (token) {
+      localStorage.setItem('token', token)
+      navigate('/')
+    } else {
+      const timer = setTimeout(() => {
+        window.location.href = "https://localhost:8081/oauth2/authorization/google"
+      }, 1500)
+      return () => clearTimeout(timer)
+    }
   }, [navigate])
 
   return (
