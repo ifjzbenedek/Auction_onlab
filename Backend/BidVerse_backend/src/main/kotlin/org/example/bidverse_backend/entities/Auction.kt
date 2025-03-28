@@ -60,5 +60,6 @@ class Auction(
 
     var minStep: Int?,
 
+    @Column(nullable = false)
     var condition: Int
 )

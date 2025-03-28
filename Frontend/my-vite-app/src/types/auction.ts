@@ -18,6 +18,7 @@ export interface AuctionBasicDTO {
   itemState: string
   tags: string | null
   minStep: number | null
+  condition: number
   images: string[]
 }
 
