@@ -2,8 +2,10 @@ package org.example.bidverse_backend.services
 
 import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionBasicDTO
 import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionCardDTO
+import org.example.bidverse_backend.DTOs.BidDTOs.BidBasicDTO
 import org.example.bidverse_backend.DTOs.EntityToDTO.toAuctionBasicDTO
 import org.example.bidverse_backend.DTOs.EntityToDTO.toAuctionCardDTO
+import org.example.bidverse_backend.DTOs.EntityToDTO.toBidBasicDTO
 import org.example.bidverse_backend.Exceptions.*
 import org.example.bidverse_backend.Security.SecurityUtils
 import org.example.bidverse_backend.entities.Auction
@@ -124,12 +126,12 @@ class AuctionService(
         return biddedAuctions.map { it.toAuctionBasicDTO() }
     }
 
-    fun getBidsForAuction(auctionId: Int): List<Bid> {
+    fun getBidsForAuction(auctionId: Int): List<BidBasicDTO> {
         if (!auctionRepository.existsById(auctionId)) {
             throw AuctionNotFoundException("Auction with ID $auctionId not found.")
         }
 
-        return bidRepository.findByAuctionId(auctionId)
+        return bidRepository.findByAuctionId(auctionId).map { it.toBidBasicDTO() }
     }
 
     fun placeBid(auctionId: Int, bidValue: BigDecimal): Bid {
