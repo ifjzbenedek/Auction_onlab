@@ -9,25 +9,58 @@ import {
   Button,
   Grid,
   Paper,
+  Tabs,
+  Tab,
   TextField,
   InputAdornment,
   IconButton,
-  Chip,
   Skeleton,
+  Chip,
 } from "@mui/material"
-import { X, Clock, DollarSign, ChevronLeft, ChevronRight, ArrowLeft, Tag } from 'lucide-react'
+import { X, Heart, Clock, ChevronLeft, ChevronRight, ArrowLeft, Tag } from "lucide-react"
 import { auctionApi } from "../services/api.ts"
-import { AuctionBasicDTO } from "../types/auction"
+import type { AuctionBasicDTO } from "../types/auction"
 
+interface TabPanelProps {
+  children?: React.ReactNode
+  index: number
+  value: number
+}
 
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`auction-tabpanel-${index}`}
+      aria-labelledby={`auction-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+    </div>
+  )
+}
 
 const AuctionDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [auction, setAuction] = useState<AuctionBasicDTO | null>()
+  const [auction, setAuction] = useState<AuctionBasicDTO>()
   const [loading, setLoading] = useState(true)
+  const [tabValue, setTabValue] = useState(0)
   const [bidAmount, setBidAmount] = useState("")
+  const [following, setFollowing] = useState(false)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue)
+  }
+
+  const handleFollowAuction = () => {
+    setFollowing(!following)
+    alert(`You have ${following ? "unfollowed" : "followed"} this auction!`)
+  }
 
   // Idő számítás
   const calculateTimeLeft = (expiredDate: string): string => {
@@ -50,16 +83,14 @@ const AuctionDetails: React.FC = () => {
       try {
         const response = await auctionApi.getAuctionById(Number(id))
         const auctionData = response.data || {}
-        
+
         setAuction({
           ...auctionData,
           images: auctionData.images || [], // Üres tömb ha nincs adat
         })
-    
-        const initialBid = auctionData.lastBid 
-          ? auctionData.lastBid + 1 
-          : auctionData.minimumPrice || 0
-          
+
+        const initialBid = auctionData.lastBid ? auctionData.lastBid + 1 : auctionData.minimumPrice || 0
+
         setBidAmount(initialBid.toString())
       } catch (error) {
         console.error("Error fetching auction:", error)
@@ -67,7 +98,7 @@ const AuctionDetails: React.FC = () => {
         setLoading(false)
       }
     }
-    
+
     fetchAuction()
   }, [id])
 
@@ -103,30 +134,22 @@ const AuctionDetails: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "active":
-        return "#2ecc71" // green
+        return "#00c853" // brighter green
       case "closed":
-        return "#e74c3c" // red
+        return "#f44336" // brighter red
       case "pending":
-        return "#f39c12" // orange
+        return "#ff9800" // brighter orange
       default:
         return "#2c3e50" // default dark blue
     }
   }
 
-  const getConditionText = (condition: number) => {
-    switch (condition) {
-      case 1: return "Új"
-      case 2: return "Újszerű"
-      case 3: return "Használt"
-      default: return "Ismeretlen"
-    }
-  }
 
   if (loading) {
     return (
       <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh", py: 4 }}>
         <Box sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, md: 3 } }}>
-          <Button startIcon={<ArrowLeft size={18} />} sx={{ mb: 3, color: "#3498db" }} onClick={handleBackToList}>
+          <Button startIcon={<ArrowLeft size={18} />} sx={{ mb: 3, color: "#1e88e5" }} onClick={handleBackToList}>
             Back to auctions
           </Button>
 
@@ -143,6 +166,8 @@ const AuctionDetails: React.FC = () => {
               <Skeleton variant="text" height={60} width="80%" />
               <Skeleton variant="text" height={30} width="40%" sx={{ mt: 2 }} />
               <Skeleton variant="text" height={40} width="60%" sx={{ mt: 2 }} />
+              <Skeleton variant="text" height={30} width="30%" sx={{ mt: 2 }} />
+              <Skeleton variant="text" height={30} width="30%" sx={{ mt: 1 }} />
               <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
                 <Skeleton variant="rectangular" height={50} width="60%" sx={{ borderRadius: 30 }} />
                 <Skeleton variant="rectangular" height={50} width="40%" sx={{ borderRadius: 30 }} />
@@ -169,7 +194,7 @@ const AuctionDetails: React.FC = () => {
   return (
     <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh", py: 4 }}>
       <Box sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, md: 3 } }}>
-        <Button startIcon={<ArrowLeft size={18} />} sx={{ mb: 3, color: "#3498db" }} onClick={handleBackToList}>
+        <Button startIcon={<ArrowLeft size={18} />} sx={{ mb: 3, color: "#1e88e5" }} onClick={handleBackToList}>
           Back to auctions
         </Button>
 
@@ -190,7 +215,7 @@ const AuctionDetails: React.FC = () => {
                   position: "relative",
                 }}
               >
-                {auction.images.length > 0 ? (
+                {auction && auction.images.length > 0 ? (
                   <Box
                     component="img"
                     src={auction.images[activeImageIndex]}
@@ -214,7 +239,7 @@ const AuctionDetails: React.FC = () => {
                     transform: "translateY(-50%)",
                     bgcolor: "rgba(255,255,255,0.8)",
                     "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
-                    color: "#3498db",
+                    color: "#1e88e5",
                     display: activeImageIndex === 0 ? "none" : "flex",
                   }}
                   onClick={handlePrevImage}
@@ -230,17 +255,17 @@ const AuctionDetails: React.FC = () => {
                     transform: "translateY(-50%)",
                     bgcolor: "rgba(255,255,255,0.8)",
                     "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
-                    color: "#3498db",
-                    display: activeImageIndex === auction.images.length - 1 ? "none" : "flex",
+                    color: "#1e88e5",
+                    display: auction && activeImageIndex === auction.images.length - 1 ? "none" : "flex",
                   }}
                   onClick={handleNextImage}
                 >
                   <ChevronRight />
                 </IconButton>
 
-                {/* Category tag */}
+                {/* Category chip */}
                 <Chip
-                  label={auction.category.categoryName}
+                  label={auction?.category?.categoryName || "Unknown Category"}
                   size="small"
                   icon={<Tag size={14} />}
                   sx={{
@@ -248,16 +273,16 @@ const AuctionDetails: React.FC = () => {
                     left: 16,
                     top: 16,
                     bgcolor: "rgba(255,255,255,0.9)",
-                    color: "#3498db",
+                    color: "#1e88e5",
                     fontWeight: 500,
-                    "& .MuiChip-icon": { color: "#3498db" },
+                    "& .MuiChip-icon": { color: "#1e88e5" },
                   }}
                 />
               </Paper>
 
               {/* Thumbnails */}
               <Box sx={{ display: "flex", gap: 1, mt: 1, justifyContent: "center" }}>
-                {auction.images.map((image, index) => (
+                {auction?.images.map((image, index) => (
                   <Box
                     key={index}
                     component="img"
@@ -270,7 +295,7 @@ const AuctionDetails: React.FC = () => {
                       objectFit: "cover",
                       cursor: "pointer",
                       borderRadius: 1,
-                      border: index === activeImageIndex ? "2px solid #3498db" : "2px solid transparent",
+                      border: index === activeImageIndex ? "2px solid #1e88e5" : "2px solid transparent",
                       opacity: index === activeImageIndex ? 1 : 0.7,
                       transition: "all 0.2s ease",
                       "&:hover": {
@@ -286,7 +311,7 @@ const AuctionDetails: React.FC = () => {
           {/* Right column - Details */}
           <Grid item xs={12} md={6}>
             <Typography variant="h4" fontWeight="bold" color="#2c3e50" gutterBottom>
-              {auction.itemName}
+              {auction?.itemName || "Unknown Item"}
             </Typography>
 
             {/* Status and timer */}
@@ -295,7 +320,7 @@ const AuctionDetails: React.FC = () => {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 1,
-                bgcolor: getStatusColor(auction.status),
+                bgcolor: getStatusColor(auction?.status || "unknown"),
                 color: "white",
                 px: 2,
                 py: 1,
@@ -305,60 +330,41 @@ const AuctionDetails: React.FC = () => {
             >
               <Clock size={18} />
               <Typography variant="subtitle1" sx={{ textTransform: "capitalize" }}>
-                {auction.status} in {calculateTimeLeft(auction.expiredDate)}
+                {auction ? `${auction.status} in ${calculateTimeLeft(auction.expiredDate)}` : "Loading..."}
               </Typography>
             </Box>
 
-            {/* Current bid */}
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="body1" color="text.secondary">
-                Current bid
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
-                <DollarSign size={24} color="#3498db" />
-                <Typography variant="h3" fontWeight="bold" color="#3498db">
-                  ${auction.lastBid?.toFixed(2) || "No bids"}
-                </Typography>
-              </Box>
+            {/* Price Information */}
+            <Box sx={{ mt: 3, mb: 3 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={4}>
+                  <Typography variant="body2" color="text.secondary">
+                    Minimum price
+                  </Typography>
+                  <Typography variant="h6" fontWeight="bold" color="#2c3e50">
+                    ${auction?.minimumPrice?.toFixed(2) || "-"}
+                  </Typography>
+                </Grid>
+                <Grid item xs={4}>
+                  <Typography variant="body2" color="text.secondary">
+                    Minimum increment
+                  </Typography>
+                  <Typography variant="h6" fontWeight="bold" color="#2c3e50">
+                    ${auction?.minStep?.toFixed(2) || "-"}
+                  </Typography>
+                </Grid>
+                <Grid item xs={4}>
+                  <Typography variant="body2" color="text.secondary">
+                    Top bid
+                  </Typography>
+                  <Typography variant="h6" fontWeight="bold" color="#1e88e5">
+                    ${auction?.lastBid?.toFixed(2) || "No bids yet"}
+                  </Typography>
+                </Grid>
+              </Grid>
             </Box>
 
-            {/* Details grid */}
-            <Grid container spacing={2} sx={{ mt: 2 }}>
-              <Grid item xs={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Minimum increment
-                </Typography>
-                <Typography variant="h6" fontWeight="medium" color="#2c3e50">
-                  ${auction.minStep?.toFixed(2) || "-"}
-                </Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Minimum price
-                </Typography>
-                <Typography variant="h6" fontWeight="medium" color="#2c3e50">
-                  ${auction.minimumPrice.toFixed(2)}
-                </Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Condition
-                </Typography>
-                <Typography variant="h6" fontWeight="medium" color="#2c3e50">
-                  {getConditionText(auction.condition)}
-                </Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Category
-                </Typography>
-                <Typography variant="h6" fontWeight="medium" color="#2c3e50">
-                  {auction.category.categoryName}
-                </Typography>
-              </Grid>
-            </Grid>
-
-            {/* Bid input */}
+            {/* Bid section */}
             <Box sx={{ mt: 3 }}>
               <TextField
                 fullWidth
@@ -371,34 +377,116 @@ const AuctionDetails: React.FC = () => {
                 }}
                 sx={{ mb: 2 }}
               />
-              <Button
-                variant="contained"
-                fullWidth
-                size="large"
-                onClick={handleMakeBid}
+              <Box sx={{ display: "flex", gap: 2 }}>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  size="large"
+                  onClick={handleMakeBid}
+                  sx={{
+                    bgcolor: "#1e88e5",
+                    color: "white",
+                    borderRadius: 30,
+                    py: 1.5,
+                    textTransform: "none",
+                    fontWeight: "bold",
+                    "&:hover": {
+                      bgcolor: "#1565c0",
+                    },
+                    boxShadow: "0 4px 10px rgba(30, 136, 229, 0.3)",
+                  }}
+                >
+                  Make a bid
+                </Button>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  size="large"
+                  onClick={handleFollowAuction}
+                  startIcon={
+                    <Heart size={18} fill={following ? "#e74c3c" : "none"} color={following ? "#e74c3c" : undefined} />
+                  }
+                  sx={{
+                    borderRadius: 30,
+                    py: 1.5,
+                    textTransform: "none",
+                    fontWeight: "medium",
+                    fontSize: "1rem",
+                    borderColor: following ? "#e74c3c" : undefined,
+                    color: following ? "#e74c3c" : undefined,
+                    "&:hover": {
+                      borderColor: following ? "#c0392b" : undefined,
+                      color: following ? "#c0392b" : undefined,
+                    },
+                  }}
+                >
+                  {following ? "Following" : "Follow auction"}
+                </Button>
+              </Box>
+            </Box>
+            {/* Tabs */}
+            <Box sx={{ mt: 4, borderBottom: 1, borderColor: "divider" }}>
+              <Tabs
+                value={tabValue}
+                onChange={handleTabChange}
                 sx={{
-                  bgcolor: "#3498db",
-                  color: "white",
-                  borderRadius: 30,
-                  py: 1.5,
-                  textTransform: "none",
-                  fontWeight: "bold",
-                  "&:hover": { bgcolor: "#2980b9" },
+                  "& .MuiTab-root": {
+                    textTransform: "none",
+                    fontWeight: "medium",
+                    fontSize: "1rem",
+                  },
+                  "& .Mui-selected": {
+                    color: "#1e88e5",
+                    fontWeight: "bold",
+                  },
+                  "& .MuiTabs-indicator": {
+                    backgroundColor: "#1e88e5",
+                  },
                 }}
               >
-                Make a bid
-              </Button>
+                <Tab label="Description" />
+                <Tab label="Details" />
+              </Tabs>
             </Box>
 
-            {/* Description */}
-            <Box sx={{ mt: 4 }}>
-              <Typography variant="h6" gutterBottom color="#2c3e50">
-                Description
-              </Typography>
+            <TabPanel value={tabValue} index={0}>
               <Typography variant="body1" color="#2c3e50" sx={{ whiteSpace: "pre-line" }}>
-                {auction.description}
+                {auction ? auction.description : "No description available"}
               </Typography>
-            </Box>
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={1}>
+              <Box sx={{ mt: 1 }}>
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Item State
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    fontWeight="medium"
+                    sx={{ color: getStatusColor(auction?.itemState || "unknown") }}
+                  >
+                    {auction?.itemState || "Unknown"}
+                  </Typography>
+                </Box>
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Condition Rating
+                  </Typography>
+                  <Typography variant="h6" fontWeight="medium" color="#2c3e50">
+                    {auction ? auction.condition.toString() : "Unknown"}
+                  </Typography>
+                </Box>
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Category
+                  </Typography>
+                  <Typography variant="h6" fontWeight="medium" color="#2c3e50">
+                    {auction?.category?.categoryName || "Unknown Category"}
+                  </Typography>
+                </Box>
+              </Box>
+            </TabPanel>
           </Grid>
         </Grid>
       </Box>
@@ -407,3 +495,4 @@ const AuctionDetails: React.FC = () => {
 }
 
 export default AuctionDetails;
+
