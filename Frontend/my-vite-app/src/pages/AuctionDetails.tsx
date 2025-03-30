@@ -20,6 +20,7 @@ import {
 import { X, Heart, Clock, ChevronLeft, ChevronRight, ArrowLeft, Tag } from "lucide-react"
 import { auctionApi } from "../services/api.ts"
 import type { AuctionBasicDTO } from "../types/auction"
+import { BidDTO } from "../types/bid.ts"
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -84,10 +85,19 @@ const AuctionDetails: React.FC = () => {
         const response = await auctionApi.getAuctionById(Number(id))
         const auctionData = response.data || {}
 
+        const bidsFromApi = response.data.bidList || [];
+
         setAuction({
-          ...auctionData,
-          images: auctionData.images || [], // Üres tömb ha nincs adat
-        })
+        ...auctionData,
+        images: auctionData.images || [],
+        bids: bidsFromApi.map((bid: BidDTO) => ({
+          id: bid.id,
+          value: bid.value,
+          timeStamp: bid.timeStamp,
+          isWinning: bid.isWinning,
+          bidder: bid.bidder,
+        })),
+      });
 
         const initialBid = auctionData.lastBid ? auctionData.lastBid + 1 : auctionData.minimumPrice || 0
 
@@ -446,6 +456,7 @@ const AuctionDetails: React.FC = () => {
               >
                 <Tab label="Description" />
                 <Tab label="Details" />
+                <Tab label="Bids" />
               </Tabs>
             </Box>
 
@@ -485,6 +496,46 @@ const AuctionDetails: React.FC = () => {
                     {auction?.category?.categoryName || "Unknown Category"}
                   </Typography>
                 </Box>
+              </Box>
+            </TabPanel>
+            <TabPanel value={tabValue} index={2}>
+              <Box sx={{ maxHeight: 400, overflowY: "auto", pr: 2 }}>
+                {auction.bids?.length ? (
+                  auction.bids.map((bid, index) => (
+                    <Paper key={index} sx={{ p: 2, mb: 2, bgcolor: "#fff", borderRadius: 2 }}>
+                      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                        <Box>
+                          <Typography variant="body1" fontWeight="medium">
+                            {bid.bidder.userName}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {new Date(bid.timeStamp).toLocaleString("hu-HU", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ textAlign: "right" }}>
+                          <Typography variant="body1" color="#1e88e5" fontWeight="bold">
+                            ${bid.value.toFixed(2)}
+                          </Typography>
+                          {bid.isWinning && (
+                            <Chip
+                              label="Winning"
+                              size="small"
+                              sx={{ bgcolor: "#00c853", color: "white", mt: 0.5 }}
+                            />
+                          )}
+                        </Box>
+                      </Box>
+                    </Paper>
+                  ))
+                ) : (
+                  <Typography color="text.secondary">No bids yet</Typography>
+                )}
               </Box>
             </TabPanel>
           </Grid>

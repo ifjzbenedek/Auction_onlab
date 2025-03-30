@@ -1,5 +1,6 @@
 import { CategoryDTO } from "./category"
 import { UserBasicDTO } from "./user"
+import { BidDTO } from "./bid" 
 
 // Kotlin: AuctionBasicDTO.kt
 export interface AuctionBasicDTO {
@@ -20,6 +21,8 @@ export interface AuctionBasicDTO {
   minStep: number | null
   condition: number
   images: string[]
+  bids?: BidDTO[] // Opcionális tömb, ha nincsenek licitek
+
 }
 
 // Kotlin: AuctionCardDTO.kt

@@ -39,3 +39,6 @@ A frontend elkészítése során Material UI-t és React Routert használtam a d
 v0.dev segítségével elkészítettem a korábban JustInMind-ban elkészített vázlatok alapján az alapvető oldalakat. Egyelőre csak Mock-olva vannak a backendet érintő hívások, jövőhéten az a célom, hogy ezek működjenek.
 
 7.hét
+Erre a hétre a leírás automatizált generálása és az eddig mock-olt backend kérések megvalósítása volt.
+Sikerült megvalósítani a kategóriák elérését, az összes aukció megjelenítését, a szűrést (kategóriák és státusz szerint), illetve az aukciós kártyákra törénő kattintás esetén az adott kártya részletes oldalának megnyitását is. Közben rájöttem, hogy még szükségem lesz pár DTO-ra, illetve vannak meglévő DTO-k, amik rosszak (mert vannak entity tagváltozóik, így a json formátumú üzeneteik rekurzívan egymásban vannak). Ezeket javítottam.
+A leírás generálóval még nem tudtam foglalkozni sajnos.
