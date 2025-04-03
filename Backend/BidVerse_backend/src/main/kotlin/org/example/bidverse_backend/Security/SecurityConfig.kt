@@ -28,12 +28,16 @@ class SecurityConfig(private val customOAuth2UserService: CustomOAuth2UserServic
                         "/api-docs/**",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
+                        "/api/auctions/**",
                         "/auctions",
                         "/auctions/**",
                         "/users/register",
                         "/users/login",
                         "/oauth2/**",
-                        "/categories"
+                        "/categories",
+                        "/api/auctions",          // Engedélyezd az összes aukció végpontot
+                        "/api/auctions/**",
+                        "/api/categories/**"
                     ).permitAll()
                     // Minden más végpont hitelesítést igényel
                     .anyRequest().authenticated()

@@ -16,6 +16,7 @@ fun User.toUserBasicDTO(): UserBasicDTO {
 
 fun User.toUserCredentialsDTO(): UserCredentialsDTO {
     return UserCredentialsDTO(
+        id = this.id!!,
         userName = this.userName,
     )
 }

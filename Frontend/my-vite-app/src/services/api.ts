@@ -1,4 +1,5 @@
 import axios from "axios"
+import { BidDTO } from "../types/bid"
 
 // API alapbeállítások
 const API_BASE_URL = "https://localhost:8081"
@@ -85,6 +86,9 @@ export const auctionApi = {
 
   // Kategóriák lekérése
   getCategories: () => api.get("/categories"),
+
+  // Bidek lekérdezése egy aukcióhoz
+  getAuctionBids: (id: number) => api.get<BidDTO[]>(`/auctions/${id}/bids`),
 
 }
 

@@ -20,7 +20,7 @@ import {
 import { X, Heart, Clock, ChevronLeft, ChevronRight, ArrowLeft, Tag } from "lucide-react"
 import { auctionApi } from "../services/api.ts"
 import type { AuctionBasicDTO } from "../types/auction"
-import { BidDTO } from "../types/bid.ts"
+import type { BidDTO } from "../types/bid"
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -48,6 +48,7 @@ const AuctionDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [auction, setAuction] = useState<AuctionBasicDTO>()
+  const [bids, setBids] = useState<BidDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [tabValue, setTabValue] = useState(0)
   const [bidAmount, setBidAmount] = useState("")
@@ -84,32 +85,30 @@ const AuctionDetails: React.FC = () => {
       try {
         const response = await auctionApi.getAuctionById(Number(id))
         const auctionData = response.data || {}
-
-        const bidsFromApi = response.data.bidList || [];
-
-        setAuction({
-        ...auctionData,
-        images: auctionData.images || [],
-        bids: bidsFromApi.map((bid: BidDTO) => ({
-          id: bid.id,
-          value: bid.value,
-          timeStamp: bid.timeStamp,
-          isWinning: bid.isWinning,
-          bidder: bid.bidder,
-        })),
-      });
-
-        const initialBid = auctionData.lastBid ? auctionData.lastBid + 1 : auctionData.minimumPrice || 0
-
-        setBidAmount(initialBid.toString())
+        // Biztosítjuk, hogy az images mindig legyen tömb
+        setAuction({ 
+          ...auctionData, 
+          images: auctionData.images || []
+        })
       } catch (error) {
         console.error("Error fetching auction:", error)
       } finally {
         setLoading(false)
       }
     }
-
     fetchAuction()
+  }, [id])
+
+  useEffect(() => {
+    const fetchBids = async () => {
+      try {
+        const response = await auctionApi.getAuctionBids(Number(id))
+        setBids(response.data)
+      } catch (error) {
+        console.error("Error fetching bids:", error)
+      }
+    }
+    fetchBids()
   }, [id])
 
   const handleBidAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,7 +152,6 @@ const AuctionDetails: React.FC = () => {
         return "#2c3e50" // default dark blue
     }
   }
-
 
   if (loading) {
     return (
@@ -500,9 +498,9 @@ const AuctionDetails: React.FC = () => {
             </TabPanel>
             <TabPanel value={tabValue} index={2}>
               <Box sx={{ maxHeight: 400, overflowY: "auto", pr: 2 }}>
-                {auction.bids?.length ? (
-                  auction.bids.map((bid, index) => (
-                    <Paper key={index} sx={{ p: 2, mb: 2, bgcolor: "#fff", borderRadius: 2 }}>
+                {bids.length > 0 ? (
+                  bids.map((bid) => ( // 🚨 Használd a 'bids' állapotot és 'bid.id'-t key-ként
+                    <Paper key={bid.id} sx={{ p: 2, mb: 2, bgcolor: "#fff", borderRadius: 2 }}>
                       <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                         <Box>
                           <Typography variant="body1" fontWeight="medium">
@@ -523,11 +521,7 @@ const AuctionDetails: React.FC = () => {
                             ${bid.value.toFixed(2)}
                           </Typography>
                           {bid.isWinning && (
-                            <Chip
-                              label="Winning"
-                              size="small"
-                              sx={{ bgcolor: "#00c853", color: "white", mt: 0.5 }}
-                            />
+                            <Chip label="Winning" size="small" sx={{ bgcolor: "#00c853", color: "white", mt: 0.5 }} />
                           )}
                         </Box>
                       </Box>
