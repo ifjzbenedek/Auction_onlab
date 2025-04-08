@@ -18,47 +18,20 @@ class SecurityConfig(private val customOAuth2UserService: CustomOAuth2UserServic
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
-            .cors { it.configurationSource(corsConfigurationSource()) } // CORS beállítások
+            .cors { it.configurationSource(corsConfigurationSource()) }
             .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
-                auth
-                    // Nyilvános végpontok
-                    .requestMatchers(
-                        "/",
-                        "/api-docs/**",
-                        "/swagger-ui/**",
-                        "/v3/api-docs/**",
-                        "/api/auctions/**",
-                        "/auctions",
-                        "/auctions/**",
-                        "/users/register",
-                        "/users/login",
-                        "/oauth2/**",
-                        "/categories",
-                        "/api/auctions",          // Engedélyezd az összes aukció végpontot
-                        "/api/auctions/**",
-                        "/api/categories/**"
-                    ).permitAll()
-                    // Minden más végpont hitelesítést igényel
-                    .anyRequest().authenticated()
+                auth.anyRequest().permitAll()
             }
             .oauth2Login { oauth2 ->
                 oauth2
                     .userInfoEndpoint { it.userService(customOAuth2UserService) }
-                    .defaultSuccessUrl("http://localhost:5173/", true)
+                    .defaultSuccessUrl("http://localhost:5173", true)
+                    //.failureUrl("http://localhost:5173/login?error") MAJD!
             }
             .sessionManagement {
-                it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
-            .headers { headers ->
-                // Biztonsági fejlécek beállítása
-                headers
-                    .xssProtection { it.disable() }
-                    .contentSecurityPolicy { policy ->
-                        policy.policyDirectives("default-src 'self'")
-                    }
-            }
-
         return http.build()
     }
 
@@ -70,23 +43,8 @@ class SecurityConfig(private val customOAuth2UserService: CustomOAuth2UserServic
                 "https://localhost:5173",
                 "http://127.0.0.1:5173"
             )
-            allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
-            allowedHeaders = listOf(
-                "Authorization",
-                "Cache-Control",
-                "Content-Type",
-                "X-Requested-With",
-                "Accept",
-                "Origin",
-                "Access-Control-Request-Method",
-                "Access-Control-Request-Headers"
-            )
-            exposedHeaders = listOf(
-                "Access-Control-Allow-Origin",
-                "Access-Control-Allow-Credentials",
-                "Authorization",
-                "Set-Cookie"
-            )
+            allowedMethods = listOf("*")
+            allowedHeaders = listOf("*")
             allowCredentials = true
             maxAge = 3600L
         }

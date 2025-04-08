@@ -115,10 +115,58 @@ const AuctionDetails: React.FC = () => {
     setBidAmount(e.target.value)
   }
 
-  const handleMakeBid = () => {
-    console.log(`Making bid of $${bidAmount}`)
-    alert(`Bid of $${bidAmount} placed successfully!`)
-  }
+  const handleMakeBid = async () => {
+    if (!bidAmount) {
+      alert("Please enter a bid amount");
+      return;
+    }
+  
+    const amount = parseFloat(bidAmount);
+    if (isNaN(amount)) {
+      alert("Please enter a valid number");
+      return;
+    }
+  
+    try {
+      // Licit elküldése
+      const response = await auctionApi.placeBid(Number(id), amount);
+      
+      // Sikeres válasz kezelése (201 Created)
+      if (response.status === 201) {
+        alert(`Bid of $${amount.toFixed(2)} placed successfully!`);
+        setBidAmount("");
+  
+        // Frissítés a legújabb adatokkal
+        const [bidsResponse, auctionResponse] = await Promise.all([
+          auctionApi.getAuctionBids(Number(id)),
+          auctionApi.getAuctionById(Number(id))
+        ]);
+        
+        setBids(bidsResponse.data);
+        setAuction(auctionResponse.data);
+      }
+    } catch (error: unknown) {
+      const err = error as { response?: { status: number, data?: string } };
+      if (err.response) {
+        switch (err.response.status) {
+          case 400:
+            alert(`Invalid bid: ${err.response.data || "Check minimum requirements"}`);
+            break;
+          case 401:
+            alert("Please log in to place a bid");
+            navigate("/login");
+            break;
+          case 404:
+            alert(err.response.data || "Auction not found");
+            break;
+          default:
+            alert("Unexpected error");
+        }
+      } else {
+        alert("Network error - please check your connection");
+      }
+    }
+  };
 
   const handlePrevImage = () => {
     if (auction && activeImageIndex > 0) {
@@ -499,7 +547,7 @@ const AuctionDetails: React.FC = () => {
             <TabPanel value={tabValue} index={2}>
               <Box sx={{ maxHeight: 400, overflowY: "auto", pr: 2 }}>
                 {bids.length > 0 ? (
-                  bids.map((bid) => ( // 🚨 Használd a 'bids' állapotot és 'bid.id'-t key-ként
+                  bids.map((bid) => (
                     <Paper key={bid.id} sx={{ p: 2, mb: 2, bgcolor: "#fff", borderRadius: 2 }}>
                       <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                         <Box>

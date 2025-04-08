@@ -1,37 +1,64 @@
 "use client"
 
-import type React from "react"
 import { useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { Box, Typography, CircularProgress } from "@mui/material"
+import { useLocation, useNavigate } from "react-router-dom"
+import authService from "../auth/auth-service.ts" 
+import { useState } from "react"
 
-const Login: React.FC = () => {
+// This is a partial update to your Login.tsx file
+// Add this code to handle the OAuth callback and return URL
+
+// Inside your Login component:
+const Login = () => {
+  const location = useLocation()
   const navigate = useNavigate()
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.hash.substr(1));
-    const token = params.get("access_token");
+    // Parse query parameters
+    const query = new URLSearchParams(location.search)
+    const code = query.get("code")
+    const returnUrl = query.get("returnUrl") || "/"
 
-    if (token) {
-      localStorage.setItem('token', token)
-      navigate('/')
-    } else {
-      const timer = setTimeout(() => {
-        window.location.href = "https://localhost:8081/oauth2/authorization/google"
-      }, 1500)
-      return () => clearTimeout(timer)
+    // Handle OAuth callback if code is present
+    if (code) {
+      handleOAuthCallback(code, returnUrl)
     }
-  }, [navigate])
+
+    // Check if user is already logged in
+    const token = localStorage.getItem("token")
+    if (token) {
+      // Redirect to return URL or home
+      navigate(returnUrl)
+    }
+  }, [location, navigate])
+
+  const handleOAuthCallback = async (code: string, returnUrl: string) => {
+    try {
+      const success = await authService.handleOAuthCallback(code)
+      if (success) {
+        navigate(returnUrl)
+      } else {
+        // Show error message
+        setError("Authentication failed. Please try again.")
+      }
+    } catch (error) {
+      console.error("OAuth callback error:", error)
+      setError("An unexpected error occurred during login.")
+    }
+  }
+
+  // Add this to your login button click handler
+  const handleGoogleLogin = () => {
+    authService.login()
+  }
 
   return (
-    <Box>
-      <Box sx={{ maxWidth: 1200, mx: "auto", p: 2, textAlign: "center", mt: 4 }}>
-        <CircularProgress sx={{ mb: 2 }} />
-        <Typography variant="h6">Redirecting to Google Login...</Typography>
-      </Box>
-    </Box>
+    <div>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      <button onClick={handleGoogleLogin}>Login with Google</button>
+    </div>
   )
 }
 
 export default Login;
-
