@@ -1,8 +1,9 @@
 import axios from "axios"
-import { BidDTO } from "../types/bid"
+import type { BidDTO } from "../types/bid"
 
 // API alapbeállítások
-const API_BASE_URL = "https://localhost:8081"
+// No need for full URL when using proxy
+const API_BASE_URL = ""
 
 // Axios instance létrehozása alapbeállításokkal
 const api = axios.create({
@@ -10,6 +11,8 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  // Add withCredentials to send cookies with cross-origin requests
+  withCredentials: true,
 })
 
 // Kérés interceptor - pl. token hozzáadása
@@ -39,9 +42,12 @@ api.interceptors.response.use(
 
       // 401 Unauthorized - token lejárt vagy érvénytelen
       if (error.response.status === 401) {
-        localStorage.removeItem("token")
-        // Opcionálisan átirányítás a bejelentkezési oldalra
-        // window.location.href = "/login"
+        // Instead of redirecting directly, return a specific error
+        console.error("Authentication required. Please log in again.")
+        return Promise.reject({
+          isAuthError: true,
+          message: "Authentication required. Please log in again.",
+        })
       }
     } else if (error.request) {
       // A kérés elküldve, de nem érkezett válasz
@@ -64,10 +70,14 @@ export const auctionApi = {
   getAuctionById: (id: number) => api.get(`/auctions/${id}`),
 
   // Új aukció létrehozása
-  createAuction: (auctionData: { title: string; description: string; startingPrice: number; endDate: string }) => api.post("/auctions", auctionData),
+  createAuction: (auctionData: { title: string; description: string; startingPrice: number; endDate: string }) =>
+    api.post("/auctions", auctionData),
 
   // Aukció frissítése
-  updateAuction: (id: number, auctionData: { title?: string; description?: string; startingPrice?: number; endDate?: string }) => api.put(`/auctions/${id}`, auctionData),
+  updateAuction: (
+    id: number,
+    auctionData: { title?: string; description?: string; startingPrice?: number; endDate?: string },
+  ) => api.put(`/auctions/${id}`, auctionData),
 
   // Aukció törlése
   deleteAuction: (id: number) => api.delete(`/auctions/${id}`),
@@ -89,8 +99,6 @@ export const auctionApi = {
 
   // Bidek lekérdezése egy aukcióhoz
   getAuctionBids: (id: number) => api.get<BidDTO[]>(`/auctions/${id}/bids`),
-
 }
 
 export default api;
-

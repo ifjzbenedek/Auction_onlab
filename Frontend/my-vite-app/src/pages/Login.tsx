@@ -9,15 +9,16 @@ const Login: React.FC = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.hash.substr(1));
-    const token = params.get("access_token");
+    const params = new URLSearchParams(window.location.hash.substr(1))
+    const token = params.get("access_token")
 
     if (token) {
-      localStorage.setItem('token', token)
-      navigate('/')
+      localStorage.setItem("token", token)
+      navigate("/")
     } else {
       const timer = setTimeout(() => {
-        window.location.href = "https://localhost:8081/oauth2/authorization/google"
+        // Use the proxy path instead of the full URL
+        window.location.href = "/oauth2/authorization/google"
       }, 1500)
       return () => clearTimeout(timer)
     }
@@ -34,4 +35,3 @@ const Login: React.FC = () => {
 }
 
 export default Login;
-

@@ -16,11 +16,15 @@ import {
   IconButton,
   Skeleton,
   Chip,
+  Alert,
+  CircularProgress,
+  Snackbar,
 } from "@mui/material"
 import { X, Heart, Clock, ChevronLeft, ChevronRight, ArrowLeft, Tag } from "lucide-react"
 import { auctionApi } from "../services/api.ts"
 import type { AuctionBasicDTO } from "../types/auction"
 import type { BidDTO } from "../types/bid"
+import axios from "axios"
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -55,6 +59,12 @@ const AuctionDetails: React.FC = () => {
   const [following, setFollowing] = useState(false)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
 
+  // New state variables for bid functionality
+  const [bidLoading, setBidLoading] = useState(false)
+  const [bidError, setBidError] = useState<string | null>(null)
+  const [bidSuccess, setBidSuccess] = useState(false)
+  const [authError, setAuthError] = useState(false)
+
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue)
   }
@@ -86,9 +96,9 @@ const AuctionDetails: React.FC = () => {
         const response = await auctionApi.getAuctionById(Number(id))
         const auctionData = response.data || {}
         // Biztosítjuk, hogy az images mindig legyen tömb
-        setAuction({ 
-          ...auctionData, 
-          images: auctionData.images || []
+        setAuction({
+          ...auctionData,
+          images: auctionData.images || [],
         })
       } catch (error) {
         console.error("Error fetching auction:", error)
@@ -115,9 +125,107 @@ const AuctionDetails: React.FC = () => {
     setBidAmount(e.target.value)
   }
 
-  const handleMakeBid = () => {
-    console.log(`Making bid of $${bidAmount}`)
-    alert(`Bid of $${bidAmount} placed successfully!`)
+  const handleMakeBid = async () => {
+    // Reset states
+    setBidError(null)
+    setBidSuccess(false)
+    setAuthError(false)
+
+    // Validate bid amount
+    if (!bidAmount || isNaN(Number(bidAmount)) || Number(bidAmount) <= 0) {
+      setBidError("Please enter a valid bid amount")
+      return
+    }
+
+    // Start loading
+    setBidLoading(true)
+
+    try {
+      // Call the API to place the bid
+      await auctionApi.placeBid(Number(id), Number(bidAmount))
+
+      // On success
+      setBidSuccess(true)
+      setBidAmount("")
+
+      // Refresh the bids list
+      const response = await auctionApi.getAuctionBids(Number(id))
+      setBids(response.data)
+
+      // Refresh auction details to get the updated lastBid
+      const auctionResponse = await auctionApi.getAuctionById(Number(id))
+      setAuction(auctionResponse.data)
+    } catch (error: unknown) {
+      // Check if it's an authentication error from our custom type
+      if (error && typeof error === "object" && "isAuthError" in error) {
+        setAuthError(true)
+        return
+      }
+
+      // Handle Axios errors
+      if (axios.isAxiosError(error)) {
+        // Check for optimistic locking failure (concurrent modification)
+        if (
+          error.response?.status === 500 &&
+          error.response.data &&
+          typeof error.response.data === "object" &&
+          "message" in error.response.data &&
+          typeof error.response.data.message === "string" &&
+          error.response.data.message.includes("ObjectOptimisticLockingFailure")
+        ) {
+          setBidError("Someone else just placed a bid. Please refresh and try again with a higher amount.")
+
+          // Refresh the bids list to show the latest bids
+          try {
+            const response = await auctionApi.getAuctionBids(Number(id))
+            setBids(response.data)
+
+            // Refresh auction details to get the updated lastBid
+            const auctionResponse = await auctionApi.getAuctionById(Number(id))
+            setAuction(auctionResponse.data)
+          } catch (refreshError) {
+            console.error("Error refreshing data after concurrent modification:", refreshError)
+          }
+          return
+        }
+
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        if (error.response) {
+          const errorMessage =
+            error.response.data &&
+            typeof error.response.data === "object" &&
+            "message" in error.response.data &&
+            typeof error.response.data.message === "string"
+              ? error.response.data.message
+              : "Failed to place bid. Please try again."
+
+          setBidError(errorMessage)
+
+          // If we get a 401 or 403, it's an auth issue
+          if (error.response.status === 401 || error.response.status === 403) {
+            setAuthError(true)
+          }
+        } else if (error.request) {
+          // The request was made but no response was received
+          setBidError("No response from server. Please check your connection.")
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          setBidError("An error occurred. Please try again.")
+        }
+      } else {
+        // For non-Axios errors
+        setBidError("An unexpected error occurred. Please try again.")
+        console.error("Non-Axios error:", error)
+      }
+    } finally {
+      setBidLoading(false)
+    }
+  }
+
+  const handleLoginRedirect = () => {
+    // Redirect to login page using the proxy
+    window.location.href = "/oauth2/authorization/google"
   }
 
   const handlePrevImage = () => {
@@ -201,6 +309,26 @@ const AuctionDetails: React.FC = () => {
 
   return (
     <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh", py: 4 }}>
+      {/* Authentication error snackbar */}
+      <Snackbar
+        open={authError}
+        autoHideDuration={6000}
+        onClose={() => setAuthError(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          severity="error"
+          onClose={() => setAuthError(false)}
+          action={
+            <Button color="inherit" size="small" onClick={handleLoginRedirect}>
+              Login
+            </Button>
+          }
+        >
+          Your session has expired. Please log in again.
+        </Alert>
+      </Snackbar>
+
       <Box sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, md: 3 } }}>
         <Button startIcon={<ArrowLeft size={18} />} sx={{ mb: 3, color: "#1e88e5" }} onClick={handleBackToList}>
           Back to auctions
@@ -384,13 +512,24 @@ const AuctionDetails: React.FC = () => {
                   startAdornment: <InputAdornment position="start">$</InputAdornment>,
                 }}
                 sx={{ mb: 2 }}
+                disabled={bidLoading}
+                error={!!bidError}
+                helperText={bidError}
               />
+
+              {bidSuccess && (
+                <Alert severity="success" sx={{ mb: 2 }}>
+                  Your bid was placed successfully!
+                </Alert>
+              )}
+
               <Box sx={{ display: "flex", gap: 2 }}>
                 <Button
                   variant="contained"
                   fullWidth
                   size="large"
                   onClick={handleMakeBid}
+                  disabled={bidLoading || !bidAmount}
                   sx={{
                     bgcolor: "#1e88e5",
                     color: "white",
@@ -404,7 +543,7 @@ const AuctionDetails: React.FC = () => {
                     boxShadow: "0 4px 10px rgba(30, 136, 229, 0.3)",
                   }}
                 >
-                  Make a bid
+                  {bidLoading ? <CircularProgress size={24} color="inherit" /> : "Make a bid"}
                 </Button>
                 <Button
                   variant="outlined"
@@ -499,7 +638,7 @@ const AuctionDetails: React.FC = () => {
             <TabPanel value={tabValue} index={2}>
               <Box sx={{ maxHeight: 400, overflowY: "auto", pr: 2 }}>
                 {bids.length > 0 ? (
-                  bids.map((bid) => ( // 🚨 Használd a 'bids' állapotot és 'bid.id'-t key-ként
+                  bids.map((bid) => (
                     <Paper key={bid.id} sx={{ p: 2, mb: 2, bgcolor: "#fff", borderRadius: 2 }}>
                       <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                         <Box>
@@ -540,4 +679,3 @@ const AuctionDetails: React.FC = () => {
 }
 
 export default AuctionDetails;
-

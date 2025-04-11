@@ -62,16 +62,13 @@ const Profile: React.FC = () => {
                 mb: 3,
                 fontWeight: "bold",
                 color: theme.palette.text.primary,
-                userSelect: "none", 
+                userSelect: "none",
               }}
             >
               Profile
             </Typography>
             <Box sx={{ mb: 2 }}>
-              <Typography
-                variant="subtitle1"
-                sx={{ color: theme.palette.text.secondary, mb: 1, userSelect: "none" }}
-              >
+              <Typography variant="subtitle1" sx={{ color: theme.palette.text.secondary, mb: 1, userSelect: "none" }}>
                 Username
               </Typography>
               <Typography
@@ -82,10 +79,7 @@ const Profile: React.FC = () => {
               </Typography>
             </Box>
             <Box sx={{ mb: 2 }}>
-              <Typography
-                variant="subtitle1"
-                sx={{ color: theme.palette.text.secondary, mb: 1, userSelect: "none" }}
-              >
+              <Typography variant="subtitle1" sx={{ color: theme.palette.text.secondary, mb: 1, userSelect: "none" }}>
                 Email
               </Typography>
               <Typography
@@ -96,10 +90,7 @@ const Profile: React.FC = () => {
               </Typography>
             </Box>
             <Box>
-              <Typography
-                variant="subtitle1"
-                sx={{ color: theme.palette.text.secondary, mb: 1, userSelect: "none" }}
-              >
+              <Typography variant="subtitle1" sx={{ color: theme.palette.text.secondary, mb: 1, userSelect: "none" }}>
                 Phone
               </Typography>
               <Typography
@@ -111,10 +102,7 @@ const Profile: React.FC = () => {
             </Box>
           </StyledPaper>
         ) : (
-          <Typography
-            variant="h6"
-            sx={{ textAlign: "center", color: theme.palette.error.main, userSelect: "none" }}
-          >
+          <Typography variant="h6" sx={{ textAlign: "center", color: theme.palette.error.main, userSelect: "none" }}>
             User not found
           </Typography>
         )}
@@ -122,5 +110,5 @@ const Profile: React.FC = () => {
     </Box>
   )
 }
- 
+
 export default Profile;
