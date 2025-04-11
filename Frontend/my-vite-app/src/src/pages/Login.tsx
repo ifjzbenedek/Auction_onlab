@@ -1,29 +1,27 @@
 "use client"
 
-import React from "react"
+import type React from "react"
 import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Box, Typography, CircularProgress } from "@mui/material"
-import { useAuth } from "../auth-context"
 
 const Login: React.FC = () => {
-  const { login } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.hash.substr(1))
-    const token = params.get("access_token")
+    const params = new URLSearchParams(window.location.hash.substr(1));
+    const token = params.get("access_token");
 
     if (token) {
-      login(token) // 🔑 Kontextus frissítése
-      navigate("/")
+      localStorage.setItem('token', token)
+      navigate('/')
     } else {
       const timer = setTimeout(() => {
         window.location.href = "https://localhost:8081/oauth2/authorization/google"
       }, 1500)
       return () => clearTimeout(timer)
     }
-  }, [login, navigate])
+  }, [navigate])
 
   return (
     <Box>
@@ -36,3 +34,4 @@ const Login: React.FC = () => {
 }
 
 export default Login;
+
