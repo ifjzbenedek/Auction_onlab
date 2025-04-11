@@ -10,6 +10,10 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler
+import org.springframework.session.web.http.CookieSerializer
+import org.springframework.session.web.http.DefaultCookieSerializer
 
 @Configuration
 @EnableWebSecurity
@@ -26,25 +30,32 @@ class SecurityConfig(private val customOAuth2UserService: CustomOAuth2UserServic
             .oauth2Login { oauth2 ->
                 oauth2
                     .userInfoEndpoint { it.userService(customOAuth2UserService) }
-                    .defaultSuccessUrl("http://localhost:5173", true)
-                    //.failureUrl("http://localhost:5173/login?error") MAJD!
+                    .successHandler(authenticationSuccessHandler())
             }
-            .sessionManagement {
-                it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .sessionManagement { session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
         return http.build()
+    }
+
+    @Bean
+    fun cookieSerializer(): CookieSerializer {
+        return DefaultCookieSerializer().apply {
+            setSameSite("None")
+            setUseSecureCookie(true)
+            setCookieName("SESSION")
+        }
     }
 
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration().apply {
             allowedOrigins = listOf(
-                "http://localhost:5173",
                 "https://localhost:5173",
-                "http://127.0.0.1:5173"
+                "http://localhost:5173"
             )
-            allowedMethods = listOf("*")
-            allowedHeaders = listOf("*")
+            allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            allowedHeaders = listOf("Authorization", "Cache-Control", "Content-Type")
             allowCredentials = true
             maxAge = 3600L
         }
@@ -54,4 +65,10 @@ class SecurityConfig(private val customOAuth2UserService: CustomOAuth2UserServic
         return source
     }
 
+    @Bean
+    fun authenticationSuccessHandler(): AuthenticationSuccessHandler {
+        val successHandler = SimpleUrlAuthenticationSuccessHandler()
+        successHandler.setDefaultTargetUrl("https://localhost:5173/auth/success")
+        return successHandler
+    }
 }

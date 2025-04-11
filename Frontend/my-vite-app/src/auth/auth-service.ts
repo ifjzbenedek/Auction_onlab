@@ -44,9 +44,21 @@ class AuthService {
     }
   }
 
+  async handlePostLogin() {
+    try {
+      const response = await authApi.get('/auth/success')
+      const token = response.data.token
+      localStorage.setItem("token", token)
+      await this.checkAuthStatus()
+      return true
+    } catch (error) {
+      console.error("Post-login error:", error)
+      return false
+    }
+  }
+  
   // Initiate OAuth2 login
   login() {
-    // Redirect to the OAuth2 login endpoint
     window.location.href = `${API_BASE_URL}/oauth2/authorization/google`
   }
 

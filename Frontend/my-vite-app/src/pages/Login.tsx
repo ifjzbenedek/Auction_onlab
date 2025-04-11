@@ -15,38 +15,22 @@ const Login = () => {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Parse query parameters
     const query = new URLSearchParams(location.search)
-    const code = query.get("code")
     const returnUrl = query.get("returnUrl") || "/"
-
-    // Handle OAuth callback if code is present
-    if (code) {
-      handleOAuthCallback(code, returnUrl)
-    }
-
-    // Check if user is already logged in
-    const token = localStorage.getItem("token")
-    if (token) {
-      // Redirect to return URL or home
-      navigate(returnUrl)
-    }
-  }, [location, navigate])
-
-  const handleOAuthCallback = async (code: string, returnUrl: string) => {
-    try {
-      const success = await authService.handleOAuthCallback(code)
+  
+    const handlePostLogin = async () => {
+      const success = await authService.handlePostLogin()
       if (success) {
         navigate(returnUrl)
       } else {
-        // Show error message
-        setError("Authentication failed. Please try again.")
+        setError("Authentication failed")
       }
-    } catch (error) {
-      console.error("OAuth callback error:", error)
-      setError("An unexpected error occurred during login.")
     }
-  }
+  
+    if (location.pathname === "/auth/success") {
+      handlePostLogin()
+    }
+  }, [location, navigate])
 
   // Add this to your login button click handler
   const handleGoogleLogin = () => {
