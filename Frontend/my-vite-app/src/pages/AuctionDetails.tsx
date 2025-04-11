@@ -16,6 +16,8 @@ import {
   IconButton,
   Skeleton,
   Chip,
+  Alert,
+  CircularProgress,
 } from "@mui/material"
 import { X, Heart, Clock, ChevronLeft, ChevronRight, ArrowLeft, Tag } from "lucide-react"
 import { auctionApi } from "../services/api.ts"
@@ -55,6 +57,50 @@ const AuctionDetails: React.FC = () => {
   const [following, setFollowing] = useState(false)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
 
+  // New state variables for bid functionality
+  const [bidLoading, setBidLoading] = useState(false)
+  const [bidError, setBidError] = useState<string | null>(null)
+  const [bidSuccess, setBidSuccess] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+// Check if user is logged in
+useEffect(() => {
+  // Ellenőrizzük a tokent
+  const token = localStorage.getItem("token")
+
+  // Ellenőrizzük, hogy a felhasználó be van-e jelentkezve
+  const checkLoginStatus = async () => {
+    try {
+      // Ha van token, akkor feltételezzük, hogy be van jelentkezve
+      if (token) {
+        setIsLoggedIn(true)
+        return
+      }
+
+      // Ha nincs token, de cookie-alapú hitelesítés van, akkor is lehet, hogy be van jelentkezve
+      // Próbáljuk meg lekérni a felhasználó adatait
+      const response = await fetch("/users/me", {
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+        },
+      })
+
+      if (response.ok) {
+        // Ha sikeres a válasz, akkor be van jelentkezve
+        setIsLoggedIn(true)
+      } else {
+        setIsLoggedIn(false)
+      }
+    } catch (error) {
+      console.error("Error checking login status:", error)
+      setIsLoggedIn(false)
+    }
+  }
+
+  checkLoginStatus()
+}, [])
+
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue)
   }
@@ -86,9 +132,9 @@ const AuctionDetails: React.FC = () => {
         const response = await auctionApi.getAuctionById(Number(id))
         const auctionData = response.data || {}
         // Biztosítjuk, hogy az images mindig legyen tömb
-        setAuction({ 
-          ...auctionData, 
-          images: auctionData.images || []
+        setAuction({
+          ...auctionData,
+          images: auctionData.images || [],
         })
       } catch (error) {
         console.error("Error fetching auction:", error)
@@ -115,9 +161,58 @@ const AuctionDetails: React.FC = () => {
     setBidAmount(e.target.value)
   }
 
-  const handleMakeBid = () => {
-    console.log(`Making bid of $${bidAmount}`)
-    alert(`Bid of $${bidAmount} placed successfully!`)
+  const handleMakeBid = async () => {
+    // Reset states
+    setBidError(null)
+    setBidSuccess(false)
+
+    // Validate bid amount
+    if (!bidAmount || isNaN(Number(bidAmount)) || Number(bidAmount) <= 0) {
+      setBidError("Please enter a valid bid amount")
+      return
+    }
+
+    // Check if user is logged in
+    if (!isLoggedIn) {
+      setBidError("You must be logged in to place a bid")
+      return
+    }
+
+    // Start loading
+    setBidLoading(true)
+
+    try {
+      // Call the API to place the bid
+      await auctionApi.placeBid(Number(id), Number(bidAmount))
+
+      // On success
+      setBidSuccess(true)
+      setBidAmount("")
+
+      // Refresh the bids list
+      const response = await auctionApi.getAuctionBids(Number(id))
+      setBids(response.data)
+
+      // Refresh auction details to get the updated lastBid
+      const auctionResponse = await auctionApi.getAuctionById(Number(id))
+      setAuction(auctionResponse.data)
+    } catch (error: unknown) {
+      // Handle different error types
+      const err = error as { response?: { data?: string }; request?: unknown }
+      if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        setBidError(err.response.data || "Failed to place bid. Please try again.")
+      } else if (err.request) {
+        // The request was made but no response was received
+        setBidError("No response from server. Please check your connection.")
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        setBidError("An error occurred. Please try again.")
+      }
+    } finally {
+      setBidLoading(false)
+    }
   }
 
   const handlePrevImage = () => {
@@ -384,13 +479,34 @@ const AuctionDetails: React.FC = () => {
                   startAdornment: <InputAdornment position="start">$</InputAdornment>,
                 }}
                 sx={{ mb: 2 }}
+                disabled={bidLoading || !isLoggedIn}
+                error={!!bidError}
+                helperText={bidError}
               />
+
+              {!isLoggedIn && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  You must be{" "}
+                  <Button size="small" onClick={() => navigate("/users/login")} sx={{ mx: 1 }}>
+                    logged in
+                  </Button>{" "}
+                  to place a bid.
+                </Alert>
+              )}
+
+              {bidSuccess && (
+                <Alert severity="success" sx={{ mb: 2 }}>
+                  Your bid was placed successfully!
+                </Alert>
+              )}
+
               <Box sx={{ display: "flex", gap: 2 }}>
                 <Button
                   variant="contained"
                   fullWidth
                   size="large"
                   onClick={handleMakeBid}
+                  disabled={bidLoading || !isLoggedIn || !bidAmount}
                   sx={{
                     bgcolor: "#1e88e5",
                     color: "white",
@@ -404,7 +520,7 @@ const AuctionDetails: React.FC = () => {
                     boxShadow: "0 4px 10px rgba(30, 136, 229, 0.3)",
                   }}
                 >
-                  Make a bid
+                  {bidLoading ? <CircularProgress size={24} color="inherit" /> : "Make a bid"}
                 </Button>
                 <Button
                   variant="outlined"
@@ -499,34 +615,38 @@ const AuctionDetails: React.FC = () => {
             <TabPanel value={tabValue} index={2}>
               <Box sx={{ maxHeight: 400, overflowY: "auto", pr: 2 }}>
                 {bids.length > 0 ? (
-                  bids.map((bid) => ( // 🚨 Használd a 'bids' állapotot és 'bid.id'-t key-ként
-                    <Paper key={bid.id} sx={{ p: 2, mb: 2, bgcolor: "#fff", borderRadius: 2 }}>
-                      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                        <Box>
-                          <Typography variant="body1" fontWeight="medium">
-                            {bid.bidder.userName}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {new Date(bid.timeStamp).toLocaleString("hu-HU", {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </Typography>
+                  bids.map(
+                    (
+                      bid, 
+                    ) => (
+                      <Paper key={bid.id} sx={{ p: 2, mb: 2, bgcolor: "#fff", borderRadius: 2 }}>
+                        <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                          <Box>
+                            <Typography variant="body1" fontWeight="medium">
+                              {bid.bidder.userName}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {new Date(bid.timeStamp).toLocaleString("hu-HU", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ textAlign: "right" }}>
+                            <Typography variant="body1" color="#1e88e5" fontWeight="bold">
+                              ${bid.value.toFixed(2)}
+                            </Typography>
+                            {bid.isWinning && (
+                              <Chip label="Winning" size="small" sx={{ bgcolor: "#00c853", color: "white", mt: 0.5 }} />
+                            )}
+                          </Box>
                         </Box>
-                        <Box sx={{ textAlign: "right" }}>
-                          <Typography variant="body1" color="#1e88e5" fontWeight="bold">
-                            ${bid.value.toFixed(2)}
-                          </Typography>
-                          {bid.isWinning && (
-                            <Chip label="Winning" size="small" sx={{ bgcolor: "#00c853", color: "white", mt: 0.5 }} />
-                          )}
-                        </Box>
-                      </Box>
-                    </Paper>
-                  ))
+                      </Paper>
+                    ),
+                  )
                 ) : (
                   <Typography color="text.secondary">No bids yet</Typography>
                 )}
@@ -540,4 +660,3 @@ const AuctionDetails: React.FC = () => {
 }
 
 export default AuctionDetails;
-
