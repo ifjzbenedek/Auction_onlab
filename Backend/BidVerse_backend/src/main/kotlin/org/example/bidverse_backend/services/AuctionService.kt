@@ -151,11 +151,12 @@ class AuctionService(
 
         val currentWinningBid = bids.find { it.isWinning }
 
-        if (currentWinningBid != null && bidValue <= currentWinningBid.value) {
+        if (currentWinningBid != null && bidValue <= (currentWinningBid.value + (auction.minStep?.toBigDecimal() ?: BigDecimal.ZERO))) {
             throw InvalidBidException("Bid amount must be higher than the current highest bid.")
         }
 
-        // Jelenlegi nyerőt átállítjuk false-ra
+
+            // Jelenlegi nyerőt átállítjuk false-ra
         currentWinningBid?.let {
             it.isWinning = false
             bidRepository.save(it)
