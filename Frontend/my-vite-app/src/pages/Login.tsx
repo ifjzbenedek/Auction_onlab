@@ -1,35 +1,89 @@
 "use client"
 
 import type React from "react"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Box, Typography, CircularProgress } from "@mui/material"
+import { Box, Typography, Button, Paper, Alert, CircularProgress } from "@mui/material"
+import { authService } from "../services/auth-service"
 
 const Login: React.FC = () => {
   const navigate = useNavigate()
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.hash.substr(1))
-    const token = params.get("access_token")
+    // Process authentication callback if present
+    const { success, error } = authService.handleAuthCallback()
 
-    if (token) {
-      localStorage.setItem("token", token)
+    if (success) {
       navigate("/")
-    } else {
-      const timer = setTimeout(() => {
-        // Use the proxy path instead of the full URL
-        window.location.href = "/oauth2/authorization/google"
-      }, 1500)
-      return () => clearTimeout(timer)
+    } else if (error) {
+      setError(`Authentication error: ${error}`)
     }
   }, [navigate])
 
+  const handleGoogleLogin = () => {
+    setLoading(true)
+    try {
+      authService.loginWithGoogle()
+    } catch (error) {
+      setLoading(false)
+      setError("Failed to initiate login process")
+    }
+  }
+
   return (
-    <Box>
-      <Box sx={{ maxWidth: 1200, mx: "auto", p: 2, textAlign: "center", mt: 4 }}>
-        <CircularProgress sx={{ mb: 2 }} />
-        <Typography variant="h6">Redirecting to Google Login...</Typography>
-      </Box>
+    <Box
+      sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", bgcolor: "#f8f9fa" }}
+    >
+      <Paper
+        sx={{
+          maxWidth: 400,
+          width: "100%",
+          p: 4,
+          textAlign: "center",
+          borderRadius: 2,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+        }}
+      >
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h4" fontWeight="bold" sx={{ color: "#2c3e50", mb: 1 }}>
+            BidVerse
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Sign in to access your auctions
+          </Typography>
+        </Box>
+
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+
+        <Button
+          variant="contained"
+          fullWidth
+          size="large"
+          onClick={handleGoogleLogin}
+          disabled={loading}
+          sx={{
+            bgcolor: "#4285F4",
+            color: "white",
+            py: 1.5,
+            mb: 2,
+            "&:hover": {
+              bgcolor: "#3367D6",
+            },
+          }}
+        >
+          {loading ? <CircularProgress size={24} color="inherit" /> : "Sign in with Google"}
+        </Button>
+
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+          By signing in, you agree to our Terms of Service and Privacy Policy
+        </Typography>
+      </Paper>
     </Box>
   )
 }

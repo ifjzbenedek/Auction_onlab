@@ -25,6 +25,7 @@ class SecurityConfig(private val customOAuth2UserService: CustomOAuth2UserServic
                     // Nyilvános végpontok
                     .requestMatchers(
                         "/",
+                        "/users/me",
                         "/api-docs/**",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
@@ -37,7 +38,8 @@ class SecurityConfig(private val customOAuth2UserService: CustomOAuth2UserServic
                         "/categories",
                         "/api/auctions",          // Engedélyezd az összes aukció végpontot
                         "/api/auctions/**",
-                        "/api/categories/**"
+                        "/api/categories/**",
+                        "/login/oauth2/**"
                     ).permitAll()
                     // Minden más végpont hitelesítést igényel
                     .anyRequest().authenticated()

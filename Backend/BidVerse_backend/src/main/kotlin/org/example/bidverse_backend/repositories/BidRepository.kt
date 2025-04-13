@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface BidRepository : JpaRepository<Bid, Int> {
     fun findByBidderId(userId: Int): List<Bid>
     fun findByAuctionId(auctionId: Int): List<Bid>
+
+
 }

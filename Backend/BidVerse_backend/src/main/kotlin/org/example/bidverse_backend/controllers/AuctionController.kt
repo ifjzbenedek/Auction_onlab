@@ -119,28 +119,24 @@ class AuctionController(private val auctionService: AuctionService) {
         }
     }
 
-    @RestController
-    @RequestMapping("/auctions")
-    class AuctionController(private val auctionService: AuctionService) {
-
-        @PostMapping("/{auctionId}/bids")
-        fun placeBid(
-            @PathVariable auctionId: Int,
-            @RequestBody bidRequest: BidRequestDTO
-        ): ResponseEntity<Any> {
-            return try {
-                val bid = auctionService.placeBid(auctionId, bidRequest.amount)
-                ResponseEntity.status(HttpStatus.CREATED).body(bid) // 201 Created
-            } catch (e: AuctionNotFoundException) {
-                ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message) // 404 Not Found
-            } catch (e: InvalidAuctionDataException) {
-                ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message) // 400 Bad Request
-            } catch (e: InvalidBidException) {
-                ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message) // 400 Bad Request
-            } catch (e: UserNotFoundException) {
-                ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message) // 404 Not Found
-            }
+    @PostMapping("/{auctionId}/bids")
+    fun placeBid(
+        @PathVariable auctionId: Int,
+        @RequestBody bidRequest: BidRequestDTO
+    ): ResponseEntity<Any> {
+        return try {
+            val bid = auctionService.placeBid(auctionId, bidRequest.amount)
+            ResponseEntity.status(HttpStatus.CREATED).body(bid) // 201 Created
+        } catch (e: AuctionNotFoundException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message) // 404 Not Found
+        } catch (e: InvalidAuctionDataException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message) // 400 Bad Request
+        } catch (e: InvalidBidException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message) // 400 Bad Request
+        } catch (e: UserNotFoundException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message) // 404 Not Found
         }
+
     }
 
 }

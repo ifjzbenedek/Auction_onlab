@@ -126,106 +126,68 @@ const AuctionDetails: React.FC = () => {
   }
 
   const handleMakeBid = async () => {
-    // Reset states
     setBidError(null)
     setBidSuccess(false)
     setAuthError(false)
 
-    // Validate bid amount
     if (!bidAmount || isNaN(Number(bidAmount)) || Number(bidAmount) <= 0) {
-      setBidError("Please enter a valid bid amount")
+      setBidError("Kérjük, adj meg egy érvényes összeget")
       return
     }
 
-    // Start loading
     setBidLoading(true)
+    let retries = 3 // Maximum 3 próbálkozás
 
-    try {
-      // Call the API to place the bid
-      await auctionApi.placeBid(Number(id), Number(bidAmount))
+    while (retries > 0) {
+      try {
+        await auctionApi.placeBid(Number(id), Number(bidAmount))
 
-      // On success
-      setBidSuccess(true)
-      setBidAmount("")
+        // Sikeres licit esetén:
+        setBidSuccess(true)
+        setBidAmount("")
 
-      // Refresh the bids list
-      const response = await auctionApi.getAuctionBids(Number(id))
-      setBids(response.data)
+        // Frissítsd az aukció adatait ÉS a verziószámot
+        const [auctionResponse, bidsResponse] = await Promise.all([
+          auctionApi.getAuctionById(Number(id)),
+          auctionApi.getAuctionBids(Number(id)),
+        ])
 
-      // Refresh auction details to get the updated lastBid
-      const auctionResponse = await auctionApi.getAuctionById(Number(id))
-      setAuction(auctionResponse.data)
-    } catch (error: unknown) {
-      // Check if it's an authentication error from our custom type
-      if (error && typeof error === "object" && "isAuthError" in error) {
-        setAuthError(true)
-        return
-      }
+        setAuction(auctionResponse.data)
+        setBids(bidsResponse.data)
 
-      // Handle Axios errors
-      if (axios.isAxiosError(error)) {
-        // Check for optimistic locking failure (concurrent modification)
-        if (
-          error.response?.status === 500 &&
-          error.response.data &&
-          typeof error.response.data === "object" &&
-          "message" in error.response.data &&
-          typeof error.response.data.message === "string" &&
-          error.response.data.message.includes("ObjectOptimisticLockingFailure")
-        ) {
-          setBidError("Someone else just placed a bid. Please refresh and try again with a higher amount.")
+        retries = 0 // Kilépés a ciklusból
+      } catch (error: unknown) {
+        retries--
 
-          // Refresh the bids list to show the latest bids
-          try {
-            const response = await auctionApi.getAuctionBids(Number(id))
-            setBids(response.data)
-
-            // Refresh auction details to get the updated lastBid
-            const auctionResponse = await auctionApi.getAuctionById(Number(id))
-            setAuction(auctionResponse.data)
-          } catch (refreshError) {
-            console.error("Error refreshing data after concurrent modification:", refreshError)
+        if (axios.isAxiosError(error)) {
+          if (error.response?.status === 401) {
+            setAuthError(true) // Triggers the login Snackbar
+            return
           }
-          return
         }
+        // Optimista zárolási hiba kezelése
+        if (axios.isAxiosError(error) && error.response?.data?.message?.includes("ObjectOptimisticLockingFailure")) {
+          // Frissítsd az adatokat új próbálkozás előtt
+          const auctionResponse = await auctionApi.getAuctionById(Number(id))
+          setAuction(auctionResponse.data)
 
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        if (error.response) {
-          const errorMessage =
-            error.response.data &&
-            typeof error.response.data === "object" &&
-            "message" in error.response.data &&
-            typeof error.response.data.message === "string"
-              ? error.response.data.message
-              : "Failed to place bid. Please try again."
+          setBidError("Valaki más licitált. Frissítjük az adatokat...")
+          await new Promise((resolve) => setTimeout(resolve, 1000)) // Várakozás
 
-          setBidError(errorMessage)
-
-          // If we get a 401 or 403, it's an auth issue
-          if (error.response.status === 401 || error.response.status === 403) {
-            setAuthError(true)
+          if (retries === 0) {
+            setBidError("Túl sok ütközés. Kérlek, frissítsd az oldalt!")
           }
-        } else if (error.request) {
-          // The request was made but no response was received
-          setBidError("No response from server. Please check your connection.")
         } else {
-          // Something happened in setting up the request that triggered an Error
-          setBidError("An error occurred. Please try again.")
+          break
         }
-      } else {
-        // For non-Axios errors
-        setBidError("An unexpected error occurred. Please try again.")
-        console.error("Non-Axios error:", error)
       }
-    } finally {
-      setBidLoading(false)
     }
+    setBidLoading(false)
   }
 
   const handleLoginRedirect = () => {
-    // Redirect to login page using the proxy
-    window.location.href = "/oauth2/authorization/google"
+    // Redirect to login page
+    navigate("/users/login")
   }
 
   const handlePrevImage = () => {

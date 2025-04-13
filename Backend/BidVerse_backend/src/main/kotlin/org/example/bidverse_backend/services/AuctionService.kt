@@ -1,5 +1,6 @@
 package org.example.bidverse_backend.services
 
+import jakarta.transaction.Transactional
 import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionBasicDTO
 import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionCardDTO
 import org.example.bidverse_backend.DTOs.BidDTOs.BidBasicDTO
@@ -134,6 +135,7 @@ class AuctionService(
         return bidRepository.findByAuctionId(auctionId).map { it.toBidBasicDTO() }
     }
 
+    @Transactional
     fun placeBid(auctionId: Int, bidValue: BigDecimal): Bid {
         val auction = auctionRepository.findById(auctionId)
             .orElseThrow { AuctionNotFoundException("Auction not found.") }
