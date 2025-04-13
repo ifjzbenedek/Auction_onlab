@@ -42,3 +42,6 @@ v0.dev segítségével elkészítettem a korábban JustInMind-ban elkészített 
 Erre a hétre a leírás automatizált generálása és az eddig mock-olt backend kérések megvalósítása volt.
 Sikerült megvalósítani a kategóriák elérését, az összes aukció megjelenítését, a szűrést (kategóriák és státusz szerint), illetve az aukciós kártyákra törénő kattintás esetén az adott kártya részletes oldalának megnyitását is. Közben rájöttem, hogy még szükségem lesz pár DTO-ra, illetve vannak meglévő DTO-k, amik rosszak (mert vannak entity tagváltozóik, így a json formátumú üzeneteik rekurzívan egymásban vannak). Ezeket javítottam.
 A leírás generálóval még nem tudtam foglalkozni sajnos.
+
+9.hét
+Elkészítettem az adott aukcióhoz tartozó bid-ek lekérdezését frontendről. Ezután az authorizációs problémát próbáltam megoldani, mert attól még, hogy egy felhasználó autentikálva lett google segítségével, később ezt nem jegyezte meg és az azt igénylő (authentikált felhasználóhoz kötött) kérések nem működtek (a backendben mindig AnonymousUser-t kapott a felhasználó beazonosító függvény). Ezt sikerült megoldani, viszont a Bid-elés még mindig nem működik. Debug-olásból arra következtetek, hogy valami ugyanahhoz a táblához történő egyszerre hozzáférs lehet a gond, még dolgozok rajta.
