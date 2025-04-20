@@ -11,7 +11,7 @@ class Auction(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "itemId", nullable = false)
-    var id: Int? = 0,
+    var id: Int? = null,
 
     @ManyToOne
     @JoinColumn(name= "ownerId", nullable = false)
@@ -61,5 +61,8 @@ class Auction(
     var minStep: Int?,
 
     @Column(nullable = false)
-    var condition: Int
+    var condition: Int,
+
+    @Version
+    val version: Long = 0
 )

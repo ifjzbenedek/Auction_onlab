@@ -1,6 +1,6 @@
 package org.example.bidverse_backend.services
 
-import jakarta.transaction.Transactional
+import org.springframework.transaction.annotation.Transactional
 import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionBasicDTO
 import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionCardDTO
 import org.example.bidverse_backend.DTOs.BidDTOs.BidBasicDTO
@@ -8,13 +8,19 @@ import org.example.bidverse_backend.DTOs.EntityToDTO.toAuctionBasicDTO
 import org.example.bidverse_backend.DTOs.EntityToDTO.toAuctionCardDTO
 import org.example.bidverse_backend.DTOs.EntityToDTO.toBidBasicDTO
 import org.example.bidverse_backend.Exceptions.*
+import org.example.bidverse_backend.RepositoryMonitoringAspect
 import org.example.bidverse_backend.Security.SecurityUtils
 import org.example.bidverse_backend.entities.Auction
 import org.example.bidverse_backend.entities.Bid
 import org.example.bidverse_backend.repositories.*
+import org.springframework.dao.OptimisticLockingFailureException
+import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Isolation
 import java.math.BigDecimal
 import java.time.LocalDateTime
+import org.springframework.retry.annotation.Backoff
+
 
 @Service
 class AuctionService(
@@ -23,7 +29,7 @@ class AuctionService(
     private val bidRepository: BidRepository,
     private val categoryRepository: CategoryRepository,
     private val watchRepository: WatchRepository,
-    private val securityUtils: SecurityUtils
+    private val securityUtils: SecurityUtils,
 
 ) {
     fun getAllAuctions(statuses: String?, categories: String?): List<AuctionCardDTO> {
@@ -135,37 +141,47 @@ class AuctionService(
         return bidRepository.findByAuctionId(auctionId).map { it.toBidBasicDTO() }
     }
 
+
+    @Retryable(
+        value = [OptimisticLockingFailureException::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 100)
+    )
     @Transactional
     fun placeBid(auctionId: Int, bidValue: BigDecimal): Bid {
-        val auction = auctionRepository.findById(auctionId)
-            .orElseThrow { AuctionNotFoundException("Auction not found.") }
+
+        // 1. Pesszimista zárolás az aukcióra
+        val auction = auctionRepository.findAuctionWithLock(auctionId)
+            ?: throw AuctionNotFoundException("Auction not found.")
 
         if (auction.status != "ACTIVE") {
             throw InvalidAuctionDataException("Auction is not active.")
         }
 
+        // 2. Pesszimista zárolás a jelenlegi nyerő licitre
+        val currentWinningBid = bidRepository.findCurrentWinningBidWithLock(auctionId)
+
+        // 3. Validációk
         val currentUserId = securityUtils.getCurrentUserId()
         if (auction.owner.id == currentUserId) {
             throw InvalidBidException("You cannot bid on your own auction.")
         }
 
-        val bids = bidRepository.findByAuctionId(auctionId)
+        val minStep = auction.minStep?.toBigDecimal() ?: BigDecimal.ZERO
+        val requiredMinimum = currentWinningBid?.value?.add(minStep) ?: auction.minimumPrice
 
-        val currentWinningBid = bids.find { it.isWinning }
-
-        if (currentWinningBid != null && bidValue <= (currentWinningBid.value + (auction.minStep?.toBigDecimal() ?: BigDecimal.ZERO))) {
-            throw InvalidBidException("Bid amount must be higher than the current highest bid.")
+        if (bidValue <= requiredMinimum) {
+            throw InvalidBidException("Bid amount must be higher than ${requiredMinimum}.")
         }
 
-
-            // Jelenlegi nyerőt átállítjuk false-ra
+        // 4. Jelenlegi nyerő frissítése (optimista zárolás használatával)
         currentWinningBid?.let {
             it.isWinning = false
-            bidRepository.save(it)
+            // Itt NEM kell explicit save, mert a tranzakció végén automatikusan flush lesz
         }
 
-        val bidder = userRepository.findById(currentUserId)
-            .orElseThrow { UserNotFoundException("User not found.") }
+        // 5. Új licit létrehozása
+        val bidder = userRepository.getReferenceById(currentUserId)
 
         val newBid = Bid(
             auction = auction,
@@ -175,8 +191,8 @@ class AuctionService(
             isWinning = true
         )
 
+        // 6. Aukció frissítése
         auction.lastBid = bidValue
-        auctionRepository.save(auction)
 
         return bidRepository.save(newBid)
     }

@@ -51,7 +51,7 @@ function TabPanel(props: TabPanelProps) {
 const AuctionDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [auction, setAuction] = useState<AuctionBasicDTO>()
+  const [auction, setAuction] = useState<AuctionBasicDTO | null>(null);
   const [bids, setBids] = useState<BidDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [tabValue, setTabValue] = useState(0)
@@ -126,68 +126,66 @@ const AuctionDetails: React.FC = () => {
   }
 
   const handleMakeBid = async () => {
-    setBidError(null)
-    setBidSuccess(false)
-    setAuthError(false)
-
+    setBidError(null);
+    setBidSuccess(false);
+    setAuthError(false);
+  
     if (!bidAmount || isNaN(Number(bidAmount)) || Number(bidAmount) <= 0) {
-      setBidError("Kérjük, adj meg egy érvényes összeget")
-      return
+      setBidError("Kérjük, adj meg egy érvényes összeget");
+      return;
     }
-
-    setBidLoading(true)
-    let retries = 3 // Maximum 3 próbálkozás
-
+  
+    setBidLoading(true);
+    let retries = 3; // Maximum 3 próbálkozás
+  
     while (retries > 0) {
       try {
-        await auctionApi.placeBid(Number(id), Number(bidAmount))
-
+        await auctionApi.placeBid(Number(id), Number(bidAmount));
+        
         // Sikeres licit esetén:
-        setBidSuccess(true)
-        setBidAmount("")
-
+        setBidSuccess(true);
+        setBidAmount("");
+  
         // Frissítsd az aukció adatait ÉS a verziószámot
         const [auctionResponse, bidsResponse] = await Promise.all([
           auctionApi.getAuctionById(Number(id)),
-          auctionApi.getAuctionBids(Number(id)),
-        ])
-
-        setAuction(auctionResponse.data)
-        setBids(bidsResponse.data)
-
-        retries = 0 // Kilépés a ciklusból
+          auctionApi.getAuctionBids(Number(id))
+        ]);
+        
+        setAuction(auctionResponse.data);
+        setBids(bidsResponse.data);
+        
+        retries = 0; // Kilépés a ciklusból
       } catch (error: unknown) {
-        retries--
-
-        if (axios.isAxiosError(error)) {
-          if (error.response?.status === 401) {
-            setAuthError(true) // Triggers the login Snackbar
-            return
-          }
-        }
+        retries--;
+  
         // Optimista zárolási hiba kezelése
-        if (axios.isAxiosError(error) && error.response?.data?.message?.includes("ObjectOptimisticLockingFailure")) {
+        if (
+          axios.isAxiosError(error) &&
+          error.response?.data?.message?.includes("ObjectOptimisticLockingFailure")
+        ) {
           // Frissítsd az adatokat új próbálkozás előtt
-          const auctionResponse = await auctionApi.getAuctionById(Number(id))
-          setAuction(auctionResponse.data)
-
-          setBidError("Valaki más licitált. Frissítjük az adatokat...")
-          await new Promise((resolve) => setTimeout(resolve, 1000)) // Várakozás
-
+          const auctionResponse = await auctionApi.getAuctionById(Number(id));
+          setAuction(auctionResponse.data);
+          
+          setBidError("Valaki más licitált. Frissítjük az adatokat...");
+          await new Promise((resolve) => setTimeout(resolve, 1000)); // Várakozás
+          
           if (retries === 0) {
-            setBidError("Túl sok ütközés. Kérlek, frissítsd az oldalt!")
+            setBidError("Túl sok ütközés. Kérlek, frissítsd az oldalt!");
           }
-        } else {
-          break
+        } 
+        else {
+          break;
         }
       }
     }
-    setBidLoading(false)
-  }
+    setBidLoading(false);
+  };
 
   const handleLoginRedirect = () => {
-    // Redirect to login page
-    navigate("/users/login")
+    // Redirect to login page using the proxy
+    window.location.href = "/oauth2/authorization/google"
   }
 
   const handlePrevImage = () => {
@@ -313,7 +311,7 @@ const AuctionDetails: React.FC = () => {
                   position: "relative",
                 }}
               >
-                {auction && auction.images.length > 0 ? (
+                {auction?.images?.length > 0 ? (
                   <Box
                     component="img"
                     src={auction.images[activeImageIndex]}
@@ -380,7 +378,7 @@ const AuctionDetails: React.FC = () => {
 
               {/* Thumbnails */}
               <Box sx={{ display: "flex", gap: 1, mt: 1, justifyContent: "center" }}>
-                {auction?.images.map((image, index) => (
+              {auction?.images?.map((image, index) => (
                   <Box
                     key={index}
                     component="img"
@@ -599,7 +597,7 @@ const AuctionDetails: React.FC = () => {
             </TabPanel>
             <TabPanel value={tabValue} index={2}>
               <Box sx={{ maxHeight: 400, overflowY: "auto", pr: 2 }}>
-                {bids.length > 0 ? (
+              {Array.isArray(bids) && bids.length > 0 ? (
                   bids.map((bid) => (
                     <Paper key={bid.id} sx={{ p: 2, mb: 2, bgcolor: "#fff", borderRadius: 2 }}>
                       <Box sx={{ display: "flex", justifyContent: "space-between" }}>

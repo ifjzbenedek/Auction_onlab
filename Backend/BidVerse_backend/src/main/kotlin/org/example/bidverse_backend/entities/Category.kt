@@ -8,7 +8,7 @@ class Category(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "categoryId", nullable = false)
-    var id: Int? = 0,
+    var id: Int? = null,
 
     @Column(nullable = false, length = 50)
     var categoryName: String,
