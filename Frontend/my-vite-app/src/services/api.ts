@@ -1,5 +1,6 @@
 import axios from "axios"
 import type { BidDTO } from "../types/bid"
+import { AuctionBasicDTO } from "../types/auction"
 
 // API alapbeállítások
 // No need for full URL when using proxy
@@ -70,8 +71,7 @@ export const auctionApi = {
   getAuctionById: (id: number) => api.get(`/auctions/${id}`),
 
   // Új aukció létrehozása
-  createAuction: (auctionData: { title: string; description: string; startingPrice: number; endDate: string }) =>
-    api.post("/auctions", auctionData),
+  createAuction: (auctionData: AuctionBasicDTO) => api.post("/auctions", auctionData),
 
   // Aukció frissítése
   updateAuction: (
