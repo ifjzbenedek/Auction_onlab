@@ -17,10 +17,15 @@ import {
   alpha,
   Chip,
   Divider,
+  CircularProgress,
+  Snackbar,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import { ArrowLeft, Check, Clock, Tag, Settings, UploadIcon, AlertCircle } from "lucide-react"
 import AuctionDetailsForm from "../components/AuctionDetailsForm"
+import type { AuctionBasicDTO, AuctionDetailsDTO } from "../types/auction"
+import { auctionApi } from "../services/api"
+import axios from "axios"
 
 // Styled components
 const PageContainer = styled(Box)(({ theme }) => ({
@@ -95,15 +100,26 @@ const StepIcon = styled(Box)(({ theme }) => ({
 const SetDetailsAuction: React.FC = () => {
   const navigate = useNavigate()
   const theme = useTheme()
-  const [auctionType, setAuctionType] = useState<"fixed" | "extended" | null>(null)
+  const [auctionType, setAuctionType] = useState<"FIXED" | "EXTENDED" | null>(null)
   const [formValid, setFormValid] = useState(false)
-  const [detailsData, setDetailsData] = useState({
+  const [detailsData, setDetailsData] = useState<AuctionDetailsDTO>({
     name: "",
     status: "Brand new",
     condition: 50,
     category: "",
+    minimumPrice: 0,
+    minStep: 0,
+    expiredDate: "",
+    extraTime: "",
   })
   const [hasUploadData, setHasUploadData] = useState(false)
+  const [uploadData, setUploadData] = useState<{ description: string; images: string[] }>({
+    description: "",
+    images: [],
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   useEffect(() => {
     // Check if we have data from step 1
@@ -113,72 +129,139 @@ const SetDetailsAuction: React.FC = () => {
       navigate("/upload-auction")
       return
     }
-    setHasUploadData(true)
+
+    try {
+      const parsedData = JSON.parse(savedData)
+      setUploadData(parsedData)
+      setHasUploadData(true)
+    } catch (e) {
+      console.error("Error parsing saved auction data", e)
+      navigate("/upload-auction")
+    }
   }, [navigate])
 
-  const handleAuctionTypeSelect = (type: "fixed" | "extended") => {
+  const handleAuctionTypeSelect = (type: "FIXED" | "EXTENDED") => {
     setAuctionType(type)
+    validateForm({ ...detailsData }, type)
   }
 
-  const handleDetailsChange = (data: DetailsData) => {
+  const handleDetailsChange = (data: AuctionDetailsDTO) => {
     setDetailsData(data)
-    validateForm(data)
+    validateForm(data, auctionType)
   }
 
-  interface DetailsData {
-    name: string;
-    status: string;
-    condition: number;
-    category: string;
-  }
-
-  const validateForm = (data: DetailsData) => {
+  const validateForm = (data: AuctionDetailsDTO, type: "FIXED" | "EXTENDED" | null) => {
     const isValid =
       data.name.trim().length > 0 &&
       data.status.trim().length > 0 &&
       data.category.trim().length > 0 &&
-      auctionType !== null
+      type !== null &&
+      data.minimumPrice > 0 &&
+      data.minStep > 0 &&
+      data.expiredDate.trim().length > 0 &&
+      (type !== "EXTENDED" || (data.extraTime && Number(data.extraTime) > 0))
 
-    setFormValid(isValid)
+    setFormValid(Boolean(isValid))
   }
 
   const handleBackToUpload = () => {
     navigate("/upload-auction")
   }
 
-  const handleUploadAuction = () => {
-    // Get upload data from session storage
-    const uploadDataStr = sessionStorage.getItem("auctionUploadData")
-    let uploadData = { description: "", imageCount: 0 }
-
-    if (uploadDataStr) {
-      try {
-        uploadData = JSON.parse(uploadDataStr)
-      } catch (e) {
-        console.error("Error parsing saved auction data", e)
+  const handleUploadAuction = async () => {
+    try {
+      // 1. Get current user
+      const userResponse = await axios.get("/users/me");
+      const currentUser = userResponse.data;
+  
+      // 2. Get category details
+      const categoriesResponse = await auctionApi.getCategories();
+      const selectedCategory = categoriesResponse.data.find(
+        (cat: { categoryName: string }) => cat.categoryName.toLowerCase() === detailsData.category.toLowerCase()
+      );
+  
+      if (!selectedCategory) {
+        throw new Error("Selected category not found");
       }
+  
+      // 3. Prepare dates
+      const expiredDate = new Date(detailsData.expiredDate).toISOString();
+      const extraTime = auctionType === "EXTENDED" && detailsData.extraTime
+        ? new Date(detailsData.extraTime).toISOString()
+        : null;
+  
+      // 4. Create payload
+      const auctionData: AuctionBasicDTO = {
+        user: currentUser,
+        category: selectedCategory,
+        itemName: detailsData.name,
+        minimumPrice: detailsData.minimumPrice,
+        status: "PENDING", // Default status
+        expiredDate: expiredDate,
+        description: uploadData.description,
+        type: auctionType as "FIXED" | "EXTENDED",
+        extraTime: extraTime,
+        itemState: detailsData.status,
+        tags: null,
+        minStep: detailsData.minStep,
+        condition: detailsData.condition
+      };
+
+      // Call the API to create the auction
+      await auctionApi.createAuction(auctionData)
+
+      // Show success message
+      setSuccessMessage("Auction created successfully!")
+
+      // Clear session storage after submission
+      sessionStorage.removeItem("auctionUploadData")
+
+      // Navigate back to home page after successful upload
+      setTimeout(() => {
+        navigate("/")
+      }, 1500)
+    } catch (err: unknown) {
+      console.error("Error creating auction:", err)
+
+      // Check if this is an authentication error
+      if (typeof err === "object" && err !== null && "isAuthError" in err && (err as { isAuthError?: boolean }).isAuthError) {
+        setError("Authentication required. Please log in to create an auction.")
+        // The redirect will be handled by the API interceptor
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to create auction. Please try again.")
+      }
+    } finally {
+      setIsSubmitting(false)
     }
+  }
 
-    // In a real app, this would send the auction data to the backend
-    console.log("Uploading auction:", {
-      uploadData,
-      auctionType,
-      details: detailsData,
-    })
-
-    // Clear session storage after submission
-    sessionStorage.removeItem("auctionUploadData")
-
-    // Navigate back to home page after successful upload
-    navigate("/")
+  const handleCloseSnackbar = () => {
+    setError(null)
+    setSuccessMessage(null)
   }
 
   if (!hasUploadData) {
-    return null // Will redirect in useEffect
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+        <CircularProgress />
+      </Box>
+    )
   }
 
   return (
     <PageContainer>
+      <Snackbar open={!!error} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: "100%" }}>
+          {error}
+        </Alert>
+      </Snackbar>
+
+      <Snackbar open={!!successMessage} autoHideDuration={3000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: "100%" }}>
+          {successMessage}
+        </Alert>
+      </Snackbar>
+
       <Box sx={{ maxWidth: 1000, mx: "auto", px: { xs: 2, md: 4 }, py: 4 }}>
         <Box sx={{ mb: 4, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Typography variant="h4" fontWeight="bold" color="text.primary">
@@ -219,7 +302,6 @@ const SetDetailsAuction: React.FC = () => {
           </Step>
         </Stepper>
 
-        {/* Auction Type Selection */}
         <StepContainer>
           <StepIcon>
             <Clock size={80} />
@@ -230,12 +312,12 @@ const SetDetailsAuction: React.FC = () => {
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <AuctionTypeCard
-                elevation={auctionType === "fixed" ? 4 : 1}
-                onClick={() => handleAuctionTypeSelect("fixed")}
+                elevation={auctionType === "FIXED" ? 4 : 1}
+                onClick={() => handleAuctionTypeSelect("FIXED")}
                 sx={{
-                  border: auctionType === "fixed" ? `2px solid ${theme.palette.primary.main}` : "none",
+                  border: auctionType === "FIXED" ? `2px solid ${theme.palette.primary.main}` : "none",
                   backgroundColor:
-                    auctionType === "fixed" ? alpha(theme.palette.primary.main, 0.05) : theme.palette.background.paper,
+                    auctionType === "FIXED" ? alpha(theme.palette.primary.main, 0.05) : theme.palette.background.paper,
                 }}
               >
                 <Box
@@ -259,7 +341,7 @@ const SetDetailsAuction: React.FC = () => {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   Auction ends at a specific time regardless of bidding activity
                 </Typography>
-                {auctionType === "fixed" && (
+                {auctionType === "FIXED" && (
                   <Chip
                     icon={<Check size={16} />}
                     label="Selected"
@@ -273,12 +355,12 @@ const SetDetailsAuction: React.FC = () => {
 
             <Grid item xs={12} md={6}>
               <AuctionTypeCard
-                elevation={auctionType === "extended" ? 4 : 1}
-                onClick={() => handleAuctionTypeSelect("extended")}
+                elevation={auctionType === "EXTENDED" ? 4 : 1}
+                onClick={() => handleAuctionTypeSelect("EXTENDED")}
                 sx={{
-                  border: auctionType === "extended" ? `2px solid ${theme.palette.primary.main}` : "none",
+                  border: auctionType === "EXTENDED" ? `2px solid ${theme.palette.primary.main}` : "none",
                   backgroundColor:
-                    auctionType === "extended"
+                    auctionType === "EXTENDED"
                       ? alpha(theme.palette.primary.main, 0.05)
                       : theme.palette.background.paper,
                 }}
@@ -304,7 +386,7 @@ const SetDetailsAuction: React.FC = () => {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   Time extends automatically when bids are placed near the end
                 </Typography>
-                {auctionType === "extended" && (
+                {auctionType === "EXTENDED" && (
                   <Chip
                     icon={<Check size={16} />}
                     label="Selected"
@@ -341,7 +423,7 @@ const SetDetailsAuction: React.FC = () => {
 
           <StepTitle variant="h5">Item Details</StepTitle>
 
-          <AuctionDetailsForm onChange={handleDetailsChange} />
+          <AuctionDetailsForm onChange={handleDetailsChange} auctionType={auctionType} />
         </StepContainer>
 
         {/* Summary */}
@@ -398,6 +480,7 @@ const SetDetailsAuction: React.FC = () => {
             color="primary"
             startIcon={<ArrowLeft size={18} />}
             onClick={handleBackToUpload}
+            disabled={isSubmitting}
           >
             Back to Photos
           </ActionButton>
@@ -405,12 +488,12 @@ const SetDetailsAuction: React.FC = () => {
           <ActionButton
             variant="contained"
             color="primary"
-            endIcon={<UploadIcon size={18} />}
+            endIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : <UploadIcon size={18} />}
             onClick={handleUploadAuction}
-            disabled={!formValid}
+            disabled={!formValid || isSubmitting}
             size="large"
           >
-            Publish Auction
+            {isSubmitting ? "Publishing..." : "Publish Auction"}
           </ActionButton>
         </Box>
       </Box>
@@ -419,4 +502,3 @@ const SetDetailsAuction: React.FC = () => {
 }
 
 export default SetDetailsAuction;
-

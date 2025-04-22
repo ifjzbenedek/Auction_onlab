@@ -138,6 +138,7 @@ const UploadAuction: React.FC = () => {
   const [description, setDescription] = useState("")
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   // Check session storage for previously uploaded data when coming back from SetDetailsAuction
   useEffect(() => {
@@ -189,17 +190,36 @@ const UploadAuction: React.FC = () => {
     }, 1500)
   }
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (uploadedImages.length >= 1 && description.trim().length > 0) {
-      // Save current data to session storage before navigating
-      const dataToSave = {
-        description,
-        imageCount: uploadedImages.length,
-      }
-      sessionStorage.setItem("auctionUploadData", JSON.stringify(dataToSave))
+      setIsUploading(true)
 
-      // Navigate to the second step
-      navigate("/set-details-auction")
+      try {
+        // In a real application, you would upload the images to a server here
+        // and get back URLs to use in the auction creation
+        // For now, we'll simulate this with a timeout and use the preview URLs
+
+        // Simulate image upload delay
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+
+        // Get image URLs (in a real app, these would be the URLs returned from the server)
+        const imageUrls = uploadedImages.map((img) => img.preview)
+
+        // Save current data to session storage before navigating
+        const dataToSave = {
+          description,
+          images: imageUrls,
+        }
+        sessionStorage.setItem("auctionUploadData", JSON.stringify(dataToSave))
+
+        // Navigate to the second step
+        navigate("/set-details-auction")
+      } catch (error) {
+        console.error("Error uploading images:", error)
+        alert("Failed to upload images. Please try again.")
+      } finally {
+        setIsUploading(false)
+      }
     }
   }
 
@@ -433,12 +453,12 @@ const UploadAuction: React.FC = () => {
           <ActionButton
             variant="contained"
             color="primary"
-            endIcon={<ArrowRight size={18} />}
+            endIcon={isUploading ? <CircularProgress size={18} color="inherit" /> : <ArrowRight size={18} />}
             onClick={handleContinue}
-            disabled={uploadedImages.length < 1 || description.trim().length === 0}
+            disabled={uploadedImages.length < 1 || description.trim().length === 0 || isUploading}
             size="large"
           >
-            Continue to Details
+            {isUploading ? "Processing..." : "Continue to Details"}
           </ActionButton>
         </Box>
       </Box>
@@ -447,4 +467,3 @@ const UploadAuction: React.FC = () => {
 }
 
 export default UploadAuction;
-

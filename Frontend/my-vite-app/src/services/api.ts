@@ -1,6 +1,6 @@
 import axios from "axios"
 import type { BidDTO } from "../types/bid"
-import { AuctionBasicDTO } from "../types/auction"
+import type { AuctionBasicDTO } from "../types/auction"
 
 // API alapbeállítások
 // No need for full URL when using proxy
@@ -43,8 +43,8 @@ api.interceptors.response.use(
 
       // 401 Unauthorized - token lejárt vagy érvénytelen
       if (error.response.status === 401) {
-        // Instead of redirecting directly, return a specific error
-        console.error("Authentication required. Please log in again.")
+        // Instead of trying to handle OAuth directly, redirect to the backend's login endpoint
+        window.location.href = "/users/login"
         return Promise.reject({
           isAuthError: true,
           message: "Authentication required. Please log in again.",
@@ -53,6 +53,16 @@ api.interceptors.response.use(
     } else if (error.request) {
       // A kérés elküldve, de nem érkezett válasz
       console.error("No response received:", error.request)
+
+      // Check if this is likely an OAuth redirect issue
+      if (error.request.responseURL && error.request.responseURL.includes("oauth2/auth")) {
+        // Redirect to the login page instead of trying to handle OAuth directly
+        window.location.href = "/users/login"
+        return Promise.reject({
+          isAuthError: true,
+          message: "Authentication required. Please log in.",
+        })
+      }
     } else {
       // Hiba a kérés beállításakor
       console.error("Request error:", error.message)
@@ -71,7 +81,7 @@ export const auctionApi = {
   getAuctionById: (id: number) => api.get(`/auctions/${id}`),
 
   // Új aukció létrehozása
-  createAuction: (auctionData: AuctionBasicDTO) => api.post("/auctions", auctionData),
+  createAuction: (auctionData: Partial<AuctionBasicDTO>) => api.post("/auctions", auctionData),
 
   // Aukció frissítése
   updateAuction: (

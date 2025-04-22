@@ -1,13 +1,12 @@
-// Create a new auth service to handle authentication properly
+// Update the auth service to handle authentication properly
 import axios from "axios"
-
-const AUTH_API_URL = "/auth" // This will be proxied to your backend
 
 export const authService = {
   // Initiate Google OAuth login
   loginWithGoogle: () => {
     // Redirect to the backend's OAuth endpoint
-    window.location.href = "/oauth2/authorization/google"
+    // This is important - we're redirecting to our backend endpoint, not directly to Google
+    window.location.href = "/users/login"
   },
 
   // Check if user is authenticated
