@@ -24,18 +24,27 @@ import {
   DialogContentText,
   DialogActions,
   Snackbar,
+  TextField,
+  AlertTitle,
 } from "@mui/material"
 import Header from "../components/Header"
 import MyAuctionItem from "../components/auction-list-items/MyAuctionItem"
 import MyBidItem from "../components/auction-list-items/MyBidItem"
 import FollowedAuctionItem from "../components/auction-list-items/FollowedAuctionItem"
 import { auctionApi } from "../services/api"
-import type { AuctionCardDTO } from "../types/auction"
+import type { AuctionCardDTO, AuctionBasicDTO } from "../types/auction"
 
 interface AuctionWithTime extends AuctionCardDTO {
   remainingTime: string
   highestBid: number
   yourBid?: number
+}
+
+interface EditAuctionFormData {
+  itemName: string
+  description: string
+  minimumPrice: number
+  minStep: number
 }
 
 const UserAuctions: React.FC = () => {
@@ -50,23 +59,53 @@ const UserAuctions: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [auctionToDelete, setAuctionToDelete] = useState<number | null>(null)
 
+  // Edit dialog state
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [auctionToEdit, setAuctionToEdit] = useState<number | null>(null)
+  const [originalDescription, setOriginalDescription] = useState("")
+  const [editFormData, setEditFormData] = useState<EditAuctionFormData>({
+    itemName: "",
+    description: "",
+    minimumPrice: 0,
+    minStep: 0,
+  })
+  const [editLoading, setEditLoading] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+
   // Snackbar state
   const [snackbarOpen, setSnackbarOpen] = useState(false)
   const [snackbarMessage, setSnackbarMessage] = useState("")
 
-  // Set initial tab based on URL query parameter
+  // Set initial tab based on URL query parameter and fetch data accordingly
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     const tab = params.get("tab")
 
+    let initialTabValue = 0
     if (tab === "bids") {
-      setTabValue(1)
+      initialTabValue = 1
     } else if (tab === "followed") {
-      setTabValue(2)
-    } else {
-      setTabValue(0)
+      initialTabValue = 2
     }
-  }, [location.search])
+
+    // Set the tab value first
+    setTabValue(initialTabValue)
+
+    // Then update the URL to match (if needed)
+    const newParams = new URLSearchParams()
+    if (initialTabValue === 1) {
+      newParams.set("tab", "bids")
+    } else if (initialTabValue === 2) {
+      newParams.set("tab", "followed")
+    }
+
+    const newUrl = newParams.toString() ? `${location.pathname}?${newParams.toString()}` : location.pathname
+    if (location.search !== `?${newParams.toString()}`) {
+      navigate(newUrl, { replace: true })
+    }
+
+    // We don't need to fetch data here as it will be triggered by the tabValue change
+  }, [location.search, navigate, location.pathname])
 
   // Calculate remaining time for an auction
   const calculateTimeLeft = (expiredDate: string): string => {
@@ -141,18 +180,7 @@ const UserAuctions: React.FC = () => {
   // Fetch auctions when tab changes
   useEffect(() => {
     fetchAuctions()
-
-    // Update URL to reflect current tab
-    const params = new URLSearchParams()
-    if (tabValue === 1) {
-      params.set("tab", "bids")
-    } else if (tabValue === 2) {
-      params.set("tab", "followed")
-    }
-
-    const newUrl = params.toString() ? `${location.pathname}?${params.toString()}` : location.pathname
-    navigate(newUrl, { replace: true })
-  }, [tabValue, navigate, location.pathname])
+  }, [tabValue])
 
   // Add a function to refresh the timer for auctions
   useEffect(() => {
@@ -173,17 +201,112 @@ const UserAuctions: React.FC = () => {
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue)
+
+    // Update URL to reflect current tab
+    const params = new URLSearchParams()
+    if (newValue === 1) {
+      params.set("tab", "bids")
+    } else if (newValue === 2) {
+      params.set("tab", "followed")
+    }
+
+    const newUrl = params.toString() ? `${location.pathname}?${params.toString()}` : location.pathname
+    navigate(newUrl, { replace: true })
   }
 
   const handleViewAuction = (id: number) => {
     navigate(`/auction/${id}`)
   }
 
-  const handleEditAuction = () => {
-    // For now, we'll just show a message since we don't have an edit page
-    // In a real implementation, you would navigate to an edit page
-    setSnackbarMessage("Edit functionality is available through the API but not implemented in the UI yet")
-    setSnackbarOpen(true)
+  const handleEditClick = async (id: number) => {
+    setAuctionToEdit(id)
+    setEditError(null)
+    setEditLoading(true)
+
+    try {
+      // Fetch the full auction details
+      const response = await auctionApi.getAuctionById(id)
+      const auction = response.data
+
+      setOriginalDescription(auction.description || "")
+      setEditFormData({
+        itemName: auction.itemName || "",
+        description: auction.description || "",
+        minimumPrice: auction.minimumPrice || 0,
+        minStep: auction.minStep || 0,
+      })
+
+      setEditDialogOpen(true)
+    } catch (err) {
+      console.error("Error fetching auction details:", err)
+      setSnackbarMessage("Failed to load auction details for editing")
+      setSnackbarOpen(true)
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
+  const handleEditFormChange = (field: keyof EditAuctionFormData, value: string | number) => {
+    setEditFormData({
+      ...editFormData,
+      [field]: value,
+    })
+  }
+
+  const handleUpdateAuction = async () => {
+    if (auctionToEdit === null) return
+
+    // Validate that the description is only extended, not shortened
+    if (editFormData.description.length < originalDescription.length) {
+      setEditError("The description can only be extended, not shortened.")
+      return
+    }
+
+    // Check if the description starts with the original description
+    if (!editFormData.description.startsWith(originalDescription)) {
+      setEditError("You can only add text to the end of the description, not modify existing text.")
+      return
+    }
+
+    setEditLoading(true)
+    setEditError(null)
+
+    try {
+      // Get the full auction first
+      const response = await auctionApi.getAuctionById(auctionToEdit)
+      const fullAuction = response.data
+
+      // Update only the description field
+      const updatedAuction: Partial<AuctionBasicDTO> = {
+        ...fullAuction,
+        description: editFormData.description,
+      }
+
+      await auctionApi.updateAuction(auctionToEdit, updatedAuction)
+
+      setEditDialogOpen(false)
+      setSnackbarMessage("Auction description updated successfully")
+      setSnackbarOpen(true)
+
+      // Refresh the auctions list
+      fetchAuctions()
+    } catch (err: unknown) {
+      console.error("Error updating auction:", err)
+
+      if (
+        typeof err === "object" &&
+        err !== null &&
+        "response" in err &&
+        (err as { response?: { data?: string } }).response &&
+        (err as { response: { data?: string } }).response.data
+      ) {
+        setEditError(`Failed to update auction: ${(err as { response: { data: string } }).response.data}`)
+      } else {
+        setEditError("Failed to update auction. Please try again.")
+      }
+    } finally {
+      setEditLoading(false)
+    }
   }
 
   const handleDeleteConfirmation = (id: number) => {
@@ -314,7 +437,7 @@ const UserAuctions: React.FC = () => {
                         key={auction.id}
                         auction={auction}
                         onView={handleViewAuction}
-                        onEdit={handleEditAuction}
+                        onEdit={handleEditClick}
                         onDelete={handleDeleteConfirmation}
                       />
                     ))}
@@ -382,6 +505,88 @@ const UserAuctions: React.FC = () => {
           </Button>
           <Button onClick={handleDeleteAuction} color="error" autoFocus>
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Auction Dialog */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Edit Auction Description</DialogTitle>
+        <DialogContent>
+          <Alert severity="info" sx={{ mb: 3, mt: 1 }}>
+            <AlertTitle>Editing Restrictions</AlertTitle>
+            You can only edit the description field, and you can only add text to the end of the existing description.
+            The original text cannot be modified or shortened.
+          </Alert>
+
+          {editError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {editError}
+            </Alert>
+          )}
+
+          <TextField
+            label="Item Name"
+            fullWidth
+            margin="normal"
+            value={editFormData.itemName}
+            disabled
+            InputProps={{
+              readOnly: true,
+            }}
+          />
+
+          <TextField
+            label="Description"
+            fullWidth
+            margin="normal"
+            multiline
+            rows={6}
+            value={editFormData.description}
+            onChange={(e) => handleEditFormChange("description", e.target.value)}
+            helperText="You can only add text to the end of the description"
+          />
+
+          <TextField
+            label="Minimum Price"
+            fullWidth
+            margin="normal"
+            type="number"
+            value={editFormData.minimumPrice}
+            disabled
+            InputProps={{
+              readOnly: true,
+              startAdornment: (
+                <Box component="span" sx={{ mr: 1 }}>
+                  $
+                </Box>
+              ),
+            }}
+          />
+
+          <TextField
+            label="Minimum Bid Increment"
+            fullWidth
+            margin="normal"
+            type="number"
+            value={editFormData.minStep}
+            disabled
+            InputProps={{
+              readOnly: true,
+              startAdornment: (
+                <Box component="span" sx={{ mr: 1 }}>
+                  $
+                </Box>
+              ),
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleUpdateAuction} color="primary" variant="contained" disabled={editLoading}>
+            {editLoading ? <CircularProgress size={24} /> : "Update Description"}
           </Button>
         </DialogActions>
       </Dialog>

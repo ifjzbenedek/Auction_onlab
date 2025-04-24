@@ -58,6 +58,8 @@ class AuctionController(private val auctionService: AuctionService) {
         return try {
             val auction = auctionService.updateAuction(auctionId, auctionBasic)
             ResponseEntity.ok(auction)
+        } catch (e: NotOnlyExtraDescriptionException){
+            ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.message)
         } catch (e: AuctionNotFoundException) {
             ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message)
         } catch (e: PermissionDeniedException) {

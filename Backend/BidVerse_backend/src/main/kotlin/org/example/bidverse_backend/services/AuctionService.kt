@@ -87,9 +87,10 @@ class AuctionService(
         if(auction.owner.id != securityUtils.getCurrentUserId())
             throw PermissionDeniedException("Permission denied.")
 
-        auction.expiredDate = auctionBasic.expiredDate
-        auction.description = auctionBasic.description
-        auction.tags = auctionBasic.tags
+        if(auctionBasic.description.contains(auction.description))
+            auction.description = auctionBasic.description
+        else
+            throw NotOnlyExtraDescriptionException("Original description can only be extended.")
 
         return auctionRepository.save(auction).toAuctionBasicDTO()
     }
