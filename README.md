@@ -45,3 +45,7 @@ A leírás generálóval még nem tudtam foglalkozni sajnos.
 
 9.hét
 Elkészítettem az adott aukcióhoz tartozó bid-ek lekérdezését frontendről. Ezután az authorizációs problémát próbáltam megoldani, mert attól még, hogy egy felhasználó autentikálva lett google segítségével, később ezt nem jegyezte meg és az azt igénylő (authentikált felhasználóhoz kötött) kérések nem működtek (a backendben mindig AnonymousUser-t kapott a felhasználó beazonosító függvény). Ezt sikerült megoldani, viszont a Bid-elés még mindig nem működik. Debug-olásból arra következtetek, hogy valami ugyanahhoz a táblához történő egyszerre hozzáférs lehet a gond, még dolgozok rajta.
+
+Tavaszi szünet
+Sikerült rájönni, hogy mi volt a gond a Bid POST-olása esetén. Az ID-t alapvetően 0-ra inicializáltam, majd ennek egyből megváltoztatása okozott problémát az adatbázisban. Ezt fixáltam azzal, hogy most már null-ra inicializálom az újonnan létrehozott rekordok id-it a backendben.
+Ezen kívül megvalósítottam az összes többi alapfunkciót. Már lehet új aukciót létrehozni, megnézni a saját aukciókat, illetve listázni azokat az aukciókat, melyekre már licitált a felhasználó. Lehet törölni a saját aukciókat, illetve updatelni is (de ahogy a specifikációban is le van írva, csak hozzáadni lehet a leíráshoz, elvenni belőle nem).
