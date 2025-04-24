@@ -30,6 +30,7 @@ export interface AuctionCardDTO {
   expiredDate: string
   lastBid: number | null
   status: string
+  images?: string[] // Optional, if handled separately
 }
 
 // Add this new interface after the AuctionCardDTO interface

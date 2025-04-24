@@ -7,10 +7,9 @@ import { Eye } from "lucide-react"
 interface MyBidItemProps {
   auction: {
     id: number
-    name: string
+    itemName: string
     remainingTime: string
     highestBid: number
-    image: string
     yourBid?: number
   }
   onView: (id: number) => void
@@ -20,27 +19,13 @@ const MyBidItem: React.FC<MyBidItemProps> = ({ auction, onView }) => {
   return (
     <TableRow hover>
       <TableCell>
-        <Box
-          component="img"
-          src={auction.image}
-          alt={auction.name}
-          sx={{
-            width: 60,
-            height: 60,
-            objectFit: "cover",
-            border: "1px solid #eee",
-            cursor: "pointer",
-          }}
-        />
-      </TableCell>
-      <TableCell>
-        <Typography variant="body1" fontWeight="medium" sx={{ cursor: "pointer" }}>
-          {auction.name}
+        <Typography variant="body1" fontWeight="medium" sx={{ cursor: "pointer" }} onClick={() => onView(auction.id)}>
+          {auction.itemName}
         </Typography>
       </TableCell>
       <TableCell>{auction.remainingTime}</TableCell>
       <TableCell>
-        ${auction.yourBid || auction.highestBid}
+        ${auction.yourBid ? auction.yourBid.toFixed(2) : auction.highestBid.toFixed(2)}
         {auction.yourBid && auction.yourBid < auction.highestBid && (
           <Typography
             variant="caption"
@@ -68,4 +53,3 @@ const MyBidItem: React.FC<MyBidItemProps> = ({ auction, onView }) => {
 }
 
 export default MyBidItem;
-

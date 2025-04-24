@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import {
   Box,
   Typography,
@@ -17,77 +17,220 @@ import {
   Tabs,
   Tab,
   CircularProgress,
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Snackbar,
 } from "@mui/material"
 import Header from "../components/Header"
 import MyAuctionItem from "../components/auction-list-items/MyAuctionItem"
 import MyBidItem from "../components/auction-list-items/MyBidItem"
 import FollowedAuctionItem from "../components/auction-list-items/FollowedAuctionItem"
+import { auctionApi } from "../services/api"
+import type { AuctionCardDTO } from "../types/auction"
 
-interface Auction {
-  id: number
-  name: string
+interface AuctionWithTime extends AuctionCardDTO {
   remainingTime: string
   highestBid: number
-  image: string
   yourBid?: number
 }
 
 const UserAuctions: React.FC = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const [tabValue, setTabValue] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [auctions, setAuctions] = useState<Auction[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [auctions, setAuctions] = useState<AuctionWithTime[]>([])
 
+  // Dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [auctionToDelete, setAuctionToDelete] = useState<number | null>(null)
+
+  // Snackbar state
+  const [snackbarOpen, setSnackbarOpen] = useState(false)
+  const [snackbarMessage, setSnackbarMessage] = useState("")
+
+  // Set initial tab based on URL query parameter
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const mockAuctions = Array(5)
-        .fill(null)
-        .map((_, i) => ({
-          id: i + 1,
-          name: `Vintage Item ${i + 1}`,
-          remainingTime: `${Math.floor(Math.random() * 24)}:${Math.floor(Math.random() * 60)}:${Math.floor(Math.random() * 60)}`,
-          highestBid: Math.floor(Math.random() * 500) + 50,
-          image: "/placeholder.svg?height=100&width=100",
-          yourBid: tabValue === 1 ? Math.floor(Math.random() * 450) + 50 : undefined, // Only for My Bids tab
-        }))
+    const params = new URLSearchParams(location.search)
+    const tab = params.get("tab")
 
-      setAuctions(mockAuctions)
+    if (tab === "bids") {
+      setTabValue(1)
+    } else if (tab === "followed") {
+      setTabValue(2)
+    } else {
+      setTabValue(0)
+    }
+  }, [location.search])
+
+  // Calculate remaining time for an auction
+  const calculateTimeLeft = (expiredDate: string): string => {
+    const now = new Date()
+    const end = new Date(expiredDate)
+    const diff = end.getTime() - now.getTime()
+
+    if (diff <= 0) return "Ended"
+
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+  }
+
+  // Format auction data for display
+  const formatAuctionData = (auctions: AuctionCardDTO[]): AuctionWithTime[] => {
+    return auctions.map((auction) => ({
+      ...auction,
+      remainingTime: calculateTimeLeft(auction.expiredDate),
+      highestBid: auction.lastBid || 0,
+    }))
+  }
+
+  // Fetch auctions based on current tab
+  const fetchAuctions = async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      let response
+
+      switch (tabValue) {
+        case 0: // My Auctions
+          response = await auctionApi.getMyAuctions()
+          setAuctions(formatAuctionData(response.data))
+          break
+        case 1: // My Bids
+          response = await auctionApi.getBiddedAuctions()
+          setAuctions(formatAuctionData(response.data))
+          break
+        case 2: // Followed
+          // Since there's no backend endpoint for watched auctions yet
+          setSnackbarMessage("Followed auctions functionality is not fully implemented on the backend")
+          setSnackbarOpen(true)
+          setAuctions([])
+          break
+      }
+    } catch (err: unknown) {
+      console.error("Error fetching auctions:", err)
+
+      // Check if this is an authentication error
+      if (typeof err === "object" && err !== null && "isAuthError" in err && (err as { isAuthError?: boolean }).isAuthError) {
+        setError("Authentication required. Please log in to view your auctions.")
+      } else if (
+        typeof err === "object" &&
+        err !== null &&
+        "response" in err &&
+        (err as { response?: { data?: string } }).response &&
+        (err as { response: { data?: string } }).response.data
+      ) {
+        setError(`Failed to load auctions: ${(err as { response: { data: string } }).response.data}`)
+      } else {
+        setError("Failed to load auctions. Please try again later.")
+      }
+    } finally {
       setLoading(false)
-    }, 800)
-  }, [tabValue])
+    }
+  }
+
+  // Fetch auctions when tab changes
+  useEffect(() => {
+    fetchAuctions()
+
+    // Update URL to reflect current tab
+    const params = new URLSearchParams()
+    if (tabValue === 1) {
+      params.set("tab", "bids")
+    } else if (tabValue === 2) {
+      params.set("tab", "followed")
+    }
+
+    const newUrl = params.toString() ? `${location.pathname}?${params.toString()}` : location.pathname
+    navigate(newUrl, { replace: true })
+  }, [tabValue, navigate, location.pathname])
+
+  // Add a function to refresh the timer for auctions
+  useEffect(() => {
+    // Update the remaining time every second
+    const timer = setInterval(() => {
+      if (auctions.length > 0) {
+        setAuctions((prevAuctions) =>
+          prevAuctions.map((auction) => ({
+            ...auction,
+            remainingTime: calculateTimeLeft(auction.expiredDate),
+          })),
+        )
+      }
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [auctions.length])
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue)
-    setLoading(true) // Reset loading state when changing tabs
   }
 
   const handleViewAuction = (id: number) => {
     navigate(`/auction/${id}`)
   }
 
-  const handleEditAuction = (id: number) => {
-    // In a real app, this would navigate to an edit page
-    console.log("Edit auction:", id)
+  const handleEditAuction = () => {
+    // For now, we'll just show a message since we don't have an edit page
+    // In a real implementation, you would navigate to an edit page
+    setSnackbarMessage("Edit functionality is available through the API but not implemented in the UI yet")
+    setSnackbarOpen(true)
   }
 
-  const handleDeleteAuction = (id: number) => {
-    // In a real app, this would show a confirmation dialog
-    if (window.confirm("Are you sure you want to delete this auction?")) {
-      setAuctions(auctions.filter((auction) => auction.id !== id))
+  const handleDeleteConfirmation = (id: number) => {
+    setAuctionToDelete(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteAuction = async () => {
+    if (auctionToDelete === null) return
+
+    setDeleteDialogOpen(false)
+
+    try {
+      await auctionApi.deleteAuction(auctionToDelete)
+      setSnackbarMessage("Auction deleted successfully")
+      setSnackbarOpen(true)
+
+      // Refresh the auctions list
+      fetchAuctions()
+    } catch (err) {
+      console.error("Error deleting auction:", err)
+      setSnackbarMessage("Failed to delete auction. Please try again.")
+      setSnackbarOpen(true)
     }
   }
 
-  const handleUnfollowAuction = (id: number) => {
-    // In a real app, this would make an API call to unfollow
-    if (window.confirm("Are you sure you want to unfollow this auction?")) {
+  const handleUnfollowAuction = async (id: number) => {
+    try {
+      // Since the backend doesn't have an unfollow endpoint yet, show a message
+      setSnackbarMessage("Unfollow functionality is not implemented yet")
+      setSnackbarOpen(true)
+
+      // For demo purposes, we'll remove it from the UI
       setAuctions(auctions.filter((auction) => auction.id !== id))
+    } catch (err) {
+      console.error("Error unfollowing auction:", err)
+      setSnackbarMessage("Failed to unfollow auction. Please try again.")
+      setSnackbarOpen(true)
     }
   }
 
   const handleCreateAuction = () => {
-    console.log("Navigating to /upload-auction");
     navigate("/upload-auction")
+  }
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false)
   }
 
   const getTabLabel = (index: number) => {
@@ -139,11 +282,16 @@ const UserAuctions: React.FC = () => {
           {getTabLabel(tabValue)}
         </Typography>
 
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+
         <TableContainer component={Paper} sx={{ boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: "#f5f5f5", userSelect: "none" }}>
-                <TableCell width="50"></TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell>Remaining time</TableCell>
                 <TableCell>{tabValue === 0 ? "Highest Bid" : tabValue === 1 ? "Your Bid" : "Current Bid"}</TableCell>
@@ -153,7 +301,7 @@ const UserAuctions: React.FC = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
                     <CircularProgress size={30} sx={{ color: "#3498db" }} />
                   </TableCell>
                 </TableRow>
@@ -167,7 +315,7 @@ const UserAuctions: React.FC = () => {
                         auction={auction}
                         onView={handleViewAuction}
                         onEdit={handleEditAuction}
-                        onDelete={handleDeleteAuction}
+                        onDelete={handleDeleteConfirmation}
                       />
                     ))}
                   {tabValue === 1 &&
@@ -188,7 +336,7 @@ const UserAuctions: React.FC = () => {
                 </>
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
                     <Typography color="text.secondary">
                       {tabValue === 0
                         ? "You haven't created any auctions yet"
@@ -219,9 +367,29 @@ const UserAuctions: React.FC = () => {
           </Table>
         </TableContainer>
       </Box>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Delete Auction</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this auction? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteAuction} color="error" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar} message={snackbarMessage} />
     </Box>
   )
 }
 
 export default UserAuctions;
-
