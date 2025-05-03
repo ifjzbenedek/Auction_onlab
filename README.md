@@ -49,3 +49,6 @@ Elkészítettem az adott aukcióhoz tartozó bid-ek lekérdezését frontendről
 Tavaszi szünet
 Sikerült rájönni, hogy mi volt a gond a Bid POST-olása esetén. Az ID-t alapvetően 0-ra inicializáltam, majd ennek egyből megváltoztatása okozott problémát az adatbázisban. Ezt fixáltam azzal, hogy most már null-ra inicializálom az újonnan létrehozott rekordok id-it a backendben.
 Ezen kívül megvalósítottam az összes többi alapfunkciót. Már lehet új aukciót létrehozni, megnézni a saját aukciókat, illetve listázni azokat az aukciókat, melyekre már licitált a felhasználó. Lehet törölni a saját aukciókat, illetve updatelni is (de ahogy a specifikációban is le van írva, csak hozzáadni lehet a leíráshoz, elvenni belőle nem).
+
+11.hét
+Ezen a héten a leírásgenerálás elkészítése volt a kitűzött cél, és ezt sikerült is megvalósítani. A kommunikáció a frontend és a flask között (ami a Gemini-2.0-flash-t promptolja) a backenden keresztül történik. Így be is vezettem ugye egy plusz végpontot a backendbe, ennek megfelelően.
