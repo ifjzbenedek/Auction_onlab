@@ -9,9 +9,7 @@ const API_BASE_URL = ""
 // Axios instance létrehozása alapbeállításokkal
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  
   // Add withCredentials to send cookies with cross-origin requests
   withCredentials: true,
 })
@@ -109,6 +107,9 @@ export const auctionApi = {
 
   // Bidek lekérdezése egy aukcióhoz
   getAuctionBids: (id: number) => api.get<BidDTO[]>(`/auctions/${id}/bids`),
+
+  // AI generált leírás kérése
+  generateDescription: (images: FormData) => api.post("/auctions/generate-description", images)
 }
 
 export default api;
