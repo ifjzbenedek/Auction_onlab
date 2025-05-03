@@ -13,9 +13,17 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 model = genai.GenerativeModel('gemini-2.0-flash')
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_ORIGINS = ["http://localhost:8081"]
 
 def checking_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.after_request
+def add_cors(response):
+    if request.headers.get("Origin") in ALLOWED_ORIGINS:
+        response.headers.add("Access-Control-Allow-Origin", request.headers.get("Origin"))
+        response.headers.add("Access-Control-Allow-Methods", "POST")
+    return response
 
 @app.route('/generate-description', methods=['POST'])
 def generate_description():

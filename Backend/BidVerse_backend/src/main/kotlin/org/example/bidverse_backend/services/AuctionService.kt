@@ -8,18 +8,22 @@ import org.example.bidverse_backend.DTOs.EntityToDTO.toAuctionBasicDTO
 import org.example.bidverse_backend.DTOs.EntityToDTO.toAuctionCardDTO
 import org.example.bidverse_backend.DTOs.EntityToDTO.toBidBasicDTO
 import org.example.bidverse_backend.Exceptions.*
-import org.example.bidverse_backend.RepositoryMonitoringAspect
 import org.example.bidverse_backend.Security.SecurityUtils
 import org.example.bidverse_backend.entities.Auction
 import org.example.bidverse_backend.entities.Bid
 import org.example.bidverse_backend.repositories.*
 import org.springframework.dao.OptimisticLockingFailureException
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Isolation
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import org.springframework.retry.annotation.Backoff
+import org.springframework.util.LinkedMultiValueMap
+import org.springframework.web.client.RestTemplate
+import org.springframework.web.multipart.MultipartFile
 
 
 @Service
@@ -30,6 +34,7 @@ class AuctionService(
     private val categoryRepository: CategoryRepository,
     private val watchRepository: WatchRepository,
     private val securityUtils: SecurityUtils,
+    private val restTemplate: RestTemplate
 
 ) {
     fun getAllAuctions(statuses: String?, categories: String?): List<AuctionCardDTO> {
@@ -196,6 +201,29 @@ class AuctionService(
         auction.lastBid = bidValue
 
         return bidRepository.save(newBid)
+    }
+
+    fun generateAuctionDescription(images: List<MultipartFile>): String {
+        if (images.isEmpty()) throw IllegalArgumentException("No images provided")
+        images.forEach { file ->
+            if (file.isEmpty || file.contentType?.startsWith("image/") != true) {
+                throw IllegalArgumentException("Invalid image file: ${file.originalFilename}")
+            }
+        }
+
+        val headers = HttpHeaders().apply {
+            contentType = MediaType.MULTIPART_FORM_DATA
+        }
+
+        val body = LinkedMultiValueMap<String, Any>().apply {
+            images.forEach { add("images", it.resource) }
+        }
+
+        return restTemplate.postForObject(
+            "http://localhost:5000/generate-description",
+            HttpEntity(body, headers),
+            String::class.java
+        ) ?: throw IllegalStateException("Empty response from AI service")
     }
 }
 

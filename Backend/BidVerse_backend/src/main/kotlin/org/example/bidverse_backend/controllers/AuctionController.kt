@@ -9,6 +9,7 @@ import org.example.bidverse_backend.services.*
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 
 
 @RestController
@@ -141,4 +142,14 @@ class AuctionController(private val auctionService: AuctionService) {
 
     }
 
+    @PostMapping("/generate-description")
+    fun generateDescription(
+        @RequestParam("images") images: Array<MultipartFile>
+    ): ResponseEntity<Any> {
+        return try {
+            ResponseEntity.ok(auctionService.generateAuctionDescription(images.toList()))
+        } catch (e: DescriptionGenerationException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message)
+        }
+    }
 }
