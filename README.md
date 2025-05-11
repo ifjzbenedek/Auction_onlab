@@ -52,3 +52,6 @@ Ezen kívül megvalósítottam az összes többi alapfunkciót. Már lehet új a
 
 11.hét
 Ezen a héten a leírásgenerálás elkészítése volt a kitűzött cél, és ezt sikerült is megvalósítani. A kommunikáció a frontend és a flask között (ami a Gemini-2.0-flash-t promptolja) a backenden keresztül történik. Így be is vezettem ugye egy plusz végpontot a backendbe, ennek megfelelően.
+
+12.hét
+Erre a hétre a képek bevezetése volt a cél a programban. Ezt habár lehetett volna blob-okban is tárolni az adatbázisban végül Cloudinary segítségével akarom megoldani, az sokkal letisztultabb és skálázhatóbb megoldás. Így adatbázisban elég az Url-eket tárolni (több kiegészítő információ között). Létrehoztam egy új táblát az adatbázisban és egy új entity-DTO-Repository-Service-Controller kombinációt a backendben. Ezután frontenden folytatom a megvalósítást. Egyelőre még hibás.
