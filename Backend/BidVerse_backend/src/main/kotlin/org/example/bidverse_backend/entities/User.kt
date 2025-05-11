@@ -19,6 +19,9 @@ class User(
     @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     var watches: MutableList<Watch> = mutableListOf(),
 
+    @OneToMany(mappedBy = "uploadedBy", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    val uploadedImages: List<AuctionImage> = mutableListOf(),
+
     @Column(nullable = false, length = 25)
     var userName: String,
 

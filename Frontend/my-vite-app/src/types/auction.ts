@@ -31,6 +31,7 @@ export interface AuctionCardDTO {
   lastBid: number | null
   status: string
   images?: string[] // Optional, if handled separately
+  imageUrl?: string; // Add this line for the primary image URL
 }
 
 // Add this new interface after the AuctionCardDTO interface

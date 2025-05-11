@@ -27,6 +27,9 @@ class Auction(
     @OneToMany(mappedBy = "auction", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     var watchedAuctions: MutableList<Watch> = mutableListOf(),
 
+    @OneToMany(mappedBy = "auction", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    val images: MutableList<AuctionImage> = mutableListOf(),
+
     @Column(nullable = false, length = 50)
     var itemName: String,
 
@@ -65,4 +68,6 @@ class Auction(
 
     @Version
     val version: Long = 0
+
+
 )

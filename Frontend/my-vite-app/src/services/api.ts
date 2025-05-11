@@ -112,4 +112,22 @@ export const auctionApi = {
   generateDescription: (images: FormData) => api.post("/auctions/generate-description", images)
 }
 
+export const imageApi = {
+  // Upload images to an auction
+  uploadAuctionImages: (auctionId: number, files: FormData) => 
+    api.post(`/auctions/${auctionId}/images`, files, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    }),
+
+  // Get all images for an auction
+  getAuctionImages: (auctionId: number) => 
+    api.get(`/auctions/${auctionId}/images`),
+
+  // Get specific image details
+  getImageDetails: (auctionId: number, imageId: number) => 
+    api.get(`/auctions/${auctionId}/images/${imageId}`)
+}
+
 export default api;

@@ -27,6 +27,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-mustache")
 	implementation("org.springframework.boot:spring-boot-starter-web")
+
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("com.microsoft.sqlserver:mssql-jdbc:10.2.0.jre8")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -43,6 +44,8 @@ dependencies {
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	implementation("org.springframework.retry:spring-retry")
 	implementation("org.apache.httpcomponents.client5:httpclient5")
+
+	implementation("com.cloudinary:cloudinary-http44:1.33.0")
 
 }
 
