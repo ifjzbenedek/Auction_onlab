@@ -23,14 +23,12 @@ import {
 import { styled } from "@mui/material/styles"
 import { Upload, Plus, ArrowRight, Sparkles, X, ImageIcon, FileText, Camera, Info } from "lucide-react"
 import auctionApi from "../services/api.ts"
-import { useAuctionCreation } from "../contexts/AuctionCreationContext"; // Importáljuk a hook-ot
+import { useAuctionCreation } from "../contexts/AuctionCreationContext";
 
-// Ez a típus már a kontextus fájlban is definiálva van, de itt is maradhat, ha csak itt használjuk lokálisan
-// Vagy importálhatjuk a kontextus fájlból, ha ott exportálva van.
 interface UploadedImage {
-  id: string
-  file: File
-  preview: string
+  id: string;
+  file: File;
+  preview: string;
 }
 
 // Styled components
@@ -158,18 +156,7 @@ const UploadAuction: React.FC = () => {
     setAuctionImages(localUploadedImages);
   }, [localUploadedImages, setAuctionImages]);
 
-  // Eltávolítjuk a sessionStorage-ből való betöltést, mivel a kontextus kezeli
-  // useEffect(() => {
-  //   const savedData = sessionStorage.getItem("auctionUploadData")
-  //   if (savedData) {
-  //     try {
-  //       const { description } = JSON.parse(savedData)
-  //       setLocalDescription(description)
-  //     } catch (e) {
-  //       console.error("Error parsing saved auction data", e)
-  //     }
-  //   }
-  // }, [])
+
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {

@@ -23,21 +23,24 @@ import type { CategoryDTO } from "../types/category"
 import { auctionApi } from "../services/api"
 
 interface AuctionDetailsFormProps {
-  onChange: (data: AuctionDetailsDTO) => void
-  auctionType: "FIXED" | "EXTENDED" | null
+  onChange: (data: AuctionDetailsDTO) => void;
+  auctionType: "FIXED" | "EXTENDED" | null;
+  initialData?: AuctionDetailsDTO; // Add initialData prop
 }
 
-const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, auctionType }) => {
-  const [formData, setFormData] = useState<AuctionDetailsDTO>({
-    name: "",
-    status: "Brand new",
-    condition: 50,
-    category: "",
-    minimumPrice: 0,
-    minStep: 0,
-    expiredDate: "",
-    extraTime: "",
-  })
+const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, auctionType, initialData }) => {
+  const [formData, setFormData] = useState<AuctionDetailsDTO>(
+    initialData || {
+      name: "",
+      status: "Brand new",
+      condition: 50,
+      category: "",
+      minimumPrice: 0,
+      minStep: 0,
+      expiredDate: "",
+      extraTime: "",
+    }
+  )
 
   const [errors, setErrors] = useState({
     name: false,
@@ -91,7 +94,7 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
     }
   }
 
-  const validateField = (field: string, value: any) => {
+  const validateField = (field: string, value: string | number | undefined) => {
     let hasError = false
 
     if (field === "name" || field === "category") {

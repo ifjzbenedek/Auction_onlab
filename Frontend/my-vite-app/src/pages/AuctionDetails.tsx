@@ -19,6 +19,7 @@ import {
   Alert,
   CircularProgress,
   Snackbar,
+  alpha,
 } from "@mui/material"
 import { X, Heart, Clock, ChevronLeft, ChevronRight, ArrowLeft, Tag } from "lucide-react"
 import { auctionApi, imageApi } from "../services/api.ts" // imageApi importálva

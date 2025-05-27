@@ -114,20 +114,17 @@ export const auctionApi = {
 
 export const imageApi = {
   // Upload images to an auction
-  uploadAuctionImages: (auctionId: number, files: FormData) => 
-    api.post(`/auctions/${auctionId}/images`, files, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    }),
+  // The backend ImageController is mapped to "/api/auctions/{auctionId}/images"
+  uploadAuctionImages: (auctionId: number, filesData: FormData) =>
+    api.post(`/api/auctions/${auctionId}/images`, filesData), // Axios will set Content-Type for FormData
 
   // Get all images for an auction
-  getAuctionImages: (auctionId: number) => 
-    api.get(`/auctions/${auctionId}/images`),
+  getAuctionImages: (auctionId: number) =>
+    api.get(`/api/auctions/${auctionId}/images`),
 
   // Get specific image details
-  getImageDetails: (auctionId: number, imageId: number) => 
-    api.get(`/auctions/${auctionId}/images/${imageId}`)
-}
+  getImageDetails: (auctionId: number, imageId: number) =>
+    api.get(`/api/auctions/${auctionId}/images/${imageId}`),
+};
 
 export default api;

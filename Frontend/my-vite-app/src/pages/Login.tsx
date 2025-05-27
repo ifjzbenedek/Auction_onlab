@@ -28,7 +28,7 @@ const Login: React.FC = () => {
       authService.loginWithGoogle()
     } catch (err) {
       setLoading(false)
-      setError("Failed to initiate login process")
+      setError(`Failed to initiate login process: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
 

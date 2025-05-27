@@ -236,7 +236,7 @@ const SetDetailsAuction: React.FC = () => {
         itemName: detailsData.name,
         minimumPrice: Number(detailsData.minimumPrice),
         status: "PENDING", 
-        expiredDate: expiredDateISO,
+        expiredDate: expiredDateISO, 
         description: descriptionFromContext,
         type: auctionType!,
         extraTime: extraTimeValue,
