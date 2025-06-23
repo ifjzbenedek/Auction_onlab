@@ -12,14 +12,14 @@ import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
 @RestController
-@RequestMapping("/api/auctions/{auctionId}/images")
+@RequestMapping("/auctions/{auctionId}/images")
 class ImageController(
     private val imageService: ImageService
 ){
     @PostMapping
     fun uploadImages(
         @PathVariable auctionId: Int,
-        @RequestParam files: List<MultipartFile>
+        @RequestParam("files") files: List<MultipartFile>
     ): ResponseEntity<Any> {
         return try {
             val uploadedImages = imageService.uploadAuctionImages(auctionId, files)

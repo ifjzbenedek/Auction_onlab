@@ -8,14 +8,8 @@ import AuctionCard from "../components/AuctionCard"
 // Import imageApi as well
 import { auctionApi, imageApi } from "../services/api.ts" 
 import { AuctionCardDTO } from "../types/auction"
+import { AuctionImageDTO } from "../types/image"
 import { CategoryDTO } from "../types/category"
-// Assuming your image API returns an array of objects with at least a URL
-// Define a simple type for what an image object might look like from your API
-interface AuctionImageDTO {
-  id: number;
-  url: string; // Or whatever property holds the image URL
-  // other properties like isPrimary, etc.
-}
 
 const BidVerseLanding: React.FC = () => {
   const [auctions, setAuctions] = useState<AuctionCardDTO[]>([])
@@ -30,63 +24,75 @@ const BidVerseLanding: React.FC = () => {
 
   // Aukciók és képeik lekérése
   useEffect(() => {
-    const fetchAuctionsAndImages = async () => {
-      setLoading(true)
-      setError(null)
-  
-      try {
-        const params = {
-          ...(filters.length > 0 && { status: filters.join(",") }),
-          category: selectedCategory || undefined,
-          search: searchTerm || undefined,
-          imageSearch: isImageSearch ? "true" : undefined,
-        }
-
-        const filteredParams = Object.fromEntries(
-          Object.entries(params).filter(([, value]) => value !== undefined)
-        );
-
-        const response = await auctionApi.getAuctions(filteredParams as Record<string, string | number>)
-        const auctionsData: AuctionCardDTO[] = response.data
-
-        // Ha az auctionsData még nem tartalmaz imageUrl-t, itt lekérjük
-        // Ez feltételezi, hogy az AuctionCardDTO-ban van egy 'imageUrl' mező
-        if (auctionsData.length > 0 && auctionsData.some(auction => auction.imageUrl === undefined || auction.imageUrl === null || auction.imageUrl === "")) {
-          const auctionsWithImages = await Promise.all(
-            auctionsData.map(async (auction) => {
-              try {
-                // Hívd meg az imageApi.getAuctionImages-t minden aukcióhoz
-                // Ez visszaad egy tömböt a képekkel (AuctionImageDTO[])
-                const imagesResponse = await imageApi.getAuctionImages(auction.id);
-                const images: AuctionImageDTO[] = imagesResponse.data;
-                
-                // Válaszd ki az első képet, vagy egy logikát az elsődleges kép kiválasztására
-                const primaryImage = images && images.length > 0 ? images[0] : null;
-                
-                return { 
-                  ...auction, 
-                  // Győződj meg róla, hogy az AuctionCardDTO-nak van imageUrl mezője
-                  imageUrl: primaryImage ? primaryImage.url : undefined 
-                };
-              } catch (imgErr) {
-                console.error(`Error fetching images for auction ${auction.id}:`, imgErr);
-                return { ...auction, imageUrl: undefined }; // Hiba esetén nincs kép URL
-              }
-            })
-          );
-          setAuctions(auctionsWithImages);
-        } else {
-          // Ha az aukciók már tartalmaznak kép URL-eket (pl. a backend adja őket)
-          setAuctions(auctionsData);
-        }
-
-      } catch (err) {
-        setError("Failed to fetch auctions")
-        console.error("Error fetching auctions:", err)
-      } finally {
-        setLoading(false)
-      }
+    // Aukciók és képeik lekérése
+const fetchAuctionsAndImages = async () => {
+  try {
+    setLoading(true);
+    
+    const params: Record<string, string | number> = {};
+    if (selectedCategory) {
+      params.categoryId = selectedCategory;
     }
+    if (searchTerm.trim()) {
+      params.search = searchTerm.trim();
+    }
+
+    const auctionsResponse = await auctionApi.getAuctions(params);
+    const auctionsData: AuctionCardDTO[] = auctionsResponse.data;
+
+    // Képek lekérése minden aukcióhoz
+    const auctionsWithImages = await Promise.all(
+      auctionsData.map(async (auction) => {
+        try {
+          const imagesResponse = await imageApi.getAuctionImages(auction.id!);
+          const images: AuctionImageDTO[] = imagesResponse.data || [];
+          
+          // Sort images by orderIndex and isPrimary (primary first, then by orderIndex)
+          const sortedImages = images.sort((a, b) => {
+            if (a.isPrimary && !b.isPrimary) return -1;
+            if (!a.isPrimary && b.isPrimary) return 1;
+            return a.orderIndex - b.orderIndex;
+          });
+          
+          // Extract cloudinaryUrl from sorted images
+          const imageUrls = sortedImages.map(img => img.cloudinaryUrl);
+          
+          return {
+            id: auction.id!,
+            itemName: auction.itemName,
+            createDate: auction.createDate!,
+            expiredDate: auction.expiredDate,
+            lastBid: auction.lastBid,
+            status: auction.status,
+            images: imageUrls.length > 0 ? imageUrls : undefined,
+            imageUrl: imageUrls.length > 0 ? imageUrls[0] : undefined // First image URL
+          } as AuctionCardDTO;
+        } catch {
+          console.log(`No images found for auction ${auction.id}, using placeholder`);
+          
+          // Ha nincs kép, visszaadjuk az aukciót placeholder nélkül
+          return {
+            id: auction.id!,
+            itemName: auction.itemName,
+            createDate: auction.createDate!,
+            expiredDate: auction.expiredDate,
+            lastBid: auction.lastBid,
+            status: auction.status,
+            images: undefined,
+            imageUrl: undefined
+          } as AuctionCardDTO;
+        }
+      })
+    );
+
+    setAuctions(auctionsWithImages);
+  } catch (error) {
+    console.error("Error fetching auctions:", error);
+    setError("Failed to load auctions");
+  } finally {
+    setLoading(false);
+  }
+};
   
     fetchAuctionsAndImages()
   }, [filters, searchTerm, isImageSearch, selectedCategory])

@@ -51,7 +51,7 @@ class ImageService(
         val nextOrderIndex = calculateNextOrderIndex(auctionId)
 
         // Feltöltjük a képeket és elmentjük az adatbázisba
-        val savedImages = files.mapIndexed { index, file ->
+         val savedImages = files.mapIndexed { index, file ->
             val (imageUrl, publicId, width, height, determinedFormat) = uploadToCloudinary(file)
 
             val image = AuctionImage(
@@ -197,8 +197,9 @@ class ImageService(
     }
     private fun calculateNextOrderIndex(auctionId: Int): Int {
         return try {
-            // Megkeressük a legnagyobb orderIndex értéket az aukcióhoz
-            (auctionImageRepository.findMaxOrderIndexByAuctionId(auctionId) ?: -1) + 1
+            // Az AuctionImage objektumból kinyerjük az orderIndex értéket
+            val maxOrderImage = auctionImageRepository.findTopOrderIndexByAuctionIdOrderByOrderIndexDesc(auctionId)
+            (maxOrderImage?.orderIndex ?: -1) + 1
         } catch (e: Exception) {
             throw ImageProcessingException("Error during order calculation: ${e.message}")
         }

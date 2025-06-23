@@ -24,64 +24,67 @@ class SecurityConfig(private val customOAuth2UserService: CustomOAuth2UserServic
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .cors { it.configurationSource(corsConfigurationSource()) }
-            // Consider enabling CSRF with CookieCsrfTokenRepository if your SPA can handle it
-            // For now, keeping it disabled as per your original config
             .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
                 auth
+                    // PUBLIKUS ENDPOINT-OK
                     .requestMatchers(
                         "/",
-                        "/users/me", // This might need authentication depending on its purpose
                         "/api-docs/**",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
-                        "/api/auctions/**", // Covered by /auctions/** if Vite rewrites /api -> /
-                        "/auctions",
-                        "/auctions/**",     // This will match requests like /auctions/ID/images after Vite proxy rewrite
                         "/users/register",
-                        "/users/login",     // This is where your frontend redirects for login, which then triggers OAuth
-                        "/oauth2/**",       // Backend endpoints for OAuth flow
-                        "/login/oauth2/**", // Backend callback endpoint
+                        "/users/login",
+                        "/oauth2/**",
+                        "/login/oauth2/**",
                         "/categories",
-                        "/api/categories/**" // Covered by /categories/** if Vite rewrites /api -> /
+                        "/api/categories/**"
                     ).permitAll()
+
+                    // AUKCIÓS ENDPOINT-OK - CSAK OLVASÁS
+                    .requestMatchers("/auctions").permitAll()
+                    .requestMatchers("/auctions/*/").permitAll()  // Aukció részletek
+                    .requestMatchers("/auctions").permitAll()
+                    .requestMatchers("/auctions/*/").permitAll()
+
+                    // KÉPEK MEGTEKINTÉSE - PUBLIKUS
+                    .requestMatchers("/auctions/*/images").permitAll()  // GET kérések a képekhez
+                    .requestMatchers("/auctions/*/images").permitAll()
+
+                    // MINDEN MÁS - AUTHENTIKÁCIÓ SZÜKSÉGES
+                    // (Képfeltöltés POST, licitálás, stb.)
                     .anyRequest().authenticated()
             }
             .oauth2Login { oauth2 ->
                 oauth2
                     .userInfoEndpoint { it.userService(customOAuth2UserService) }
                     .defaultSuccessUrl("http://localhost:5173/", true)
-                // Optionally, you can specify the login page/initiation URL
-                // .loginPage("/oauth2/authorization/google") // Or your custom frontend login page
             }
             .sessionManagement {
-                it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // Or SessionCreationPolicy.STATELESS if you move to tokens fully
+                it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
             .exceptionHandling { exceptions ->
-                // For AJAX requests (typically those expecting JSON or with X-Requested-With), return 401
-                // instead of redirecting to login page.
                 val ajaxEntryPoint = HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
                 exceptions.defaultAuthenticationEntryPointFor(
                     ajaxEntryPoint,
                     RequestHeaderRequestMatcher("X-Requested-With", "XMLHttpRequest")
                 )
-                // You might want another entry point for non-ajax requests if you don't want the default oauth2Login behavior for all
             }
             .headers { headers ->
                 headers
-                    .xssProtection { it.disable() } // Generally recommended to rely on modern browser XSS protection
+                    .xssProtection { it.disable() }
                     .contentSecurityPolicy { policy ->
                         policy.policyDirectives(
                             "default-src 'self';" +
-                                    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com;" + // 'unsafe-inline/eval' for dev, try to remove for prod
+                                    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com;" +
                                     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;" +
-                                    "img-src 'self' data: https:;" + // Allow images from self, data URLs, and any HTTPS source
+                                    "img-src 'self' data: https:;" +
                                     "font-src 'self' https://fonts.gstatic.com;" +
-                                    "connect-src 'self' http://localhost:5173 https://localhost:5173 https://localhost:8081 wss://localhost:8081 https://accounts.google.com;" + // Allow connections to self, frontend, backend, and Google
-                                    "frame-src 'self' https://accounts.google.com;" + // Allow framing Google for OAuth iframes
+                                    "connect-src 'self' http://localhost:5173 https://localhost:5173 https://localhost:8081 wss://localhost:8081 https://accounts.google.com;" +
+                                    "frame-src 'self' https://accounts.google.com;" +
                                     "object-src 'none';" +
                                     "base-uri 'self';" +
-                                    "form-action 'self' https://accounts.google.com;" // Allow form submissions to Google
+                                    "form-action 'self' https://accounts.google.com;"
                         )
                     }
             }
@@ -94,14 +97,14 @@ class SecurityConfig(private val customOAuth2UserService: CustomOAuth2UserServic
         val configuration = CorsConfiguration().apply {
             allowedOrigins = listOf(
                 "http://localhost:5173",
-                "https://localhost:5173", // If your frontend ever runs on HTTPS
+                "https://localhost:5173",
                 "http://127.0.0.1:5173"
             )
             allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
             allowedHeaders = listOf(
                 "Authorization", "Cache-Control", "Content-Type", "X-Requested-With",
                 "Accept", "Origin", "Access-Control-Request-Method",
-                "Access-Control-Request-Headers", "X-CSRF-TOKEN" // If you enable CSRF
+                "Access-Control-Request-Headers", "X-CSRF-TOKEN"
             )
             exposedHeaders = listOf(
                 "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials",

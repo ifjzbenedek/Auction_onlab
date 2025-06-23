@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface ImageRepository: JpaRepository<AuctionImage, Int> {
 
     fun existsByAuctionId(auctionId: Int): Boolean
-    fun findMaxOrderIndexByAuctionId(auctionId: Int): Int?
+    fun findTopOrderIndexByAuctionIdOrderByOrderIndexDesc(auctionId: Int): AuctionImage?
     fun findByAuctionIdOrderByOrderIndexAsc(auctionId: Int): List<AuctionImage>
 }
