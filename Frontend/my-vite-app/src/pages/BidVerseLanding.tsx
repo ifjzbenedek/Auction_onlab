@@ -5,7 +5,6 @@ import { useState, useEffect } from "react"
 import { Box, Typography, Grid, CircularProgress, Alert } from "@mui/material"
 import Header from "../components/Header"
 import AuctionCard from "../components/AuctionCard"
-// Import imageApi as well
 import { auctionApi, imageApi } from "../services/api.ts" 
 import { AuctionCardDTO } from "../types/auction"
 import { AuctionImageDTO } from "../types/image"
@@ -18,112 +17,134 @@ const BidVerseLanding: React.FC = () => {
   const [isImageSearch, setIsImageSearch] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [categories, setCategories] = useState<CategoryDTO[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  
+  // Remove the empty array and actually fetch categories
+  const [categories, setCategories] = useState<CategoryDTO[]>([])
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await auctionApi.getCategories();
+        setCategories(response.data);
+        console.log('Loaded categories:', response.data); // Debug log
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Aukciók és képeik lekérése
   useEffect(() => {
-    // Aukciók és képeik lekérése
-const fetchAuctionsAndImages = async () => {
-  try {
-    setLoading(true);
-    
-    const params: Record<string, string | number> = {};
-    if (selectedCategory) {
-      params.categoryId = selectedCategory;
-    }
-    if (searchTerm.trim()) {
-      params.search = searchTerm.trim();
-    }
-
-    const auctionsResponse = await auctionApi.getAuctions(params);
-    const auctionsData: AuctionCardDTO[] = auctionsResponse.data;
-
-    // Képek lekérése minden aukcióhoz
-    const auctionsWithImages = await Promise.all(
-      auctionsData.map(async (auction) => {
-        try {
-          const imagesResponse = await imageApi.getAuctionImages(auction.id!);
-          const images: AuctionImageDTO[] = imagesResponse.data || [];
+    const fetchAuctionsAndImages = async () => {
+      try {
+        setLoading(true);
+        
+        const params: Record<string, string | number> = {};
+        
+        // Status filters - use "status" (singular) as backend expects
+        if (filters.length > 0) {
+          const statusMapping: Record<string, string> = {
+            'ongoing': 'ACTIVE',
+            'finished': 'CLOSED', 
+            'upcoming': 'PENDING'
+          };
           
-          // Sort images by orderIndex and isPrimary (primary first, then by orderIndex)
-          const sortedImages = images.sort((a, b) => {
-            if (a.isPrimary && !b.isPrimary) return -1;
-            if (!a.isPrimary && b.isPrimary) return 1;
-            return a.orderIndex - b.orderIndex;
-          });
-          
-          // Extract cloudinaryUrl from sorted images
-          const imageUrls = sortedImages.map(img => img.cloudinaryUrl);
-          
-          return {
-            id: auction.id!,
-            itemName: auction.itemName,
-            createDate: auction.createDate!,
-            expiredDate: auction.expiredDate,
-            lastBid: auction.lastBid,
-            status: auction.status,
-            images: imageUrls.length > 0 ? imageUrls : undefined,
-            imageUrl: imageUrls.length > 0 ? imageUrls[0] : undefined // First image URL
-          } as AuctionCardDTO;
-        } catch {
-          console.log(`No images found for auction ${auction.id}, using placeholder`);
-          
-          // Ha nincs kép, visszaadjuk az aukciót placeholder nélkül
-          return {
-            id: auction.id!,
-            itemName: auction.itemName,
-            createDate: auction.createDate!,
-            expiredDate: auction.expiredDate,
-            lastBid: auction.lastBid,
-            status: auction.status,
-            images: undefined,
-            imageUrl: undefined
-          } as AuctionCardDTO;
+          const backendStatuses = filters
+            .map(filter => statusMapping[filter])
+            .filter(status => status)
+            .join(',');
+            
+          if (backendStatuses) {
+            params.status = backendStatuses; // Changed from "statuses" to "status"
+          }
         }
-      })
-    );
+        
+        // Category filter - use "category" (singular) as backend expects
+        if (selectedCategory) {
+          params.category = selectedCategory; // Changed from "categories" to "category"
+        }
+        
+        // Search term
+        if (searchTerm.trim()) {
+          params.search = searchTerm.trim();
+        }
 
-    setAuctions(auctionsWithImages);
-  } catch (error) {
-    console.error("Error fetching auctions:", error);
-    setError("Failed to load auctions");
-  } finally {
-    setLoading(false);
-  }
-};
+        console.log('API params:', params); // Debug log
+        console.log('Current filters:', filters); // Debug log
+        console.log('Selected category:', selectedCategory); // Debug log
+
+        const auctionsResponse = await auctionApi.getAuctions(params);
+        const auctionsData: AuctionCardDTO[] = auctionsResponse.data;
+
+        console.log('Received auctions from API:', auctionsData.length); // Debug log
+
+        // Képek lekérése minden aukcióhoz
+        const auctionsWithImages = await Promise.all(
+          auctionsData.map(async (auction) => {
+            try {
+              const imagesResponse = await imageApi.getAuctionImages(auction.id!);
+              const images: AuctionImageDTO[] = imagesResponse.data || [];
+              
+              const imageUrls = images.map(img => img.cloudinaryUrl);
+              
+              return {
+                id: auction.id!,
+                itemName: auction.itemName,
+                createDate: auction.createDate!,
+                expiredDate: auction.expiredDate,
+                lastBid: auction.lastBid,
+                status: auction.status,
+                images: imageUrls.length > 0 ? imageUrls : undefined,
+                imageUrl: imageUrls.length > 0 ? imageUrls[0] : undefined
+              } as AuctionCardDTO;
+            } catch {
+              console.log(`No images found for auction ${auction.id}, using placeholder`);
+              
+              return {
+                id: auction.id!,
+                itemName: auction.itemName,
+                createDate: auction.createDate!,
+                expiredDate: auction.expiredDate,
+                lastBid: auction.lastBid,
+                status: auction.status,
+                images: undefined,
+                imageUrl: undefined
+              } as AuctionCardDTO;
+            }
+          })
+        );
+
+        setAuctions(auctionsWithImages);
+      } catch (error) {
+        console.error("Error fetching auctions:", error);
+        setError("Failed to load auctions");
+      } finally {
+        setLoading(false);
+      }
+    };
   
     fetchAuctionsAndImages()
   }, [filters, searchTerm, isImageSearch, selectedCategory])
 
-  // Kategóriák lekérése
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await auctionApi.getCategories()
-        setCategories(response.data)
-      } catch (err) {
-        console.error("Hiba a kategóriák lekérésekor:", err)
-        setCategories([]) // Hiba esetén üres tömb
-      }
-    }
-    fetchCategories()
-  }, [])
-
   // Szűrők kezelése
   const handleFilterChange = (newFilters: string[]) => {
+    console.log('Filter change received:', newFilters); // Debug log
     setFilters(newFilters)
   }
 
   // Keresés kezelése
   const handleSearch = (term: string, imageSearch: boolean) => {
+    console.log('Search received:', term, imageSearch); // Debug log
     setSearchTerm(term)
     setIsImageSearch(imageSearch)
   }
 
   // Kategória váltás
   const handleCategoryChange = (category: string | null) => {
+    console.log('Category change received:', category); // Debug log
     setSelectedCategory(category)
   }
 
@@ -133,13 +154,13 @@ const fetchAuctionsAndImages = async () => {
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         onCategoryChange={handleCategoryChange}
-        categories={categories.map(c => c.categoryName)} // Feltételezve, hogy a CategoryDTO-nak van categoryName mezője
+        categories={categories.map(c => c.categoryName)}
       />
 
       <Box sx={{
-          maxWidth: { xs: "100%", lg: "1400px" }, // Vagy a kívánt maximális szélesség
+          maxWidth: { xs: "100%", lg: "1400px" },
           mx: "auto",
-          px: { xs: 2, sm: 3 }, // Reszponzív padding
+          px: { xs: 2, sm: 3 },
           py: 3,
         }}
       >
@@ -159,11 +180,14 @@ const fetchAuctionsAndImages = async () => {
             <Typography variant="body1" color="text.secondary">
               Próbálj más szűrőket vagy keresési feltételeket.
             </Typography>
+            {/* Debug info */}
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
+              Filters: {JSON.stringify(filters)}, Category: {selectedCategory}, Search: {searchTerm}
+            </Typography>
           </Box>
         ) : (
-          <Grid container spacing={3}> {/* Reszponzív spacing */}
+          <Grid container spacing={3}>
             {auctions.map((auction) => (
-              // Az AuctionCardDTO-nak tartalmaznia kell az imageUrl-t
               <Grid item xs={12} sm={6} md={4} lg={3} key={auction.id}>
                 <AuctionCard {...auction} />
               </Grid>

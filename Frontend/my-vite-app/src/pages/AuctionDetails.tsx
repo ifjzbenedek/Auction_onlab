@@ -26,15 +26,9 @@ import { auctionApi, imageApi } from "../services/api.ts" // imageApi importálv
 import type { AuctionBasicDTO } from "../types/auction"
 import type { BidDTO } from "../types/bid"
 import axios from "axios"
-
-// Ideális esetben ez a típus a src/types mappában lenne definiálva és onnan importálva
-interface AuctionImageDTO {
-  id: number; // Vagy bármilyen más azonosító
-  url: string; // A kép URL-je
-}
+import type { AuctionImageDTO } from "../types/image"
 
 interface TabPanelProps {
-// ...existing code...
   children?: React.ReactNode
   index: number
   value: number
@@ -85,7 +79,6 @@ const AuctionDetails: React.FC = () => {
 
   // Idő számítás
   const calculateTimeLeft = (expiredDate: string): string => {
-// ...existing code...
     const now = new Date()
     const end = new Date(expiredDate)
     const diff = end.getTime() - now.getTime()
@@ -100,7 +93,7 @@ const AuctionDetails: React.FC = () => {
   }
 
   // Aukció adatok és képek lekérése
-  useEffect(() => {
+    useEffect(() => {
     const fetchAuctionAndImages = async () => {
       if (!id) {
         setLoading(false);
@@ -115,7 +108,6 @@ const AuctionDetails: React.FC = () => {
 
         if (!auctionData) {
           setAuction(null);
-          // Consider navigating to a 404 page or showing a more prominent "not found" message
           throw new Error(`Auction with ID ${id} not found`);
         }
 
@@ -126,25 +118,24 @@ const AuctionDetails: React.FC = () => {
         if (!imageURLs.length) {
           try {
             const imagesResponse = await imageApi.getAuctionImages(Number(id));
-            // Feltételezzük, hogy imagesResponse.data AuctionImageDTO[] típusú
-            if (imagesResponse.data && Array.isArray(imagesResponse.data)) {
-              imageURLs = imagesResponse.data.map((img: AuctionImageDTO) => img.url);
-            }
+            const images: AuctionImageDTO[] = imagesResponse.data || [];
+            
+            // A backend már sorrendezi a képeket, csak ki kell nyerni a cloudinaryUrl-eket
+            imageURLs = images.map(img => img.cloudinaryUrl);
           } catch (imgError) {
             console.error(`Error fetching images for auction ${id}:`, imgError);
-            // Hiba esetén marad az auctionData-ból kapott (valószínűleg üres) képlista
             imageURLs = auctionData.images || [];
           }
         }
         
         setAuction({
           ...auctionData,
-          images: imageURLs, // Biztosítjuk, hogy az images mindig stringek tömbje legyen
+          images: imageURLs,
         });
 
       } catch (error) {
         console.error("Error fetching auction details:", error);
-        setAuction(null); // Hiba esetén az aukciót null-ra állítjuk
+        setAuction(null);
       } finally {
         setLoading(false);
       }
@@ -153,8 +144,8 @@ const AuctionDetails: React.FC = () => {
     fetchAuctionAndImages();
   }, [id]);
 
+
   useEffect(() => {
-// ...existing code...
     const fetchBids = async () => {
       try {
         const response = await auctionApi.getAuctionBids(Number(id))
@@ -171,7 +162,6 @@ const AuctionDetails: React.FC = () => {
   }
 
   const handleMakeBid = async () => {
-// ...existing code...
     setBidError(null);
     setBidSuccess(false);
     setAuthError(false);
@@ -205,7 +195,7 @@ const AuctionDetails: React.FC = () => {
             try {
                 const imagesResponse = await imageApi.getAuctionImages(Number(id));
                 if (imagesResponse.data && Array.isArray(imagesResponse.data)) {
-                    updatedImageURLs = imagesResponse.data.map((img: AuctionImageDTO) => img.url);
+                    updatedImageURLs = imagesResponse.data.map((img: AuctionImageDTO) => img.cloudinaryUrl);
                 }
             } catch (imgError) {
                 console.error(`Error fetching images for auction ${id} after bid:`, imgError);
@@ -240,7 +230,7 @@ const AuctionDetails: React.FC = () => {
             try {
                 const imagesResponseRetry = await imageApi.getAuctionImages(Number(id));
                 if (imagesResponseRetry.data && Array.isArray(imagesResponseRetry.data)) {
-                    imagesRetry = imagesResponseRetry.data.map((img: AuctionImageDTO) => img.url);
+                    imagesRetry = imagesResponseRetry.data.map((img: AuctionImageDTO) => img.cloudinaryUrl);
                 }
             } catch (imgError) {
                 console.error(`Error fetching images for auction ${id} during retry:`, imgError);
@@ -273,7 +263,6 @@ const AuctionDetails: React.FC = () => {
   };
 
   const handleLoginRedirect = () => {
-// ...existing code...
     // Redirect to login page using the proxy
     window.location.href = "/oauth2/authorization/google"
   }

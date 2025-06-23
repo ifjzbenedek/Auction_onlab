@@ -138,14 +138,16 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
     onFilterChange(newFilters); // Küldd el a frissített szűrőket
   };
 
-  const removeCategory = (category: string) => {
+   const removeCategory = (category: string) => {
     const newCategories = selectedCategories.filter(c => c !== category)
     setSelectedCategories(newCategories)
+    // Send all selected categories as comma-separated string or null if empty
     onCategoryChange?.(newCategories.length > 0 ? newCategories.join(',') : null)
   }
 
   const addCategory = (category: string) => {
     if (!selectedCategories.includes(category)) {
+      // Add to existing categories instead of replacing
       const newCategories = [...selectedCategories, category]
       setSelectedCategories(newCategories)
       onCategoryChange?.(newCategories.join(','))
@@ -454,9 +456,9 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
         {/* Filter buttons */}
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
           {[
-            { id: "ACTIVE", label: "Ongoing", color: "#2ecc71" },   // Zöld
-            { id: "CLOSED", label: "Finished", color: "#e74c3c" },  // Piros
-            { id: "PENDING", label: "Upcoming", color: "#f39c12" }, // Narancs
+            { id: "ongoing", label: "Ongoing", color: "#2ecc71" },   // Zöld
+            { id: "finished", label: "Finished", color: "#e74c3c" },  // Piros
+            { id: "upcoming", label: "Upcoming", color: "#f39c12" }, // Narancs
           ].map((filter) => (
             <FilterButton
               key={filter.id}
