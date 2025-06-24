@@ -47,17 +47,19 @@ def generate_description():
             return jsonify({"error": "Invalid pictures!"}), 400
 
         prompt = """
-        Analyze the uploaded images and generate a detailed description suitable for auction listings. Focus specifically on:
-            - **Overall Condition** (Excellent, Good, Fair, Poor)
-            - **Visible Defects** (scratches, cracks, chips, dents)
-            - **Cleanliness** (stains, dirt, dust, discoloration)
-            - **Quality Assessment** (New, Used-Like New, Used-Good, Used-Fair, Vintage/Collector's Item)
-            - **Notable Features** (unique markings, signatures, rarity indicators)
-
-            Provide a professional, objective description that helps potential buyers evaluate the item accurately. 
-            Be specific about any imperfections while maintaining a neutral tone. 
-            Highlight both positive attributes and any flaws that affect value.
-        """
+                Analyze the item(s) shown in the uploaded images and generate a detailed, professional description suitable for auction or marketplace listings. The output should be a natural, multi-paragraph narrative rather than a bullet list.
+                In your analysis, seamlessly cover aspects such as:
+                Overall condition (e.g., excellent, good, fair, poor)
+                Visible defects (scratches, cracks, chips, dents, etc.)
+                Cleanliness and visual impression (stains, dust, discoloration)
+                Usage level / Quality grading (new, like new, used-good, used-fair, vintage/collector's item)
+                Notable or rare features (signatures, markings, collectible value)
+                Emphasize strengths while honestly acknowledging flaws that may affect value. The goal is to give buyers a trustworthy, clear understanding of the item.
+                If any critical details are not visible (e.g., missing views of the back, base, interior, etc.), politely mention that additional photos may be needed to fully assess the item.
+                Please ensure that, the description is written in a way, that would fit for an auction page item descripton, written by the seller.
+                If you think the photoes are not enough, then only write "description not possible, please upload more photos of the item(s)!".
+                Please do not write anything else, just the description.
+           """
 
         response = model.generate_content([prompt, *image_parts])
         return jsonify({"description": response.text})
