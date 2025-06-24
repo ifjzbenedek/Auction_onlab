@@ -55,3 +55,7 @@ Ezen a héten a leírásgenerálás elkészítése volt a kitűzött cél, és e
 
 12.hét
 Erre a hétre a képek bevezetése volt a cél a programban. Ezt habár lehetett volna blob-okban is tárolni az adatbázisban végül Cloudinary segítségével akarom megoldani, az sokkal letisztultabb és skálázhatóbb megoldás. Így adatbázisban elég az Url-eket tárolni (több kiegészítő információ között). Létrehoztam egy új táblát az adatbázisban és egy új entity-DTO-Repository-Service-Controller kombinációt a backendben. Ezután frontenden folytatom a megvalósítást. Egyelőre még hibás.
+
+Jún eleje
+Ebben az időszakban igyekeztem kijavítani a képek megjelenítését, illetve megírni a dokumentációt. A dokumentáció egyes részeit (pl architektúra) kibővítettem, megírtam a technológiák részt, illetve kifejtettem a leírás generátor működését.
+A képek kezelését is sikerült kijavítanom, kiderült, hogy a fő probléma a sorrendezéssel volt a backendben (konverziós hiba, véletlen Auction-t akartam int-re konvertálni). Ezen kívül a frontenden nem volt megfelelő az interface, amiben a backendtől kapott adatot fogadta, ezt is javítottam és most már rendesen működik.
