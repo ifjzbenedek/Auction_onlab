@@ -21,12 +21,13 @@ import {
   Snackbar,
   alpha,
 } from "@mui/material"
-import { X, Heart, Clock, ChevronLeft, ChevronRight, ArrowLeft, Tag } from "lucide-react"
+import { X, Heart, ChevronLeft, ChevronRight, ArrowLeft, Tag } from "lucide-react"
 import { auctionApi, imageApi } from "../services/api.ts" // imageApi importálva
 import type { AuctionBasicDTO } from "../types/auction"
 import type { BidDTO } from "../types/bid"
 import axios from "axios"
 import type { AuctionImageDTO } from "../types/image"
+import TimeDisplay from "../components/TimeDisplay"
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -75,21 +76,6 @@ const AuctionDetails: React.FC = () => {
     setFollowing(!following)
     // Itt API hívás történhet a követés mentésére a backend-en
     alert(`You have ${following ? "unfollowed" : "followed"} this auction!`)
-  }
-
-  // Idő számítás
-  const calculateTimeLeft = (expiredDate: string): string => {
-    const now = new Date()
-    const end = new Date(expiredDate)
-    const diff = end.getTime() - now.getTime()
-
-    if (diff <= 0) return "00:00:00"
-
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000)
-
-    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
   }
 
   // Aukció adatok és képek lekérése
@@ -505,10 +491,22 @@ const AuctionDetails: React.FC = () => {
                 mb: 2,
               }}
             >
-              <Clock size={18} />
-              <Typography variant="subtitle1" sx={{ textTransform: "capitalize" }}>
-                {`${auction.status} in ${calculateTimeLeft(auction.expiredDate)}`}
+              <Typography variant="subtitle1" sx={{ textTransform: "capitalize", mr: 1 }}>
+                {auction.status}
               </Typography>
+              <Box sx={{ 
+                '& *': { color: 'white !important' },
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}>
+                <TimeDisplay 
+                  expiredDate={auction.expiredDate} 
+                  variant="compact" 
+                  size="medium"
+                  showIcon={true}
+                />
+              </Box>
             </Box>
 
             {/* Price Information */}

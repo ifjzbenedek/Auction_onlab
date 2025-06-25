@@ -57,7 +57,7 @@ def generate_description():
                 Emphasize strengths while honestly acknowledging flaws that may affect value. The goal is to give buyers a trustworthy, clear understanding of the item.
                 If any critical details are not visible (e.g., missing views of the back, base, interior, etc.), politely mention that additional photos may be needed to fully assess the item.
                 Please ensure that, the description is written in a way, that would fit for an auction page item descripton, written by the seller.
-                If you think the photoes are not enough, then only write "description not possible, please upload more photos of the item(s)!".
+                If you think the photoes are not enough, then only write "Description not possible, please upload more photos of the item(s)!".
                 Please do not write anything else, just the description.
            """
 
