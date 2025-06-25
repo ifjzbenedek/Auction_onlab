@@ -8,4 +8,5 @@ interface ImageRepository: JpaRepository<AuctionImage, Int> {
     fun existsByAuctionId(auctionId: Int): Boolean
     fun findTopOrderIndexByAuctionIdOrderByOrderIndexDesc(auctionId: Int): AuctionImage?
     fun findByAuctionIdOrderByOrderIndexAsc(auctionId: Int): List<AuctionImage>
+    fun existsByAuctionIdAndIsPrimaryTrue(auctionId: Int): Boolean
 }

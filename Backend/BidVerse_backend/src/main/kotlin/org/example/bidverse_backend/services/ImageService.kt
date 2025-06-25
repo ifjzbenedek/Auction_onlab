@@ -15,6 +15,12 @@ import java.util.*
 import javax.imageio.ImageIO
 import org.example.bidverse_backend.entities.AuctionImage
 import org.springframework.transaction.annotation.Transactional
+import java.awt.Color
+import java.awt.RenderingHints
+import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
+import javax.imageio.IIOImage
+import javax.imageio.ImageWriteParam
 
 
 @Service
@@ -26,8 +32,7 @@ class ImageService(
     private val cloudinary: Cloudinary
 ) {
     companion object {
-        private val ALLOWED_CONTENT_TYPES = setOf("image/jpeg", "image/png", "image/webp")
-        private const val MAX_FILE_SIZE_MB = 10
+        private const val MAX_FILE_SIZE_MB = 50 // Maximum file size in MB
     }
 
     @Transactional
@@ -46,28 +51,68 @@ class ImageService(
         val currentUser = userRepository.findById(securityUtils.getCurrentUserId())
             .orElseThrow { UserNotFoundException("User not found") }
 
-        // Ellenőrizzük, hogy van-e már kép az aukcióhoz
-        val isFirstUpload = !auctionImageRepository.existsByAuctionId(auctionId)
+        // Ellenőrizzük, hogy van-e már primary kép
+        val hasPrimaryImage = auctionImageRepository.existsByAuctionIdAndIsPrimaryTrue(auctionId)
         val nextOrderIndex = calculateNextOrderIndex(auctionId)
 
-        // Feltöltjük a képeket és elmentjük az adatbázisba
-         val savedImages = files.mapIndexed { index, file ->
-            val (imageUrl, publicId, width, height, determinedFormat) = uploadToCloudinary(file)
+        // Képek előkészítése (minden feltöltés egyszerre)
+        val imagesToSave = mutableListOf<AuctionImage>()
 
-            val image = AuctionImage(
-                auction = auction,
-                cloudinaryUrl = imageUrl,
-                isPrimary = isFirstUpload && index == 0,
-                orderIndex = nextOrderIndex + index,
-                uploadedBy = currentUser,
-                fileSizeKb = (file.size / 1024).toInt(),
-                format = determinedFormat
-            )
+        files.forEachIndexed { index, file ->
+            try {
+                val (imageUrl, publicId, width, height, determinedFormat) = uploadToCloudinary(file)
 
-            auctionImageRepository.save(image) // Minden képet külön mentünk
+                val image = AuctionImage(
+                    auction = auction,
+                    cloudinaryUrl = imageUrl,
+                    isPrimary = !hasPrimaryImage && index == 0, // Csak az első új kép lesz primary, ha még nincs
+                    orderIndex = nextOrderIndex + index,
+                    uploadedBy = currentUser,
+                    fileSizeKb = (file.size / 1024).toInt(),
+                    format = determinedFormat
+                )
+
+                imagesToSave.add(image)
+
+            } catch (e: Exception) {
+                // Ha egy kép feltöltése sikertelen, töröljük a már feltöltött képeket
+                rollbackCloudinaryUploads(imagesToSave)
+                throw ImageUploadException("Failed to upload image ${file.originalFilename}: ${e.message}")
+            }
+        }
+
+        // Batch mentés az adatbázisba
+        val savedImages = try {
+            auctionImageRepository.saveAll(imagesToSave)
+        } catch (e: Exception) {
+            // Ha az adatbázis mentés sikertelen, töröljük a Cloudinary-ből a képeket
+            rollbackCloudinaryUploads(imagesToSave)
+            throw ImageProcessingException("Failed to save images to database: ${e.message}")
         }
 
         return savedImages.map { it.toAuctionImageDTO() }
+    }
+
+    // Segédmetódus a Cloudinary rollback-hez
+    private fun rollbackCloudinaryUploads(images: List<AuctionImage>) {
+        images.forEach { image ->
+            try {
+                // Cloudinary public_id kinyerése az URL-ből vagy külön tárolás
+                val publicId = extractPublicIdFromUrl(image.cloudinaryUrl)
+                cloudinary.uploader().destroy(publicId, emptyMap<String, Any>())
+            } catch (e: Exception) {
+                // Log the error, de ne akadályozza meg a rollback folyamatát
+                println("Warning: Failed to delete image from Cloudinary: ${e.message}")
+            }
+        }
+    }
+
+    private fun extractPublicIdFromUrl(url: String): String {
+        // Példa: https://res.cloudinary.com/demo/image/upload/v1234567890/auction_images/auction_123_uuid.jpg
+        // A public_id: auction_images/auction_123_uuid
+        return url.substringAfter("/upload/")
+            .substringAfter("/") // version eltávolítása ha van
+            .substringBeforeLast(".") // fájlkiterjesztés eltávolítása
     }
 
     fun getAuctionImages(auctionId: Int): List<AuctionImageDTO> {
@@ -86,8 +131,8 @@ class ImageService(
 
     private fun uploadToCloudinary(file: MultipartFile): CloudinaryUploadResult {
         return try {
-            // 1. Kép méreteinek és formátumának meghatározása
-            val (width, height) = getImageDimensions(file)
+            // 1. Kép méreteinek beállítása
+            val resizedImageBytes = resizeImageTo720x720(file)
             val format = determineImageFormat(file)
 
             // 2. Cloudinary feltöltési paraméterek
@@ -102,20 +147,97 @@ class ImageService(
 
             // 3. Képfeltöltés indítása
             val uploadResult = cloudinary.uploader()
-                .upload(file.bytes, uploadParams)
+                .upload(resizedImageBytes, uploadParams)
 
             // 4. Eredmény feldolgozása
             CloudinaryUploadResult(
                 url = uploadResult["secure_url"] as String,
                 publicId = uploadResult["public_id"] as String,
-                width = width,
-                height = height,
+                width = 720,
+                height = 720,
                 format = format,
-                sizeKb = (file.size / 1024).toInt()
+                sizeKb = (resizedImageBytes.size / 1024).toInt()
             )
         } catch (e: Exception) {
             throw ImageUploadException("Error during cloudinary upload: ${e.message}")
         }
+    }
+    private fun resizeImageTo720x720(file: MultipartFile): ByteArray {
+        return try {
+            val originalImage = ImageIO.read(ByteArrayInputStream(file.bytes))
+                ?: throw ImageValidationException("Cannot read image for resizing")
+
+            // 720x720-as négyzet létrehozása
+            val resizedImage = createSquareImage(originalImage, 720)
+
+            // Byte array-re konvertálás
+            val outputStream = ByteArrayOutputStream()
+            val format = determineImageFormat(file)
+
+            when (format.lowercase()) {
+                "jpg", "jpeg" -> {
+                    // JPEG minőséges kompresszió
+                    val writers = ImageIO.getImageWritersByFormatName("jpeg")
+                    val writer = writers.next()
+                    val writeParam = writer.defaultWriteParam
+                    writeParam.compressionMode = ImageWriteParam.MODE_EXPLICIT
+                    writeParam.compressionQuality = 0.85f // 85% minőség
+
+                    ImageIO.createImageOutputStream(outputStream).use { ios ->
+                        writer.output = ios
+                        writer.write(null, IIOImage(resizedImage, null, null), writeParam)
+                    }
+                    writer.dispose()
+                }
+                "png" -> {
+                    ImageIO.write(resizedImage, "PNG", outputStream)
+                }
+                else -> {
+                    ImageIO.write(resizedImage, "JPEG", outputStream)
+                }
+            }
+
+            outputStream.toByteArray()
+        } catch (e: Exception) {
+            throw ImageProcessingException("Image resizing failed: ${e.message}")
+        }
+    }
+
+    private fun createSquareImage(originalImage: BufferedImage, targetSize: Int): BufferedImage {
+        val originalWidth = originalImage.width
+        val originalHeight = originalImage.height
+
+        // Négyzet létrehozása fehér háttérrel
+        val squareImage = BufferedImage(targetSize, targetSize, BufferedImage.TYPE_INT_RGB)
+        val graphics = squareImage.createGraphics()
+
+        // Minőségi renderelés beállítása
+        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+        graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+
+        // Fehér háttér
+        graphics.color = Color.WHITE
+        graphics.fillRect(0, 0, targetSize, targetSize)
+
+        // Kép arányának megtartása
+        val scale = minOf(
+            targetSize.toDouble() / originalWidth,
+            targetSize.toDouble() / originalHeight
+        )
+
+        val scaledWidth = (originalWidth * scale).toInt()
+        val scaledHeight = (originalHeight * scale).toInt()
+
+        // Központozás
+        val x = (targetSize - scaledWidth) / 2
+        val y = (targetSize - scaledHeight) / 2
+
+        // Kép rajzolása
+        graphics.drawImage(originalImage, x, y, scaledWidth, scaledHeight, null)
+        graphics.dispose()
+
+        return squareImage
     }
 
     private fun determineImageFormat(file: MultipartFile): String {
@@ -141,8 +263,8 @@ class ImageService(
             throw ImageValidationException("Uploaded file is empty")
         }
 
-        // 2. Méret ellenőrzése (max 10MB)
-        val maxFileSizeBytes = 10 * 1024 * 1024 // 10MB
+        // 2. Méret ellenőrzése (max 50MB)
+        val maxFileSizeBytes = MAX_FILE_SIZE_MB * 1024 * 1024
         if (file.size > maxFileSizeBytes) {
             throw ImageValidationException("Image size too big, max 10MB allowed")
         }
