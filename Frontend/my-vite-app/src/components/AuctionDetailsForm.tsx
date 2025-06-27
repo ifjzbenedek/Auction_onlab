@@ -38,6 +38,7 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
       minimumPrice: 0,
       minStep: 0,
       expiredDate: "",
+      startDate: "",
       extraTime: "",
     }
   )
@@ -48,6 +49,7 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
     minimumPrice: false,
     minStep: false,
     expiredDate: false,
+    startDate: false,
     extraTime: false,
   })
 
@@ -94,7 +96,7 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
     }
   }
 
-  const validateField = (field: string, value: string | number | undefined) => {
+  const validateField = (field: string, value: string | number | null | undefined) => {
     let hasError = false
 
     if (field === "name" || field === "category") {
@@ -103,6 +105,8 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
       hasError = typeof value === "number" && value <= 0
     } else if (field === "expiredDate") {
       hasError = typeof value === "string" && value.trim().length === 0
+    } else if (field === "startDate") {
+      hasError = false
     } else if (field === "extraTime" && auctionType === "EXTENDED") {
       hasError = typeof value === "string" && (value.trim().length === 0 || Number(value) <= 0)
     }
@@ -137,111 +141,111 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
   }
 
   return (
-    <Paper sx={{ p: 3, bgcolor: "white", borderRadius: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle1" sx={{ mb: 1 }}>
-          Name
-        </Typography>
-        <TextField
-          fullWidth
-          placeholder="Itemname"
-          value={formData.name}
-          onChange={(e) => handleChange("name", e.target.value)}
-          onBlur={(e) => validateField("name", e.target.value)}
-          error={errors.name}
-          helperText={errors.name ? "Name is required" : ""}
-          size="small"
+  <Paper sx={{ p: 3, bgcolor: "white", borderRadius: 3 }}>
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="subtitle1" sx={{ mb: 1 }}>
+        Name
+      </Typography>
+      <TextField
+        fullWidth
+        placeholder="Itemname"
+        value={formData.name}
+        onChange={(e) => handleChange("name", e.target.value)}
+        onBlur={(e) => validateField("name", e.target.value)}
+        error={errors.name}
+        helperText={errors.name ? "Name is required" : ""}
+        size="small"
+      />
+    </Box>
+
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="subtitle1" sx={{ mb: 1 }}>
+        Status
+      </Typography>
+      <FormControl fullWidth size="small">
+        <Select
+          value={formData.status}
+          onChange={(e) => handleChange("status", e.target.value)}
+          displayEmpty
+          sx={{ bgcolor: "#000", color: "white" }}
+        >
+          {statusOptions.map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </Box>
+
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="subtitle1" sx={{ mb: 1 }}>
+        Condition
+      </Typography>
+      <Box sx={{ px: 1 }}>
+        <Slider
+          value={formData.condition}
+          onChange={(_, value) => handleChange("condition", Array.isArray(value) ? value[0] : value)}
+          marks={conditionMarks}
+          step={1}
+          min={0}
+          max={100}
+          sx={{
+            color: "#3498db",
+            "& .MuiSlider-thumb": {
+              height: 24,
+              width: 24,
+              backgroundColor: "#fff",
+              border: "2px solid currentColor",
+            },
+            "& .MuiSlider-track": {
+              height: 8,
+            },
+            "& .MuiSlider-rail": {
+              height: 8,
+              opacity: 0.5,
+              backgroundColor: "#bfbfbf",
+            },
+            "& .MuiSlider-mark": {
+              backgroundColor: "#bfbfbf",
+              height: 8,
+              width: 1,
+              marginTop: 0,
+            },
+            "& .MuiSlider-markLabel": {
+              fontSize: "0.75rem",
+              color: "#666",
+            },
+          }}
         />
       </Box>
+    </Box>
 
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle1" sx={{ mb: 1 }}>
-          Status
-        </Typography>
-        <FormControl fullWidth size="small">
-          <Select
-            value={formData.status}
-            onChange={(e) => handleChange("status", e.target.value)}
-            displayEmpty
-            sx={{ bgcolor: "#000", color: "white" }}
-          >
-            {statusOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
-
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle1" sx={{ mb: 1 }}>
-          Condition
-        </Typography>
-        <Box sx={{ px: 1 }}>
-          <Slider
-            value={formData.condition}
-            onChange={(_, value) => handleChange("condition", Array.isArray(value) ? value[0] : value)}
-            marks={conditionMarks}
-            step={1}
-            min={0}
-            max={100}
-            sx={{
-              color: "#3498db",
-              "& .MuiSlider-thumb": {
-                height: 24,
-                width: 24,
-                backgroundColor: "#fff",
-                border: "2px solid currentColor",
-              },
-              "& .MuiSlider-track": {
-                height: 8,
-              },
-              "& .MuiSlider-rail": {
-                height: 8,
-                opacity: 0.5,
-                backgroundColor: "#bfbfbf",
-              },
-              "& .MuiSlider-mark": {
-                backgroundColor: "#bfbfbf",
-                height: 8,
-                width: 1,
-                marginTop: 0,
-              },
-              "& .MuiSlider-markLabel": {
-                fontSize: "0.75rem",
-                color: "#666",
-              },
-            }}
-          />
-        </Box>
-      </Box>
-
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle1" sx={{ mb: 1 }}>
-          Category
-        </Typography>
-        <FormControl fullWidth size="small" error={errors.category}>
-          <Select
-            value={formData.category}
-            onChange={(e) => handleChange("category", e.target.value)}
-            onBlur={() => validateField("category", formData.category)}
-            displayEmpty
-          >
-            <MenuItem value="" disabled>
-              <em>Select a category</em>
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="subtitle1" sx={{ mb: 1 }}>
+        Category
+      </Typography>
+      <FormControl fullWidth size="small" error={errors.category}>
+        <Select
+          value={formData.category}
+          onChange={(e) => handleChange("category", e.target.value)}
+          onBlur={() => validateField("category", formData.category)}
+          displayEmpty
+        >
+          <MenuItem value="" disabled>
+            <em>Select a category</em>
+          </MenuItem>
+          {categories.map((category) => (
+            <MenuItem key={category.id} value={category.categoryName}>
+              {category.categoryName}
             </MenuItem>
-            {categories.map((category) => (
-              <MenuItem key={category.id} value={category.categoryName}>
-                {category.categoryName}
-              </MenuItem>
-            ))}
-          </Select>
-          {errors.category && <FormHelperText>Category is required</FormHelperText>}
-        </FormControl>
-      </Box>
+          ))}
+        </Select>
+        {errors.category && <FormHelperText>Category is required</FormHelperText>}
+      </FormControl>
+    </Box>
 
-      {auctionType && (
+    {auctionType && (
         <Box sx={{ mt: 3 }}>
           <Typography variant="subtitle1" fontWeight="medium" color="primary.main" gutterBottom>
             {auctionType === "FIXED" ? "Fixed Time Auction Details" : "Auto-Extended Auction Details"}
@@ -313,6 +317,32 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
 
             <Grid item xs={12} md={6}>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Start Date and Time (Optional)
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                type="datetime-local"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Calendar size={16} />
+                    </InputAdornment>
+                  ),
+                }}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                value={formData.startDate || ""} 
+                onChange={(e) => handleChange("startDate", e.target.value || "")} 
+                onBlur={() => validateField("startDate", formData.startDate)}
+                error={errors.startDate}
+                helperText="Leave empty to start immediately"
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 End Date and Time
               </Typography>
               <TextField
@@ -329,8 +359,8 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
                 InputLabelProps={{
                   shrink: true,
                 }}
-                value={formData.expiredDate}
-                onChange={(e) => handleChange("expiredDate", e.target.value)}
+                value={formData.expiredDate || ""} 
+                onChange={(e) => handleChange("expiredDate", e.target.value || "")} 
                 onBlur={() => validateField("expiredDate", formData.expiredDate)}
                 error={errors.expiredDate}
               />
@@ -355,10 +385,10 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
                       </InputAdornment>
                     ),
                   }}
-                  value={formData.extraTime}
+                  value={formData.extraTime || ""} 
                   onChange={(e) => {
                     const value = e.target.value;
-                    handleChange("extraTime", value);
+                    handleChange("extraTime", value || ""); 
                   }}
                   onBlur={() => validateField("extraTime", formData.extraTime)}
                   error={errors.extraTime}

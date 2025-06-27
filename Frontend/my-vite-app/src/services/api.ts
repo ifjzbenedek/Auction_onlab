@@ -87,6 +87,9 @@ export const auctionApi = {
     auctionData: { title?: string; description?: string; startingPrice?: number; endDate?: string },
   ) => api.put(`/auctions/${id}`, auctionData),
 
+  // Aukció státuszának frissítése
+  updateAuctionStatus: (id: number, newStatus: string) => api.patch(`/auctions/${id}/status`, { newStatus }),
+
   // Aukció törlése
   deleteAuction: (id: number) => api.delete(`/auctions/${id}`),
 

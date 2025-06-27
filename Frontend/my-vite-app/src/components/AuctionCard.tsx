@@ -9,17 +9,19 @@ import {
 } from "@mui/material";
 import { AuctionCardDTO } from "../types/auction";
 import TimeDisplay from './TimeDisplay';
+import { useAuctionStatusManager } from './StatusHook';
 
 const AuctionCard: React.FC<AuctionCardDTO> = ({ 
   id, 
   itemName, 
-  expiredDate, 
+  expiredDate,
   lastBid, 
   status, 
   imageUrl,
   images 
 }) => {
   const navigate = useNavigate();
+  const { handleStatusChange } = useAuctionStatusManager(); // ⭐ ÚJ hook
 
   const handleCardClick = () => {
     navigate(`/auction/${id}`);
@@ -108,9 +110,12 @@ const AuctionCard: React.FC<AuctionCardDTO> = ({
         {/* Time display */}
         <Box sx={{ mb: 2 }}>
           <TimeDisplay 
-            expiredDate={expiredDate} 
+            expiredDate={expiredDate}
             variant="compact" 
             size="small"
+            auctionId={id} 
+            currentStatus={status} 
+            onStatusChange={handleStatusChange} 
           />
         </Box>
 

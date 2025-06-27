@@ -20,6 +20,7 @@ export interface AuctionBasicDTO {
   minStep: number;
   condition: number;
   images?: string[]; // Optional if handled separately
+  startDate?: string | null;
 }
 
 // For the card view
@@ -31,10 +32,10 @@ export interface AuctionCardDTO {
   lastBid: number | null
   status: string
   images?: string[] // Optional, if handled separately
-  imageUrl?: string; // Add this line for the primary image URL
+  imageUrl?: string // Add this line for the primary image URL
+  startDate?: string | null
 }
 
-// Add this new interface after the AuctionCardDTO interface
 // For the auction details form
 export interface AuctionDetailsDTO {
   name: string
@@ -44,6 +45,7 @@ export interface AuctionDetailsDTO {
   minimumPrice: number
   minStep: number
   expiredDate: string
+  startDate?: string | null
   extraTime?: string // Optional, only for EXTENDED type
 }
 
@@ -63,4 +65,5 @@ export interface AuctionFormState {
   minStep: number
   expiredDate: string
   extraTime?: string
+  startDate?: string | null
 }

@@ -80,56 +80,64 @@ const AuctionDetails: React.FC = () => {
 
   // Aukció adatok és képek lekérése
     useEffect(() => {
-    const fetchAuctionAndImages = async () => {
-      if (!id) {
-        setLoading(false);
+  const fetchAuctionAndImages = async () => {
+    if (!id) {
+      setLoading(false);
+      setAuction(null);
+      console.error("Auction ID is missing.");
+      return;
+    }
+    setLoading(true);
+    try {
+      console.log('🔍 Fetching auction with ID:', id); // ⭐ DEBUG
+
+      const auctionResponse = await auctionApi.getAuctionById(Number(id));
+      const auctionData = auctionResponse.data;
+
+      console.log('🔍 Raw auction data:', auctionData); // ⭐ DEBUG
+
+      // ⭐ JAVÍTÁS: Ellenőrizzük az auctionData tulajdonságait
+      if (!auctionData || !auctionData.id) {
+        console.error('❌ Invalid auction data:', auctionData);
         setAuction(null);
-        console.error("Auction ID is missing.");
         return;
       }
-      setLoading(true);
-      try {
-        const auctionResponse = await auctionApi.getAuctionById(Number(id));
-        const auctionData: AuctionBasicDTO | null = auctionResponse.data;
 
-        if (!auctionData) {
-          setAuction(null);
-          throw new Error(`Auction with ID ${id} not found`);
+      let imageURLs: string[] = auctionData.images || [];
+
+      // Ha az aukciós adatok nem tartalmazzák a képeket
+      if (!imageURLs.length) {
+        try {
+          console.log('🔍 Fetching images for auction:', id);
+          const imagesResponse = await imageApi.getAuctionImages(Number(id));
+          const images: AuctionImageDTO[] = imagesResponse.data || [];
+          imageURLs = images.map(img => img.cloudinaryUrl);
+          console.log('✅ Images fetched:', imageURLs);
+        } catch (imgError) {
+          console.error(`❌ Error fetching images for auction ${id}:`, imgError);
+          imageURLs = [];
         }
-
-        let imageURLs: string[] = auctionData.images || [];
-
-        // Ha az aukciós adatok nem tartalmazzák a képeket, vagy üres a tömb,
-        // akkor próbáljuk meg őket külön lekérni.
-        if (!imageURLs.length) {
-          try {
-            const imagesResponse = await imageApi.getAuctionImages(Number(id));
-            const images: AuctionImageDTO[] = imagesResponse.data || [];
-            
-            // A backend már sorrendezi a képeket, csak ki kell nyerni a cloudinaryUrl-eket
-            imageURLs = images.map(img => img.cloudinaryUrl);
-          } catch (imgError) {
-            console.error(`Error fetching images for auction ${id}:`, imgError);
-            imageURLs = auctionData.images || [];
-          }
-        }
-        
-        setAuction({
-          ...auctionData,
-          images: imageURLs,
-        });
-
-      } catch (error) {
-        console.error("Error fetching auction details:", error);
-        setAuction(null);
-      } finally {
-        setLoading(false);
       }
-    };
+      
+      const finalAuction = {
+        ...auctionData,
+        images: imageURLs,
+      };
 
-    fetchAuctionAndImages();
-  }, [id]);
+      console.log('✅ Final auction object:', finalAuction); // ⭐ DEBUG
 
+      setAuction(finalAuction);
+
+    } catch (error) {
+      console.error("❌ Error fetching auction details:", error);
+      setAuction(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchAuctionAndImages();
+}, [id]);
 
   useEffect(() => {
     const fetchBids = async () => {

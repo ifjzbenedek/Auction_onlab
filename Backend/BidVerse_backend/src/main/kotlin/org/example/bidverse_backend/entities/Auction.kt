@@ -67,7 +67,8 @@ class Auction(
     var condition: Int,
 
     @Version
-    val version: Long = 0
+    val version: Long = 0,
 
+    var startDate: LocalDateTime?
 
 )

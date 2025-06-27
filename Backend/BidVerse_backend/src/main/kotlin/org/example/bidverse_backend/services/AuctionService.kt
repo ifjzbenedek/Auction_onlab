@@ -3,15 +3,18 @@ package org.example.bidverse_backend.services
 import org.springframework.transaction.annotation.Transactional
 import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionBasicDTO
 import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionCardDTO
+import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionStatusResponseDTO
 import org.example.bidverse_backend.DTOs.BidDTOs.BidBasicDTO
 import org.example.bidverse_backend.DTOs.EntityToDTO.toAuctionBasicDTO
 import org.example.bidverse_backend.DTOs.EntityToDTO.toAuctionCardDTO
+import org.example.bidverse_backend.DTOs.EntityToDTO.toAuctionStatusResponseDTO
 import org.example.bidverse_backend.DTOs.EntityToDTO.toBidBasicDTO
 import org.example.bidverse_backend.Exceptions.*
 import org.example.bidverse_backend.Security.SecurityUtils
 import org.example.bidverse_backend.entities.Auction
 import org.example.bidverse_backend.entities.Bid
 import org.example.bidverse_backend.repositories.*
+import org.example.bidverse_backend.services.AuctionUtils.AllAuctionUtils
 import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -61,8 +64,8 @@ class AuctionService(
             category = category,
             itemName = auctionBasic.itemName,
             minimumPrice = auctionBasic.minimumPrice,
-            status = "ACTIVE",
-            createDate = LocalDateTime.now(),
+            status = AllAuctionUtils.getStatusWhenCreatingAuction(auctionBasic.createDate),
+            createDate = auctionBasic.createDate,
             expiredDate = auctionBasic.expiredDate,
             description = auctionBasic.description,
             type = auctionBasic.type,
@@ -71,7 +74,8 @@ class AuctionService(
             minStep = auctionBasic.minStep,
             extraTime = auctionBasic.extraTime,
             lastBid = auctionBasic.lastBid,
-            condition = auctionBasic.condition
+            condition = auctionBasic.condition,
+            startDate = auctionBasic.startDate
         )
 
         return auctionRepository.save(auction).toAuctionBasicDTO()
@@ -99,6 +103,20 @@ class AuctionService(
 
         return auctionRepository.save(auction).toAuctionBasicDTO()
     }
+
+    fun updateAuctionStatus(auctionId: Int, newStatus: String): AuctionStatusResponseDTO {
+        val auction = auctionRepository.findById(auctionId)
+            .orElseThrow { AuctionNotFoundException("Auction not found.") }
+
+        if (!AllAuctionUtils.isValidStatusChange(auction.status, newStatus)) {
+            throw InvalidAuctionDataException("Invalid status change from ${auction.status} to $newStatus.")
+        }
+
+        auction.status = newStatus
+        return auctionRepository.save(auction).toAuctionStatusResponseDTO()
+    }
+
+
 
     fun deleteAuction(auctionId: Int) {
         val auction = auctionRepository.findById(auctionId)

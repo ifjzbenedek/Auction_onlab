@@ -60,7 +60,7 @@ class ImageService(
 
         files.forEachIndexed { index, file ->
             try {
-                val (imageUrl, publicId, width, height, determinedFormat) = uploadToCloudinary(file)
+                val (imageUrl, determinedFormat) = uploadToCloudinary(file)
 
                 val image = AuctionImage(
                     auction = auction,
@@ -296,27 +296,6 @@ class ImageService(
         }
     }
 
-    private fun getImageDimensions(file: MultipartFile): Pair<Int, Int> {
-        return try {
-            // A file.bytes egy byte tömböt ad vissza.
-            // Ebből minden alkalommal egy új, független ByteArrayInputStream-et hozunk létre.
-            // A .use {} blokk biztosítja, hogy ez az új inputStream lezárásra kerüljön a végén.
-            ByteArrayInputStream(file.bytes).use { inputStream ->
-                val bufferedImage = ImageIO.read(inputStream)
-                    ?: throw ImageValidationException("Invalid image data") // Ha nem sikerül képet olvasni
-
-                // Ellenőrizzük, hogy a kép mérete ésszerű-e (nem nulla vagy negatív)
-                if (bufferedImage.width <= 0 || bufferedImage.height <= 0) {
-                    throw ImageValidationException("Invalid image dimensions")
-                }
-
-                Pair(bufferedImage.width, bufferedImage.height)
-            }
-        } catch (e: Exception) {
-            // Ha bármi más hiba történik a méretek kinyerése közben
-            throw ImageValidationException("Error during image dimension extraction: ${e.message}")
-        }
-    }
     private fun calculateNextOrderIndex(auctionId: Int): Int {
         return try {
             // Az AuctionImage objektumból kinyerjük az orderIndex értéket

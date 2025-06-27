@@ -9,6 +9,6 @@ import org.springframework.stereotype.Service
 class CategoryService(private val categoryRepository: CategoryRepository) {
 
     fun getAllCategories(): List<CategoryDTO> {
-        return categoryRepository.findAll().map { CategoryDTO(it.id ?: 0, it.categoryName ?: "") }
+        return categoryRepository.findAll().map { CategoryDTO(it.id ?: 0, it.categoryName) }
     }
 }

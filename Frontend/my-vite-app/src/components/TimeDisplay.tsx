@@ -1,25 +1,60 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Box, Typography, Chip } from '@mui/material';
 import { Clock } from 'lucide-react';
 import { useTimer } from './TimeHook';
 import { TimeDisplayProps } from '../types/TimeUtils/TimeDisplayProps';
 import { calculateTimeLeft } from '../utils/timeUtils';
 
-const TimeDisplay: React.FC<TimeDisplayProps> = ({
+interface ExtendedTimeDisplayProps extends TimeDisplayProps {
+  auctionId?: number;
+  currentStatus?: string;
+  onStatusChange?: (auctionId: number, newStatus: string) => void;
+}
+
+const TimeDisplay: React.FC<ExtendedTimeDisplayProps> = ({
   expiredDate,
   variant = 'compact',
   showIcon = true,
-  size = 'medium'
+  size = 'medium',
+  auctionId,
+  currentStatus,
+  onStatusChange
 }) => {
-  // Use the timer to trigger re-renders
+  const prevStatusRef = useRef<string | null>(null);
+  
   useTimer(1000);
   
   const { timeString, isExpired, totalSeconds } = calculateTimeLeft(expiredDate);
 
+  // Automatic status change logic
+  useEffect(() => {
+  if (!auctionId || !currentStatus || !onStatusChange) return;
+
+  const now = new Date();
+  const expiredDateTime = new Date(expiredDate);
+  const isCurrentlyExpired = now >= expiredDateTime;
+
+  // PENDING/UPCOMING -> ACTIVE (auction starts)
+  if (currentStatus.toUpperCase() === 'PENDING' && !isCurrentlyExpired && totalSeconds > 0 && prevStatusRef.current !== 'started') {
+    // ⭐ JAVÍTÁS: Egyszerűsített logika - ha PENDING és még nem járt le, akkor indítjuk
+    if (totalSeconds > 0) {
+      onStatusChange(auctionId, 'ACTIVE');
+      prevStatusRef.current = 'started';
+      console.log(`🚀 Auction ${auctionId} started automatically`);
+    }
+  }
+
+  // ACTIVE -> CLOSED (auction expires)
+  if (currentStatus.toUpperCase() === 'ACTIVE' && isCurrentlyExpired && prevStatusRef.current !== 'expired') {
+    onStatusChange(auctionId, 'CLOSED');
+    prevStatusRef.current = 'expired';
+    console.log(` Auction ${auctionId} expired automatically`);
+  }
+}, [auctionId, currentStatus, expiredDate, onStatusChange, totalSeconds, isExpired]);
+
   // Színek meghatározása
   const getColor = () => {
     if (isExpired) return '#f44336'; // Piros
-    if (totalSeconds < 3600) return '#ff9800'; // Narancs (kevesebb mint 1 óra)
     if (totalSeconds < 86400) return '#ff9800'; // Narancs (kevesebb mint 1 nap)
     return '#00c853'; // Zöld
   };

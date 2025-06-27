@@ -2,6 +2,7 @@ package org.example.bidverse_backend.DTOs.EntityToDTO
 
 import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionBasicDTO
 import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionCardDTO
+import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionStatusResponseDTO
 
 import org.example.bidverse_backend.entities.Auction
 import org.example.bidverse_backend.extensions.toUserBasicDTO
@@ -13,7 +14,8 @@ fun Auction.toAuctionCardDTO(): AuctionCardDTO {
         createDate = this.createDate,
         expiredDate = this.expiredDate,
         lastBid = this.lastBid,
-        status = this.status
+        status = this.status,
+        startDate = this.startDate
     )
 }
 
@@ -34,6 +36,14 @@ fun Auction.toAuctionBasicDTO(): AuctionBasicDTO {
         extraTime = this.extraTime,
         itemState = this.itemState,
         tags = this.tags,
-        minStep = this.minStep
+        minStep = this.minStep,
+        startDate = this.startDate
+    )
+}
+
+fun Auction.toAuctionStatusResponseDTO(): AuctionStatusResponseDTO {
+    return AuctionStatusResponseDTO(
+        id = this.id!!,
+        status = this.status
     )
 }

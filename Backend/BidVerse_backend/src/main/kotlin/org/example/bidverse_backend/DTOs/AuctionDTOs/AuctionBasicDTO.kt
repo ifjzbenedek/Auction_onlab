@@ -12,7 +12,7 @@ data class AuctionBasicDTO(
     val itemName: String,
     val minimumPrice: BigDecimal,
     val status: String,
-    val createDate: LocalDateTime? = null,
+    val createDate: LocalDateTime,
     val expiredDate: LocalDateTime,
     val lastBid: BigDecimal?,
     val description: String,
@@ -21,5 +21,6 @@ data class AuctionBasicDTO(
     val itemState: String,
     val tags: String?,
     val minStep: Int?,
-    val condition: Int
+    val condition: Int,
+    val startDate: LocalDateTime?
 )

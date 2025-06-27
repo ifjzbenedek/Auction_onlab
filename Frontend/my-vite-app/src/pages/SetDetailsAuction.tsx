@@ -126,7 +126,7 @@ const SetDetailsAuction: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
-
+  const [, setCategories] = useState<CategoryDTO[]>([]); // Új állapot a kategóriák tárolására
 
   // 1. useEffect: Adatok szinkronizálása és a betöltött állapot jelzése
   useEffect(() => {
@@ -236,7 +236,8 @@ const SetDetailsAuction: React.FC = () => {
         itemName: detailsData.name,
         minimumPrice: Number(detailsData.minimumPrice),
         status: "PENDING", 
-        expiredDate: expiredDateISO, 
+        expiredDate: expiredDateISO,
+        startDate: detailsData.startDate || null, 
         description: descriptionFromContext,
         type: auctionType!,
         extraTime: extraTimeValue,
@@ -299,6 +300,29 @@ const SetDetailsAuction: React.FC = () => {
     setError(null);
     setSuccessMessage(null);
   };
+
+
+  useEffect(() => {
+    // Ha nincs adat a context-ben, irányítsuk át az upload lépésra
+    if (!filesForUpload.length && !auctionData.description && !auctionType) {
+      console.log("No auction creation data found in context after initial load attempt, redirecting to upload step.");
+      navigate('/upload-auction');
+      return;
+    }
+
+    // Fetch categories
+    const fetchCategories = async () => {
+      try {
+        const response = await auctionApi.getCategories();
+        setCategories(response.data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setError('Failed to load categories');
+      }
+    };
+
+    fetchCategories();
+  }, []); // ⭐ Csak egyszer fusson le
 
   if (!hasLoadedInitialData) {
     return (
