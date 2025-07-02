@@ -4,22 +4,22 @@ import type { UserBasicDTO } from "./user"
 // Main auction interface
 export interface AuctionBasicDTO {
   id?: number; // Optional for creation
-  user: UserBasicDTO;
+  user?: UserBasicDTO; // Optional for creation
   category: CategoryDTO;
   itemName: string;
-  minimumPrice: number; // Frontend uses number, backend will convert to BigDecimal
-  status: string;
-  createDate?: string; // Optional, backend will set
-  expiredDate: string; // ISO string format
-  lastBid?: number | null; // Optional
+  minimumPrice: number;
+  status?: string; // Optional for creation
+  createDate?: string;
+  expiredDate: string;
+  lastBid?: number | null;
   description: string;
   type: "FIXED" | "EXTENDED";
-  extraTime?: string | null; // ISO string format
+  extraTime?: string | null;
   itemState: string;
   tags: string | null;
   minStep: number;
   condition: number;
-  images?: string[]; // Optional if handled separately
+  images?: string[];
   startDate?: string | null;
 }
 

@@ -3,8 +3,11 @@ package org.example.bidverse_backend.services.AuctionUtils
 import java.time.LocalDateTime
 
 object AllAuctionUtils {
-    fun getStatusWhenCreatingAuction(createDate: LocalDateTime): String {
-        val auctionStartedInstantly = createDate.isBefore(LocalDateTime.now())
+    fun getStatusWhenCreatingAuction(startDate: LocalDateTime?): String {
+        if (startDate == null) {
+            return "ACTIVE"
+        }
+        val auctionStartedInstantly = startDate.isBefore(LocalDateTime.now())
 
         return if(auctionStartedInstantly)
              "ACTIVE"

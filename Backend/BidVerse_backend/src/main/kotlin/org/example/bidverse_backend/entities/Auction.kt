@@ -54,7 +54,7 @@ class Auction(
     @Column(nullable = false, length = 20)
     var type: String,
 
-    var extraTime: LocalDateTime?,
+    var extraTime: Int?,
 
     @Column(nullable = false, length = 20)
     var itemState: String,

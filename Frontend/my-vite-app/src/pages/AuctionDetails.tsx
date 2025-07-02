@@ -89,16 +89,15 @@ const AuctionDetails: React.FC = () => {
     }
     setLoading(true);
     try {
-      console.log('🔍 Fetching auction with ID:', id); // ⭐ DEBUG
+      console.log('🔍 Fetching auction with ID:', id); 
 
       const auctionResponse = await auctionApi.getAuctionById(Number(id));
       const auctionData = auctionResponse.data;
 
-      console.log('🔍 Raw auction data:', auctionData); // ⭐ DEBUG
+      console.log('🔍 Raw auction data:', auctionData); 
 
-      // ⭐ JAVÍTÁS: Ellenőrizzük az auctionData tulajdonságait
       if (!auctionData || !auctionData.id) {
-        console.error('❌ Invalid auction data:', auctionData);
+        console.error(' Invalid auction data:', auctionData);
         setAuction(null);
         return;
       }
@@ -112,9 +111,9 @@ const AuctionDetails: React.FC = () => {
           const imagesResponse = await imageApi.getAuctionImages(Number(id));
           const images: AuctionImageDTO[] = imagesResponse.data || [];
           imageURLs = images.map(img => img.cloudinaryUrl);
-          console.log('✅ Images fetched:', imageURLs);
+          console.log(' Images fetched:', imageURLs);
         } catch (imgError) {
-          console.error(`❌ Error fetching images for auction ${id}:`, imgError);
+          console.error(` Error fetching images for auction ${id}:`, imgError);
           imageURLs = [];
         }
       }
@@ -124,12 +123,12 @@ const AuctionDetails: React.FC = () => {
         images: imageURLs,
       };
 
-      console.log('✅ Final auction object:', finalAuction); // ⭐ DEBUG
+      console.log(' Final auction object:', finalAuction); 
 
       setAuction(finalAuction);
 
     } catch (error) {
-      console.error("❌ Error fetching auction details:", error);
+      console.error(" Error fetching auction details:", error);
       setAuction(null);
     } finally {
       setLoading(false);
@@ -289,7 +288,7 @@ const AuctionDetails: React.FC = () => {
         return "#00c853" // brighter green
       case "closed":
         return "#f44336" // brighter red
-      case "pending":
+      case "UPCOMING":
         return "#ff9800" // brighter orange
       default:
         return "#2c3e50" // default dark blue

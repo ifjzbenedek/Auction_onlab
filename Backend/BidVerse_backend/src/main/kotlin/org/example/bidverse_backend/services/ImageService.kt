@@ -60,22 +60,21 @@ class ImageService(
 
         files.forEachIndexed { index, file ->
             try {
-                val (imageUrl, determinedFormat) = uploadToCloudinary(file)
+                val uploadResult = uploadToCloudinary(file)
 
                 val image = AuctionImage(
                     auction = auction,
-                    cloudinaryUrl = imageUrl,
-                    isPrimary = !hasPrimaryImage && index == 0, // Csak az első új kép lesz primary, ha még nincs
+                    cloudinaryUrl = uploadResult.url,
+                    isPrimary = !hasPrimaryImage && index == 0,
                     orderIndex = nextOrderIndex + index,
                     uploadedBy = currentUser,
-                    fileSizeKb = (file.size / 1024).toInt(),
-                    format = determinedFormat
+                    fileSizeKb = uploadResult.sizeKb,
+                    format = uploadResult.format // Használd az uploadResult format mezőjét
                 )
 
                 imagesToSave.add(image)
 
             } catch (e: Exception) {
-                // Ha egy kép feltöltése sikertelen, töröljük a már feltöltött képeket
                 rollbackCloudinaryUploads(imagesToSave)
                 throw ImageUploadException("Failed to upload image ${file.originalFilename}: ${e.message}")
             }

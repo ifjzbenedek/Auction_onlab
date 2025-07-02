@@ -30,7 +30,7 @@ class AuctionImage(
     @Column(nullable = false)
     val fileSizeKb: Int,
 
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, length = 50)
     val format: String,
 
 )

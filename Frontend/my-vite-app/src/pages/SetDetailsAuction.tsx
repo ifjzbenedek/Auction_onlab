@@ -192,8 +192,8 @@ const SetDetailsAuction: React.FC = () => {
       return;
     }
     if (!descriptionFromContext && filesForUpload.length === 0) {
-        setError("Missing description or images from the previous step. Please go back.");
-        return;
+      setError("Missing description or images from the previous step. Please go back.");
+      return;
     }
     setIsSubmitting(true)
     setError(null)
@@ -203,28 +203,24 @@ const SetDetailsAuction: React.FC = () => {
       const userResponse = await axios.get<UserBasicDTO>("/users/me");
       const currentUser = userResponse.data;
 
-      // Ellenőrizd, hogy a currentUser tartalmazza-e a szükséges mezőket
-      // console.log("Current User from /users/me:", currentUser); 
-
-      if (!currentUser || !currentUser.id || !currentUser.userName || !currentUser.emailAddress /* || !currentUser.phoneNumber */) { 
-          // Ha a phoneNumber is kötelező a backend szerint a UserBasicDTO-ban az aukció létrehozásakor, itt is ellenőrizni kellene
-          throw new Error("Could not fetch current user details or required user fields (ID, userName, emailAddress) are missing.");
+      if (!currentUser || !currentUser.id || !currentUser.userName || !currentUser.emailAddress) { 
+        throw new Error("Could not fetch current user details or required user fields (ID, userName, emailAddress) are missing.");
       }
 
       const categoriesResponse = await auctionApi.getCategories();
       const selectedCategoryObject = categoriesResponse.data.find(
         (cat: CategoryDTO) => cat.categoryName?.toLowerCase() === detailsData.category.toLowerCase()
       );
-  
+
       if (!selectedCategoryObject || !selectedCategoryObject.id) {
         throw new Error("Selected category not found or category ID is missing.");
       }
-  
+
       const expiredDateISO = new Date(detailsData.expiredDate).toISOString();
       const extraTimeValue = auctionType === "EXTENDED" && detailsData.extraTime
         ? detailsData.extraTime.toString()
         : null;
-  
+
       const auctionPayload: AuctionBasicDTO = {
         user: { 
           id: currentUser.id, 
@@ -232,10 +228,14 @@ const SetDetailsAuction: React.FC = () => {
           emailAddress: currentUser.emailAddress,
           phoneNumber: currentUser.phoneNumber 
         } as UserBasicDTO,
-        category: { id: selectedCategoryObject.id, categoryName: selectedCategoryObject.categoryName } as CategoryDTO,
+        category: { 
+          id: selectedCategoryObject.id, 
+          categoryName: selectedCategoryObject.categoryName 
+        } as CategoryDTO,
         itemName: detailsData.name,
         minimumPrice: Number(detailsData.minimumPrice),
         status: "PENDING", 
+        // ⭐ createDate: TÖRÖLVE - backend automatikusan beállítja
         expiredDate: expiredDateISO,
         startDate: detailsData.startDate || null, 
         description: descriptionFromContext,
@@ -247,13 +247,18 @@ const SetDetailsAuction: React.FC = () => {
         condition: Number(detailsData.condition), 
       };
 
+      console.log('🔍 Submitting auction payload:', auctionPayload); // Debug log
+
       const createdAuctionResponse = await auctionApi.createAuction(auctionPayload);
       const createdAuction = createdAuctionResponse.data;
+      
       if (!createdAuction || typeof createdAuction.id !== 'number') {
         throw new Error("Auction created, but its ID was not returned or is invalid from the server.");
       }
+      
       const auctionId: number = createdAuction.id;
 
+      // Image upload logic...
       if (filesForUpload && filesForUpload.length > 0) {
         const imageFormData = new FormData();
         filesForUpload.forEach((fileObject) => {
@@ -266,8 +271,8 @@ const SetDetailsAuction: React.FC = () => {
         setSuccessMessage("Auction created successfully (no new images to upload)!");
       }
 
-      clearAuctionData(); // Kontextus adatainak törlése
-      setFilesForUpload([]); // Helyi állapot törlése is (biztonság kedvéért)
+      clearAuctionData();
+      setFilesForUpload([]);
 
       setTimeout(() => {
         navigate(`/auction/${auctionId}`);

@@ -49,7 +49,7 @@ const BidVerseLanding: React.FC = () => {
           const statusMapping: Record<string, string> = {
             'ongoing': 'ACTIVE',
             'finished': 'CLOSED', 
-            'upcoming': 'PENDING'
+            'upcoming': 'UPCOMING'
           };
           
           const backendStatuses = filters

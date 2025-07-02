@@ -40,7 +40,7 @@ const AuctionCard: React.FC<AuctionCardDTO> = ({
         return 'success';
       case 'CLOSED':
         return 'error';
-      case 'PENDING':
+      case 'UPCOMING':
         return 'warning';
       default:
         return 'default';
@@ -53,7 +53,7 @@ const AuctionCard: React.FC<AuctionCardDTO> = ({
         return 'Ongoing';
       case 'CLOSED':
         return 'Finished';
-      case 'PENDING':
+      case 'UPCOMING':
         return 'Upcoming';
       default:
         return status || 'Ismeretlen';
