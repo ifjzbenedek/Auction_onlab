@@ -216,7 +216,10 @@ const SetDetailsAuction: React.FC = () => {
         throw new Error("Selected category not found or category ID is missing.");
       }
 
-      const expiredDateISO = new Date(detailsData.expiredDate).toISOString();
+      // ⭐ A felhasználó által kiválasztott dátumokat ugyanúgy kezeljük
+      // Nem konvertálunk UTC-be, hanem úgy küldjük, ahogy a felhasználó beállította
+      const expiredDateFormatted = detailsData.expiredDate; // Ne konvertáljuk!
+      const startDateFormatted = detailsData.startDate || null;
       const extraTimeValue = auctionType === "EXTENDED" && detailsData.extraTime
         ? detailsData.extraTime.toString()
         : null;
@@ -236,8 +239,8 @@ const SetDetailsAuction: React.FC = () => {
         minimumPrice: Number(detailsData.minimumPrice),
         status: "PENDING", 
         // ⭐ createDate: TÖRÖLVE - backend automatikusan beállítja
-        expiredDate: expiredDateISO,
-        startDate: detailsData.startDate || null, 
+        expiredDate: expiredDateFormatted,
+        startDate: startDateFormatted, 
         description: descriptionFromContext,
         type: auctionType!,
         extraTime: extraTimeValue,
@@ -327,7 +330,7 @@ const SetDetailsAuction: React.FC = () => {
     };
 
     fetchCategories();
-  }, []); // ⭐ Csak egyszer fusson le
+  });
 
   if (!hasLoadedInitialData) {
     return (

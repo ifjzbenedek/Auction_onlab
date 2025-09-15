@@ -10,18 +10,19 @@ import {
 import { AuctionCardDTO } from "../types/auction";
 import TimeDisplay from './TimeDisplay';
 import { useAuctionStatusManager } from './StatusHook';
+import { calculateAuctionStatus, getStatusColor, getStatusLabel } from '../utils/auctionStatusUtils';
 
 const AuctionCard: React.FC<AuctionCardDTO> = ({ 
   id, 
   itemName, 
   expiredDate,
   lastBid, 
-  status, 
   imageUrl,
-  images 
+  images,
+  startDate
 }) => {
   const navigate = useNavigate();
-  const { handleStatusChange } = useAuctionStatusManager(); // ⭐ ÚJ hook
+  const { handleStatusChange } = useAuctionStatusManager();
 
   const handleCardClick = () => {
     navigate(`/auction/${id}`);
@@ -34,31 +35,11 @@ const AuctionCard: React.FC<AuctionCardDTO> = ({
   // Használj imageUrl-t vagy az első képet az images tömbből
   const displayImage = imageUrl || (images && images.length > 0 ? images[0] : null);
 
-  const getStatusColor = (status: string): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
-    switch (status?.toUpperCase()) {
-      case 'ACTIVE':
-        return 'success';
-      case 'CLOSED':
-        return 'error';
-      case 'UPCOMING':
-        return 'warning';
-      default:
-        return 'default';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status?.toUpperCase()) {
-      case 'ACTIVE':
-        return 'Ongoing';
-      case 'CLOSED':
-        return 'Finished';
-      case 'UPCOMING':
-        return 'Upcoming';
-      default:
-        return status || 'Ismeretlen';
-    }
-  };
+  // ⭐ ÚJ: Kiszámoljuk az aktuális státuszt az időpontok alapján
+  const { status: calculatedStatus } = calculateAuctionStatus(startDate, expiredDate);
+  
+  // Az adatbázisból érkező státusz helyett a számított státuszt használjuk
+  const currentStatus = calculatedStatus;
 
   return (
     <Card 
@@ -111,10 +92,11 @@ const AuctionCard: React.FC<AuctionCardDTO> = ({
         <Box sx={{ mb: 2 }}>
           <TimeDisplay 
             expiredDate={expiredDate}
+            startDate={startDate}
             variant="compact" 
             size="small"
             auctionId={id} 
-            currentStatus={status} 
+            currentStatus={currentStatus} 
             onStatusChange={handleStatusChange} 
           />
         </Box>
@@ -132,9 +114,9 @@ const AuctionCard: React.FC<AuctionCardDTO> = ({
         {/* Status chip */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Chip
-            label={getStatusLabel(status)}
+            label={getStatusLabel(currentStatus)}
             size="small"
-            color={getStatusColor(status)}
+            color={getStatusColor(currentStatus)}
             sx={{ fontWeight: "bold" }}
           />
         </Box>

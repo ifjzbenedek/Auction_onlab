@@ -28,6 +28,9 @@ import type { BidDTO } from "../types/bid"
 import axios from "axios"
 import type { AuctionImageDTO } from "../types/image"
 import TimeDisplay from "../components/TimeDisplay"
+import { calculateAuctionStatus, getStatusColor as utilGetStatusColor } from '../utils/auctionStatusUtils';
+import { parseBackendDate, debugTimezoneIssues } from '../utils/timezoneUtils';
+import { useAuctionStatusManager } from '../components/StatusHook';
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -54,6 +57,7 @@ function TabPanel(props: TabPanelProps) {
 const AuctionDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { handleStatusChange } = useAuctionStatusManager(); // Státusz kezelő hook
   const [auction, setAuction] = useState<AuctionBasicDTO | null>(null);
   const [bids, setBids] = useState<BidDTO[]>([])
   const [loading, setLoading] = useState(true)
@@ -125,7 +129,41 @@ const AuctionDetails: React.FC = () => {
 
       console.log(' Final auction object:', finalAuction); 
 
-      setAuction(finalAuction);
+      // ⭐ DEBUG: Timezone-korrigált időadatok ellenőrzése
+      debugTimezoneIssues(finalAuction.startDate, finalAuction.expiredDate);
+      
+      // ⭐ HIBA ELLENŐRZÉS: Hibás dátumok ellenőrzése timezone-korrigált verzióval
+      if (finalAuction.startDate) {
+        const startTime = parseBackendDate(finalAuction.startDate);
+        const endTime = parseBackendDate(finalAuction.expiredDate);
+        
+        if (startTime.getTime() >= endTime.getTime()) {
+          console.error('🚨 HIBÁS AUKCIÓ ADATOK: A startDate későbbi, mint az expiredDate!');
+          console.error('- startDate:', finalAuction.startDate, '→', startTime.toISOString());
+          console.error('- expiredDate:', finalAuction.expiredDate, '→', endTime.toISOString());
+          console.error('- Ez backend hiba! Az aukciót nem lehet így létrehozni.');
+        }
+      }
+      
+      // ⭐ ÚJ: Kiszámoljuk az aktuális státuszt az időpontok alapján
+      const { status: calculatedStatus } = calculateAuctionStatus(finalAuction.startDate, finalAuction.expiredDate);
+      console.log('- Calculated status based on time:', calculatedStatus);
+      
+      // Teszteljük az idő számítást timezone-korrigált verziókkal
+      const now = new Date();
+      const endTime = parseBackendDate(finalAuction.expiredDate);
+      const timeDiff = endTime.getTime() - now.getTime();
+      console.log('- Time difference (ms):', timeDiff);
+      console.log('- Time difference (minutes):', Math.floor(timeDiff / (1000 * 60)));
+      console.log('- Is expired?', timeDiff <= 0);
+
+      // Az adatbázisból érkező státusz helyett a számított státuszt használjuk
+      const finalAuctionWithCalculatedStatus = {
+        ...finalAuction,
+        status: calculatedStatus
+      };
+
+      setAuction(finalAuctionWithCalculatedStatus);
 
     } catch (error) {
       console.error(" Error fetching auction details:", error);
@@ -282,13 +320,25 @@ const AuctionDetails: React.FC = () => {
   }
 
   const getStatusColor = (status: string) => {
-// ...existing code...
+    // Ha ez egy AuctionStatus típus, használjuk az új utility-t
+    if (['ACTIVE', 'CLOSED', 'UPCOMING'].includes(status.toUpperCase())) {
+      const muiColor = utilGetStatusColor(status.toUpperCase() as 'ACTIVE' | 'CLOSED' | 'UPCOMING');
+      // Konvertáljuk MUI színekről hex színekre
+      switch (muiColor) {
+        case 'success': return "#00c853"; // ACTIVE - zöld
+        case 'error': return "#f44336";   // CLOSED - piros
+        case 'warning': return "#ff9800"; // UPCOMING - narancs
+        default: return "#2c3e50";       // default - sötétkék
+      }
+    }
+    
+    // Fallback a régi logikára egyéb státuszok esetén
     switch (status.toLowerCase()) {
       case "active":
         return "#00c853" // brighter green
       case "closed":
         return "#f44336" // brighter red
-      case "UPCOMING":
+      case "upcoming":
         return "#ff9800" // brighter orange
       default:
         return "#2c3e50" // default dark blue
@@ -508,10 +558,14 @@ const AuctionDetails: React.FC = () => {
                 gap: 1
               }}>
                 <TimeDisplay 
-                  expiredDate={auction.expiredDate} 
+                  expiredDate={auction.expiredDate}
+                  startDate={auction.startDate}
                   variant="compact" 
                   size="medium"
                   showIcon={true}
+                  auctionId={auction.id}
+                  currentStatus={auction.status}
+                  onStatusChange={handleStatusChange}
                 />
               </Box>
             </Box>
@@ -686,7 +740,7 @@ const AuctionDetails: React.FC = () => {
             <TabPanel value={tabValue} index={2}>
               <Box sx={{ maxHeight: 400, overflowY: "auto", pr: 2 }}>
               {Array.isArray(bids) && bids.length > 0 ? (
-                  bids.sort((a, b) => new Date(b.timeStamp).getTime() - new Date(a.timeStamp).getTime()) // Sort bids by time, newest first
+                  bids.sort((a, b) => parseBackendDate(b.timeStamp).getTime() - parseBackendDate(a.timeStamp).getTime()) // Sort bids by time, newest first
                   .map((bid) => (
                     <Paper key={bid.id} sx={{ p: 2, mb: 2, bgcolor: "#fff", borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
                       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -695,7 +749,7 @@ const AuctionDetails: React.FC = () => {
                             {bid.bidder.userName}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            {new Date(bid.timeStamp).toLocaleString("hu-HU", {
+                            {parseBackendDate(bid.timeStamp).toLocaleString("hu-HU", {
                               year: "numeric",
                               month: "short",
                               day: "numeric",

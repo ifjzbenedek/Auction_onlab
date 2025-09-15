@@ -3,16 +3,18 @@ import { Box, Typography, Chip } from '@mui/material';
 import { Clock } from 'lucide-react';
 import { useTimer } from './TimeHook';
 import { TimeDisplayProps } from '../types/TimeUtils/TimeDisplayProps';
-import { calculateTimeLeft } from '../utils/timeUtils';
+import { calculateSmartTimeLeft } from '../utils/timeUtils';
+import { AuctionStatus, calculateAuctionStatus } from '../utils/auctionStatusUtils';
 
 interface ExtendedTimeDisplayProps extends TimeDisplayProps {
   auctionId?: number;
-  currentStatus?: string;
+  currentStatus?: AuctionStatus | string;
   onStatusChange?: (auctionId: number, newStatus: string) => void;
 }
 
 const TimeDisplay: React.FC<ExtendedTimeDisplayProps> = ({
   expiredDate,
+  startDate,
   variant = 'compact',
   showIcon = true,
   size = 'medium',
@@ -24,33 +26,53 @@ const TimeDisplay: React.FC<ExtendedTimeDisplayProps> = ({
   
   useTimer(1000);
   
-  const { timeString, isExpired, totalSeconds } = calculateTimeLeft(expiredDate);
+  // Státusz alapján dönt, hogy startDate-ig vagy expiredDate-ig számoljon
+  const { timeString, isExpired, totalSeconds, targetEvent, status: smartStatus } = calculateSmartTimeLeft(startDate, expiredDate);
+  
+  // Kiszámoljuk az aktuális státuszt az időpontok alapján
+  const { status: calculatedStatus } = calculateAuctionStatus(startDate, expiredDate);
 
-  // Automatic status change logic
+  // Automatic status change logic - csak frontend státusz frissítés
   useEffect(() => {
-  if (!auctionId || !currentStatus || !onStatusChange) return;
+    if (!auctionId || !currentStatus || !onStatusChange) return;
 
-  const now = new Date();
-  const expiredDateTime = new Date(expiredDate);
-  const isCurrentlyExpired = now >= expiredDateTime;
-
-  // PENDING/UPCOMING -> ACTIVE (auction starts)
-  if (currentStatus.toUpperCase() === 'PENDING' && !isCurrentlyExpired && totalSeconds > 0 && prevStatusRef.current !== 'started') {
-    // ⭐ JAVÍTÁS: Egyszerűsített logika - ha PENDING és még nem járt le, akkor indítjuk
-    if (totalSeconds > 0) {
-      onStatusChange(auctionId, 'ACTIVE');
-      prevStatusRef.current = 'started';
-      console.log(`🚀 Auction ${auctionId} started automatically`);
+    const currentStatusStr = typeof currentStatus === 'string' ? currentStatus : currentStatus;
+    
+    // Ha a számított státusz eltér a jelenlegi státusztól és még nem frissítettük
+    if (calculatedStatus !== currentStatusStr.toUpperCase() && prevStatusRef.current !== calculatedStatus) {
+      prevStatusRef.current = calculatedStatus;
+      
+      // Frontend + Backend státusz frissítés a StatusHook-on keresztül
+      onStatusChange(auctionId, calculatedStatus);
+      console.log(`🔄 Auction ${auctionId} status automatically updated from ${currentStatusStr} to ${calculatedStatus}`);
     }
-  }
+  }, [auctionId, currentStatus, calculatedStatus, onStatusChange]);
 
-  // ACTIVE -> CLOSED (auction expires)
-  if (currentStatus.toUpperCase() === 'ACTIVE' && isCurrentlyExpired && prevStatusRef.current !== 'expired') {
-    onStatusChange(auctionId, 'CLOSED');
-    prevStatusRef.current = 'expired';
-    console.log(` Auction ${auctionId} expired automatically`);
-  }
-}, [auctionId, currentStatus, expiredDate, onStatusChange, totalSeconds, isExpired]);
+  // Szöveg meghatározása aszerint, hogy mihez számolunk vissza
+  const getDisplayLabel = () => {
+    if (isExpired) {
+      return smartStatus === 'UPCOMING' ? "Starting now" : "Expired";
+    }
+    
+    switch (targetEvent) {
+      case 'start':
+        return "Starts in";
+      case 'end':
+        return "Ends in";
+      case 'expired':
+        return "Expired";
+      default:
+        return "Time left";
+    }
+  };
+
+  // Chip label
+  const getChipLabel = () => {
+    if (isExpired) {
+      return smartStatus === 'UPCOMING' ? "Starting" : "Expired";
+    }
+    return timeString;
+  };
 
   // Színek meghatározása
   const getColor = () => {
@@ -82,7 +104,7 @@ const TimeDisplay: React.FC<ExtendedTimeDisplayProps> = ({
     return (
       <Chip
         icon={showIcon ? <Clock size={14} /> : undefined}
-        label={isExpired ? "Expired" : timeString}
+        label={getChipLabel()}
         size={size === 'large' ? 'medium' : 'small'}
         sx={{
           backgroundColor: getColor(),
@@ -109,7 +131,7 @@ const TimeDisplay: React.FC<ExtendedTimeDisplayProps> = ({
           </Box>
         )}
         <Typography variant={getTextVariant()} sx={{ fontWeight: 'bold', mb: 1 }}>
-          {isExpired ? "Auction Ended" : "Time Remaining"}
+          {getDisplayLabel()}
         </Typography>
         <Typography 
           variant={size === 'large' ? 'h5' : 'h6'} 
@@ -123,7 +145,7 @@ const TimeDisplay: React.FC<ExtendedTimeDisplayProps> = ({
         </Typography>
         {isExpired && (
           <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
-            This auction has expired
+            {smartStatus === 'UPCOMING' ? 'Auction is starting' : 'This auction has expired'}
           </Typography>
         )}
       </Box>
@@ -144,7 +166,7 @@ const TimeDisplay: React.FC<ExtendedTimeDisplayProps> = ({
           fontFamily: 'monospace'
         }}
       >
-        {isExpired ? "Expired" : timeString}
+        {isExpired ? getDisplayLabel() : `${getDisplayLabel()}: ${timeString}`}
       </Typography>
     </Box>
   );
