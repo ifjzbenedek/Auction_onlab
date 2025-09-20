@@ -69,7 +69,7 @@ class ImageService(
                     orderIndex = nextOrderIndex + index,
                     uploadedBy = currentUser,
                     fileSizeKb = uploadResult.sizeKb,
-                    format = uploadResult.format // Használd az uploadResult format mezőjét
+                    format = uploadResult.format
                 )
 
                 imagesToSave.add(image)

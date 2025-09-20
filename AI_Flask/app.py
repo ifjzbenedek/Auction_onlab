@@ -47,21 +47,31 @@ def generate_description():
             return jsonify({"error": "Invalid pictures!"}), 400
 
         prompt = """
-                Analyze the item(s) shown in the uploaded images and generate a detailed, professional description suitable for auction or marketplace listings. The output should be a natural, multi-paragraph narrative rather than a bullet list.
-                In your analysis, seamlessly cover aspects such as:
-                Overall condition (e.g., excellent, good, fair, poor)
-                Visible defects (scratches, cracks, chips, dents, etc.)
-                Cleanliness and visual impression (stains, dust, discoloration)
-                Usage level / Quality grading (new, like new, used-good, used-fair, vintage/collector's item)
-                Notable or rare features (signatures, markings, collectible value)
-                Emphasize strengths while honestly acknowledging flaws that may affect value. The goal is to give buyers a trustworthy, clear understanding of the item.
-                If any critical details are not visible (e.g., missing views of the back, base, interior, etc.), politely mention that additional photos may be needed to fully assess the item.
-                Please ensure that, the description is written in a way, that would fit for an auction page item descripton, written by the seller.
-                If you think the photoes are not enough, then only write "Description not possible, please upload more photos of the item(s)!".
-                Please do not write anything else, just the description.
-           """
+        FIRST: Start your response with "NO" on the first line if the photos are insufficient (too blurry, poor lighting, missing important angles, too few photos, etc.)
+        
+        IF NO: Write only "No" and nothing else.
+
+        IF YES: Create a compelling auction-style description as if you're the seller trying to attract buyers.
+
+        For auction descriptions, write in a natural, marketing-oriented style that includes overview, condition, key features, completeness, target buyer well integrated into the text. 
+        Do not make it sound like an enumeration or list or bullet point.
+        Mainly try to enhance the positive aspects of the item while being honest about any flaws.
+
+        Write like an experienced seller who knows how to highlight positives while being honest about flaws. Use engaging language that would make potential bidders interested, but remain truthful and detailed.
+        
+        Example opening styles:
+        - "Up for auction is this beautiful..."
+        - "Offered here is a well-maintained..."
+        - "Don't miss this opportunity to own..."
+        
+        Keep it conversational but professional, like a knowledgeable seller describing their item to a potential buyer.
+        """
 
         response = model.generate_content([prompt, *image_parts])
+
+        if response.text.strip().lower().startswith('no'):
+            return jsonify({"description": "The amount of photos and angles are insufficient, please provide more."}), 200
+        
         return jsonify({"description": response.text})
 
     except Exception as e:
