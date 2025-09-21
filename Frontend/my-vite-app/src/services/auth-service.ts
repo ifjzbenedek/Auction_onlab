@@ -1,54 +1,38 @@
-// Update the auth service to handle authentication properly
+// Session-based authentication service for Google OAuth
 import axios from "axios"
 
 export const authService = {
   // Initiate Google OAuth login
   loginWithGoogle: () => {
     // Redirect to the backend's OAuth endpoint
-    // This is important - we're redirecting to our backend endpoint, not directly to Google
-    window.location.href = "/users/login"
+    window.location.href = "/oauth2/authorization/google"
   },
 
-  // Check if user is authenticated
-  isAuthenticated: () => {
-    return !!localStorage.getItem("token")
-  },
-
-  // Get the current authentication token
-  getToken: () => {
-    return localStorage.getItem("token")
-  },
-
-  // Logout the user
-  logout: async () => {
+  // Check if user is authenticated by calling the backend
+  isAuthenticated: async (): Promise<boolean> => {
     try {
-      // Call backend logout endpoint if available
-      await axios.post("/auth/logout", {}, { withCredentials: true })
-    } catch (error) {
-      console.error("Logout error:", error)
+      const response = await axios.get("/users/me", { withCredentials: true })
+      return response.status === 200
+    } catch {
+      return false
     }
-
-    // Clear local storage regardless of backend response
-    localStorage.removeItem("token")
   },
 
-  // Handle OAuth callback (for implicit flow)
-  handleAuthCallback: () => {
-    // Check for token in URL hash (for implicit flow)
-    const params = new URLSearchParams(window.location.hash.substr(1))
-    const token = params.get("access_token")
+  // Get current user data
+  getCurrentUser: async () => {
+    const response = await axios.get("/users/me", { withCredentials: true })
+    return response.data
+  },
 
-    // Check for error in URL parameters
-    const urlParams = new URLSearchParams(window.location.search)
-    const errorParam = urlParams.get("error")
-
-    if (token) {
-      localStorage.setItem("token", token)
-      return { success: true, error: null }
-    } else if (errorParam) {
-      return { success: false, error: errorParam }
-    }
-
-    return { success: false, error: null }
+  // Simple logout - just redirect to backend logout and let Spring Security handle it
+  logout: () => {
+    console.log("Redirecting to backend logout...")
+    
+    // Clear browser storage
+    localStorage.clear()
+    sessionStorage.clear()
+    
+    // Use relative URL to go through Vite proxy
+    window.location.href = "/logout"
   },
 }

@@ -29,22 +29,29 @@ const Profile: React.FC = () => {
   const theme = useTheme()
 
   useEffect(() => {
-    // Felhasználó adatainak lekérése a backendtől
-    fetch("/users/me", { credentials: "include" })
-      .then((response) => {
+    const fetchUserData = async () => {
+      try {
+        // Az AuthGuard már ellenőrizte az auth státuszt, itt csak a user adatokat kérjük le
+        const response = await fetch('/users/me', {
+          credentials: 'include'
+        })
+        
         if (!response.ok) {
-          throw new Error("Failed to fetch user data")
+          throw new Error(`HTTP error! status: ${response.status}`)
         }
-        return response.json()
-      })
-      .then((data) => {
-        setUser(data)
+        
+        const userData = await response.json()
+        console.log('User data loaded:', userData)
+        setUser(userData)
+      } catch (error) {
+        console.error('Error fetching user data:', error)
+        // Ha itt hiba van, valami nincs rendben
+      } finally {
         setLoading(false)
-      })
-      .catch((error) => {
-        console.error(error)
-        setLoading(false)
-      })
+      }
+    }
+
+    fetchUserData()
   }, [])
 
   return (

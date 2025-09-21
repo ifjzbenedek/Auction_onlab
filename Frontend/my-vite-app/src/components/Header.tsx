@@ -5,6 +5,7 @@ import { useState } from "react"
 import TollIcon from "@mui/icons-material/Toll"
 import AccountCircleIcon from "@mui/icons-material/AccountCircle"
 import { Search, Plus, X, ChevronDown, RefreshCw, Image, User, LogOut, Package, DollarSign, Heart } from "lucide-react"
+import { authService } from "../services/auth-service"
 import {
   Box,
   Typography,
@@ -155,22 +156,29 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
   }
 
   const handleProfileClick = (event: React.MouseEvent<HTMLElement>) => {
+    console.log("Profile button clicked!")
     setProfileAnchorEl(event.currentTarget)
   }
 
   const handleProfileClose = () => {
+    console.log("Profile menu closed")
     setProfileAnchorEl(null)
   }
 
-  const handleProfileMenuItemClick = (action: string) => {
+  const handleProfileMenuItemClick = async (action: string) => {
+    console.log("Profile menu item clicked:", action)
     handleProfileClose()
     if (action === "profile") {
       navigate("/users/me")
     } else if (action === "logout") {
-      // Handle logout
-      console.log("Logging out...")
-      // Egyszerűsített logout - valós alkalmazásban API hívás lenne
-      navigate("/users/login")
+      // Handle logout with explicit call
+      console.log("Logout action triggered!")
+      try {
+        await authService.logout()
+        console.log("Logout completed")
+      } catch (error) {
+        console.error("Logout failed:", error)
+      }
     } else if (action === "myAuctions") {
       navigate("/my-auctions")
     } else if (action === "myBids") {

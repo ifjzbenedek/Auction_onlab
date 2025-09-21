@@ -37,6 +37,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // Proxy logout endpoint
+      "/logout": {
+        target: "https://localhost:8081",
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });

@@ -7,6 +7,7 @@ import AuctionDetails from "./pages/AuctionDetails.tsx"
 import UploadAuction from "./pages/UploadAuction.tsx"
 import SetDetailsAuction from "./pages/SetDetailsAuction.tsx"
 import UserAuctions from "./pages/UserAuctions.tsx"
+import AuthGuard from "./components/AuthGuard.tsx"
 import { AuctionCreationProvider } from "./contexts/AuctionCreationContext.tsx"
 
 const App: React.FC = () => {
@@ -16,10 +17,42 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<BidVerseLanding />} />
           <Route path="/auction/:id" element={<AuctionDetails />} />
-          <Route path="/upload-auction" element={<UploadAuction />} />
-          <Route path="/set-details-auction" element={<SetDetailsAuction />} />
-          <Route path="/my-auctions" element={<UserAuctions />} />
-          <Route path="/users/me" element={<Profile />} />
+          
+          {/* Protected routes - require authentication */}
+          <Route 
+            path="/upload-auction" 
+            element={
+              <AuthGuard>
+                <UploadAuction />
+              </AuthGuard>
+            } 
+          />
+          <Route 
+            path="/set-details-auction" 
+            element={
+              <AuthGuard>
+                <SetDetailsAuction />
+              </AuthGuard>
+            } 
+          />
+          <Route 
+            path="/my-auctions" 
+            element={
+              <AuthGuard>
+                <UserAuctions />
+              </AuthGuard>
+            } 
+          />
+          <Route 
+            path="/users/me" 
+            element={
+              <AuthGuard>
+                <Profile />
+              </AuthGuard>
+            } 
+          />
+          
+          {/* Public routes */}
           <Route path="/users/login" element={<Login />} />
         </Routes>
       </AuctionCreationProvider>
