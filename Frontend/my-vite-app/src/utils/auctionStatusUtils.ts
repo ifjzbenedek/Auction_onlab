@@ -29,12 +29,6 @@ export const calculateAuctionStatus = (
     
     // Ha a startDate későbbi, mint az expiredDate, akkor rossz adatok vannak
     if (startTime.getTime() >= endTime.getTime()) {
-      console.warn('🚨 Invalid auction data: startDate is after expiredDate!', {
-        startDate,
-        expiredDate,
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString()
-      });
       
       // Ebben az esetben kezeljük úgy, mintha nincs startDate
       return calculateAuctionStatus(null, expiredDate);

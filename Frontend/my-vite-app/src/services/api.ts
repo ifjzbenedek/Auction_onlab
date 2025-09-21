@@ -14,13 +14,11 @@ const api = axios.create({
   withCredentials: true,
 })
 
-// Kérés interceptor - pl. token hozzáadása
+// Kérés interceptor - mivel session-based auth-ot használunk, nincs szükség token-re
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token")
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
+    // Session-based auth esetén a browser automatikusan küldi a cookie-kat
+    // withCredentials: true már be van állítva az axios instance-ban
     return config
   },
   (error) => {
@@ -28,7 +26,7 @@ api.interceptors.request.use(
   },
 )
 
-// Válasz interceptor - pl. hibakezelés
+// Válasz interceptor - hibakezelés session-based auth-hoz
 api.interceptors.response.use(
   (response) => {
     return response
@@ -39,10 +37,15 @@ api.interceptors.response.use(
       // A szerver válaszolt hibakóddal
       console.error("API Error:", error.response.status, error.response.data)
 
-      // 401 Unauthorized - token lejárt vagy érvénytelen
+      // 401 Unauthorized - nincs bejelentkezve vagy session lejárt
       if (error.response.status === 401) {
-        // Instead of trying to handle OAuth directly, redirect to the backend's login endpoint
-        window.location.href = "/users/login"
+        // Ha JSON választ kapunk authUrl-lel, használjuk azt
+        if (error.response.data?.authUrl) {
+          window.location.href = error.response.data.authUrl
+        } else {
+          // Fallback: redirect az OAuth endpoint-ra
+          window.location.href = "/oauth2/authorization/google"
+        }
         return Promise.reject({
           isAuthError: true,
           message: "Authentication required. Please log in again.",
@@ -51,16 +54,6 @@ api.interceptors.response.use(
     } else if (error.request) {
       // A kérés elküldve, de nem érkezett válasz
       console.error("No response received:", error.request)
-
-      // Check if this is likely an OAuth redirect issue
-      if (error.request.responseURL && error.request.responseURL.includes("oauth2/auth")) {
-        // Redirect to the login page instead of trying to handle OAuth directly
-        window.location.href = "/users/login"
-        return Promise.reject({
-          isAuthError: true,
-          message: "Authentication required. Please log in.",
-        })
-      }
     } else {
       // Hiba a kérés beállításakor
       console.error("Request error:", error.message)

@@ -110,8 +110,6 @@ class AuctionController(private val auctionService: AuctionService) {
         }
     }
 
-    //Később kell majd followedAuctions
-
     @GetMapping("/{auctionId}/bids")
     fun getBidsForAuction(@PathVariable auctionId: Int): ResponseEntity<Any> {
         return try {
