@@ -310,15 +310,16 @@ const SetDetailsAuction: React.FC = () => {
   };
 
 
+  // Check for auction data and navigate if needed
   useEffect(() => {
-    // Ha nincs adat a context-ben, irányítsuk át az upload lépésra
     if (!filesForUpload.length && !auctionData.description && !auctionType) {
       console.log("No auction creation data found in context after initial load attempt, redirecting to upload step.");
       navigate('/upload-auction');
-      return;
     }
+  }, [filesForUpload.length, auctionData.description, auctionType, navigate]);
 
-    // Fetch categories
+  // Fetch categories once on component mount
+  useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await auctionApi.getCategories();
@@ -330,7 +331,7 @@ const SetDetailsAuction: React.FC = () => {
     };
 
     fetchCategories();
-  });
+  }, []); // Empty dependency array - fetch categories only once
 
   if (!hasLoadedInitialData) {
     return (
@@ -410,7 +411,7 @@ const SetDetailsAuction: React.FC = () => {
             <Clock size={80} />
           </StepIcon>
           <StepTitle variant="h5">Choose Auction Type</StepTitle>
-          <Grid container spacing={3}>
+          <Grid container spacing={3} sx={{ mb: 3 }}>
             <Grid item xs={12} md={6}>
               <AuctionTypeCard
                 elevation={auctionType === "FIXED" ? 4 : 1}
@@ -419,6 +420,8 @@ const SetDetailsAuction: React.FC = () => {
                   border: auctionType === "FIXED" ? `2px solid ${theme.palette.primary.main}` : "none",
                   backgroundColor:
                     auctionType === "FIXED" ? alpha(theme.palette.primary.main, 0.05) : theme.palette.background.paper,
+                  minHeight: 220,
+                  pb: 3,
                 }}
               >
                 <Box
@@ -463,6 +466,8 @@ const SetDetailsAuction: React.FC = () => {
                     auctionType === "EXTENDED"
                       ? alpha(theme.palette.primary.main, 0.05)
                       : theme.palette.background.paper,
+                  minHeight: 220,
+                  pb: 3,
                 }}
               >
                  <Box
@@ -501,7 +506,7 @@ const SetDetailsAuction: React.FC = () => {
           {!auctionType && (
             <Alert
               severity="info"
-              sx={{ mt: 3, borderRadius: 2, "& .MuiAlert-icon": { alignItems: "center" } }}
+              sx={{ mt: 5, borderRadius: 2, "& .MuiAlert-icon": { alignItems: "center" } }}
             >
               Please select an auction type to continue.
             </Alert>
