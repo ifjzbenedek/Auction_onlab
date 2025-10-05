@@ -182,7 +182,7 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
       <Typography variant="subtitle1" sx={{ mb: 1 }}>
         Condition
       </Typography>
-      <Box sx={{ px: 1 }}>
+      <Box sx={{ px: 1, pr: 4, overflow: "hidden" }}>
         <Slider
           value={formData.condition}
           onChange={(_, value) => handleChange("condition", Array.isArray(value) ? value[0] : value)}
@@ -192,6 +192,7 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
           max={100}
           sx={{
             color: "#3498db",
+            padding: "13px 0",
             "& .MuiSlider-thumb": {
               height: 24,
               width: 24,
