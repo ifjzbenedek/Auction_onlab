@@ -16,6 +16,8 @@ interface AuctionRepository : JpaRepository<Auction, Int>{
 
     fun findByOwner(user: User): List<Auction>
 
+    fun findByIdIn(ids: List<Int>): List<Auction>
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT a FROM Auction a WHERE a.id = :id")
     fun findAuctionWithLock(@Param("id") id: Int): Auction?

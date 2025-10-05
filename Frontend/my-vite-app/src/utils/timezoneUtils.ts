@@ -23,11 +23,11 @@ export const parseBackendDate = (dateString: string): Date => {
   
   // Ellenőrizzük, hogy érvényes dátum-e
   if (isNaN(parsedDate.getTime())) {
-    console.warn('⚠️ Invalid date string received from backend:', dateString);
+    console.warn('Invalid date string received from backend:', dateString);
     return new Date(); // Fallback az aktuális időre
   }
   
-  console.log('🕐 Date parsing (no conversion):', {
+  console.log('Date parsing (no conversion):', {
     original: dateString,
     parsed: parsedDate.toISOString(),
     localTime: parsedDate.toLocaleString("hu-HU"),
@@ -50,7 +50,7 @@ export const needsTimezoneCorrection = (dateString: string): boolean => {
  * Debug információkat jelenít meg a dátum kezelésről
  */
 export const debugTimezoneIssues = (startDate: string | null, expiredDate: string) => {
-  console.group('🕐 Date Parsing Debug Info');
+  console.group(' Date Parsing Debug Info');
   
   console.log('Raw backend data:');
   console.log('- startDate:', startDate);
