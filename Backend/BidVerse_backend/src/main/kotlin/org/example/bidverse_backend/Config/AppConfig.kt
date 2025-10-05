@@ -2,19 +2,19 @@ package org.example.bidverse_backend.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory
+import org.springframework.boot.web.client.RestTemplateBuilder
 import org.springframework.web.client.RestTemplate
+import java.time.Duration
 
 @Configuration
 class AppConfig {
 
     @Bean
-    fun restTemplate(): RestTemplate {
-        val factory = HttpComponentsClientHttpRequestFactory().apply {
-            setConnectTimeout(10000)   //10mp
-            setReadTimeout(60000)     //1p
-        }
-        return RestTemplate(factory)
+    fun restTemplate(builder: RestTemplateBuilder): RestTemplate {
+        return builder
+            .setConnectTimeout(Duration.ofSeconds(10))
+            .setReadTimeout(Duration.ofSeconds(60))
+            .build()
     }
 }
 

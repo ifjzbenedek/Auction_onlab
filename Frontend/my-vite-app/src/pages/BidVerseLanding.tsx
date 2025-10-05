@@ -18,6 +18,7 @@ const BidVerseLanding: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [isSmartSearchActive, setIsSmartSearchActive] = useState(false)
   // Remove the empty array and actually fetch categories
   const [categories, setCategories] = useState<CategoryDTO[]>([])
 
@@ -38,6 +39,11 @@ const BidVerseLanding: React.FC = () => {
 
   // Aukciók és képeik lekérése
   useEffect(() => {
+    // Ne fusson le, ha smart search aktív
+    if (isSmartSearchActive) {
+      return
+    }
+
     const fetchAuctionsAndImages = async () => {
       try {
         setLoading(true);
@@ -129,7 +135,7 @@ const BidVerseLanding: React.FC = () => {
     };
   
     fetchAuctionsAndImages()
-  }, [filters, searchTerm, isImageSearch, selectedCategory])
+  }, [filters, searchTerm, isImageSearch, selectedCategory, isSmartSearchActive])
 
   // Szűrők kezelése
   const handleFilterChange = (newFilters: string[]) => {
@@ -138,10 +144,65 @@ const BidVerseLanding: React.FC = () => {
   }
 
   // Keresés kezelése
-  const handleSearch = (term: string, imageSearch: boolean) => {
-    console.log('Search received:', term, imageSearch); // Debug log
+  const handleSearch = async (term: string, imageSearch: boolean, smartSearch?: boolean) => {
+    console.log('Search received:', term, imageSearch, 'Smart:', smartSearch); // Debug log
     setSearchTerm(term)
     setIsImageSearch(imageSearch)
+    
+    // Ha üres a keresési kifejezés, ne használjunk smart search-et
+    if (!term.trim()) {
+      console.log('Empty search term, showing all auctions')
+      setIsSmartSearchActive(false)
+      // Az eredeti useEffect fogja kezelni az összes aukció megjelenítését
+      return
+    }
+    
+    // Ha smart search-et kértek és van érvényes keresési kifejezés
+    if (smartSearch && term.trim()) {
+      try {
+        setIsSmartSearchActive(true)
+        setLoading(true)
+        console.log('Performing smart search with term:', term)
+        
+        const response = await auctionApi.smartSearch(term)
+        const smartResults: AuctionCardDTO[] = response.data
+        
+        // Smart search eredmények feldolgozása képekkel
+        const auctionsWithImages = await Promise.all(
+          smartResults.map(async (auction) => {
+            try {
+              const imagesResponse = await imageApi.getAuctionImages(auction.id!)
+              const images: AuctionImageDTO[] = imagesResponse.data || []
+              const imageUrls = images.map(img => img.cloudinaryUrl)
+              
+              return {
+                ...auction,
+                images: imageUrls.length > 0 ? imageUrls : undefined,
+                imageUrl: imageUrls.length > 0 ? imageUrls[0] : undefined
+              } as AuctionCardDTO
+            } catch {
+              return {
+                ...auction,
+                images: undefined,
+                imageUrl: undefined
+              } as AuctionCardDTO
+            }
+          })
+        )
+        
+        setAuctions(auctionsWithImages)
+        setLoading(false)
+        console.log('Smart search completed, found:', auctionsWithImages.length, 'auctions')
+      } catch (error) {
+        console.error('Smart search failed:', error)
+        setError('Smart search failed')
+        setLoading(false)
+        setIsSmartSearchActive(false)
+      }
+    } else {
+      // Normál keresés esetén kapcsoljuk ki a smart search flag-et
+      setIsSmartSearchActive(false)
+    }
   }
 
   // Kategória váltás

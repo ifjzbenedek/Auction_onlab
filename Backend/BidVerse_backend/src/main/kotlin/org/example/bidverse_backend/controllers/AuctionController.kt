@@ -167,4 +167,20 @@ class AuctionController(private val auctionService: AuctionService) {
 
         }
     }
+
+    @GetMapping("/smart-search")
+    fun smartSearch(@RequestParam query: String): ResponseEntity<Any> {
+        return try {
+            val auctions = auctionService.smartSearch(query)
+            ResponseEntity.ok(auctions)
+        } catch (e: InvalidSearchQueryException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message)
+        } catch (e: SearchServiceTimeoutException) {
+            ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT).body(e.message)
+        } catch (e: SearchServiceUnavailableException) {
+            ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(e.message)
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error performing search.")
+        }
+    }
 }

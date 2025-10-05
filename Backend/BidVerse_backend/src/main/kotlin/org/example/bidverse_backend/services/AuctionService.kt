@@ -78,7 +78,12 @@ class AuctionService(
             startDate = auctionBasic.startDate
         )
 
-        return auctionRepository.save(auction).toAuctionBasicDTO()
+        val savedAuction = auctionRepository.save(auction)
+        
+        // Index the auction for search - allow exception to propagate to controller
+        indexAuctionForSearch(savedAuction)
+
+        return savedAuction.toAuctionBasicDTO()
     }
 
     fun getAuctionById(auctionId: Int): AuctionBasicDTO {
@@ -115,7 +120,6 @@ class AuctionService(
         auction.status = newStatus
         return auctionRepository.save(auction).toAuctionStatusResponseDTO()
     }
-
 
 
     fun deleteAuction(auctionId: Int) {
@@ -242,6 +246,79 @@ class AuctionService(
             HttpEntity(body, headers),
             String::class.java
         ) ?: throw IllegalStateException("Empty response from AI service")
+    }
+
+    fun smartSearch(query: String): List<AuctionCardDTO> {
+        if (query.isBlank()) {
+            throw InvalidSearchQueryException("Search query cannot be empty")
+        }
+
+        val headers = HttpHeaders().apply {
+            contentType = MediaType.APPLICATION_JSON
+        }
+
+        val requestBody = mapOf("query" to query)
+        val httpEntity = HttpEntity(requestBody, headers)
+
+        val response = try {
+            restTemplate.postForObject(
+                "http://localhost:8001/search",
+                httpEntity,
+                Map::class.java
+            ) ?: throw SearchServiceUnavailableException("Empty response from search service")
+        } catch (e: org.springframework.web.client.ResourceAccessException) {
+            throw SearchServiceTimeoutException("Search service is not responding: ${e.message}")
+        } catch (e: org.springframework.web.client.HttpClientErrorException) {
+            throw SearchServiceUnavailableException("Search service returned error: ${e.message}")
+        } catch (e: org.springframework.web.client.HttpServerErrorException) {
+            throw SearchServiceUnavailableException("Search service internal error: ${e.message}")
+        }
+
+        val auctionIds = (response["auction_ids"] as? List<String>)?.mapNotNull { 
+            it.toIntOrNull() 
+        } ?: return emptyList()
+        
+        if (auctionIds.isEmpty()) {
+            return emptyList()
+        }
+
+        val auctions = auctionRepository.findByIdIn(auctionIds)
+        val auctionMap = auctions.associateBy { it.id }
+        return auctionIds.mapNotNull { id -> 
+            auctionMap[id]?.toAuctionCardDTO() 
+        }
+    }
+
+    private fun indexAuctionForSearch(auction: Auction) {
+        val headers = HttpHeaders().apply {
+            contentType = MediaType.APPLICATION_JSON
+        }
+
+        val requestBody = mapOf(
+            "product_id" to auction.id.toString(),
+            "title" to auction.itemName,
+            "description" to auction.description,
+            "category" to auction.category.categoryName,
+            "price" to auction.minimumPrice.toDouble()
+        )
+
+        val httpEntity = HttpEntity(requestBody, headers)
+
+        try {
+            restTemplate.postForObject(
+                "http://localhost:8001/index",
+                httpEntity,
+                Map::class.java
+            )
+        } catch (e: org.springframework.web.client.ResourceAccessException) {
+            throw SearchIndexingException("Failed to index auction: timeout connecting to search service")
+        } catch (e: org.springframework.web.client.HttpClientErrorException) {
+            throw SearchIndexingException("Failed to index auction: client error ${e.statusCode}")
+        } catch (e: org.springframework.web.client.HttpServerErrorException) {
+            throw SearchIndexingException("Failed to index auction: server error ${e.statusCode}")
+        } catch (e: Exception) {
+            throw SearchIndexingException("Failed to index auction: ${e.message}")
+        }
     }
 }
 

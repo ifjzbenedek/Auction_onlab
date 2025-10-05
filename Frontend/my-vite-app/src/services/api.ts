@@ -98,6 +98,9 @@ export const auctionApi = {
   // Licitált aukciók lekérése
   getBiddedAuctions: () => api.get("/auctions/my/biddedAuctions"),
 
+  // Smart search aukciók között
+  smartSearch: (query: string) => api.get(`/auctions/smart-search?query=${encodeURIComponent(query)}`),
+
   // Kategóriák lekérése
   getCategories: () => api.get("/categories"),
 

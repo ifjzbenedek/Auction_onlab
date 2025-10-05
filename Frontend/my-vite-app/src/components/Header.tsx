@@ -85,7 +85,7 @@ const CategorySearchInput = styled(InputBase)(() => ({
 
 interface HeaderProps {
   onFilterChange: (newFilters: string[]) => void;
-  onSearch: (term: string, imageSearch: boolean) => void;
+  onSearch: (term: string, imageSearch: boolean, smartSearch?: boolean) => void;
   onNewAuction?: () => void; 
   onCategoryChange?: (category: string | null) => void;
   categories?: string[];
@@ -118,25 +118,44 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setSearchTerm(value)
-    if (onSearch) {
+    // Only trigger regular search when smart search is disabled
+    if (onSearch && !smartSearch) {
       onSearch(value, isImageSearch)
+    }
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && onSearch) {
+      const trimmedTerm = searchTerm.trim()
+      
+      if (trimmedTerm === '') {
+        // Empty search - reset to show all auctions
+        onSearch('', isImageSearch, false)
+      } else if (smartSearch) {
+        // Trigger smart search on Enter with non-empty term
+        onSearch(trimmedTerm, isImageSearch, true)
+      } else {
+        // Regular search on Enter
+        onSearch(trimmedTerm, isImageSearch)
+      }
     }
   }
 
   const toggleSearchType = () => {
     setIsImageSearch(!isImageSearch)
-    if (onSearch) {
+    // Only trigger search when smart search is disabled
+    if (onSearch && !smartSearch) {
       onSearch(searchTerm, !isImageSearch)
     }
   }
 
   const toggleFilter = (filter: string) => {
     const newFilters = activeFilters.includes(filter)
-      ? activeFilters.filter((f) => f !== filter) // Távolítsd el a szűrőt
-      : [...activeFilters, filter]; // Add hozzá a szűrőt
+      ? activeFilters.filter((f) => f !== filter)
+      : [...activeFilters, filter];
   
     setActiveFilters(newFilters);
-    onFilterChange(newFilters); // Küldd el a frissített szűrőket
+    onFilterChange(newFilters);
   };
 
    const removeCategory = (category: string) => {
@@ -261,19 +280,23 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
             display: "flex",
             alignItems: "center",
             gap: 1.5,
-            flex: { xs: "1 1 100%", md: "0 1 auto" },
+            flex: { xs: "1 1 100%", md: "1 1 auto" },
             order: { xs: 3, md: 2 },
             width: { xs: "100%", md: "auto" },
-            maxWidth: { md: 400 },
+            maxWidth: { md: 600 }, 
+            minWidth: { md: 450 }, 
           }}
         >
-          <Box sx={{ position: "relative", flex: 1 }}>
+          <Box sx={{ position: "relative", flex: 1, minWidth: 0 }}> {/* Added minWidth: 0 for proper flex shrinking */}
             <TextField
               fullWidth
               size="small"
-              placeholder={isImageSearch ? "Image search..." : "Name..."}
+              placeholder={smartSearch 
+                ? (isImageSearch ? "Image search... (Press Enter)" : "Smart search... (Press Enter)") 
+                : (isImageSearch ? "Image search..." : "Name...")}
               value={searchTerm}
               onChange={handleSearchChange}
+              onKeyPress={handleKeyPress}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -304,14 +327,20 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
                 ),
                 sx: {
                   borderRadius: 30,
-                  height: 40,
+                  height: 42, // Increased from 40 to 42
                   pr: 1,
                 },
               }}
             />
           </Box>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Box sx={{ 
+            display: "flex", 
+            alignItems: "center", 
+            gap: 0.5, 
+            flexShrink: 0, // Prevent shrinking of the toggle
+            minWidth: "fit-content" // Ensure toggle doesn't get compressed
+          }}>
             <Typography variant="body2" sx={{ fontSize: 12, color: "#5b7c99" }}>
               Smart search
             </Typography>
