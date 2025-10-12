@@ -4,7 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import TollIcon from "@mui/icons-material/Toll"
 import AccountCircleIcon from "@mui/icons-material/AccountCircle"
-import { Search, Plus, X, ChevronDown, RefreshCw, Image, User, LogOut, Package, DollarSign, Heart } from "lucide-react"
+import { Search, Plus, X, ChevronDown, RefreshCw, Image, User, LogOut, Package, DollarSign, Heart, Mail } from "lucide-react"
 import { authService } from "../services/auth-service"
 import {
   Box,
@@ -198,6 +198,8 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
       } catch (error) {
         console.error("Logout failed:", error)
       }
+    } else if (action === "mailbox") {
+      navigate("/mailbox")
     } else if (action === "myAuctions") {
       navigate("/my-auctions")
     } else if (action === "myBids") {
@@ -416,6 +418,12 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
                   <LogOut size={18} />
                 </ListItemIcon>
                 <ListItemText primary="Log Out" />
+              </ProfileMenuItem>
+              <ProfileMenuItem onClick={() => handleProfileMenuItemClick("mailbox")}>
+                <ListItemIcon sx={{ minWidth: 36 }}>
+                  <Mail size={18} />
+                </ListItemIcon>
+                <ListItemText primary="Mailbox" />
               </ProfileMenuItem>
               <ProfileMenuItem onClick={() => handleProfileMenuItemClick("myAuctions")}>
                 <ListItemIcon sx={{ minWidth: 36 }}>

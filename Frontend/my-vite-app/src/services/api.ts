@@ -126,4 +126,40 @@ export const imageApi = {
     api.get(`/auctions/${auctionId}/images/${imageId}`),
 };
 
+export const notificationApi = {
+  // Create a new notification (send message)
+  createNotification: (notificationData: {
+    receiverId: number
+    messageText: string
+    titleText: string
+    auctionId?: number | null
+  }) => {
+    const payload = {
+      id: 0, // Will be set by backend
+      sender: null,
+      receiver: {
+        id: notificationData.receiverId,
+        userName: "",
+        emailAddress: "",
+        phoneNumber: "",
+      },
+      auction: notificationData.auctionId ? { id: notificationData.auctionId } : null,
+      createdAt: new Date().toISOString(), // Will be overridden by backend
+      messageText: notificationData.messageText,
+      titleText: notificationData.titleText,
+      alreadyOpened: false,
+    }
+    return api.post("/notifications", payload)
+  },
+
+  // Get all notifications for the current user
+  getMyNotifications: () => api.get("/notifications/me"),
+
+  // Get specific notification by ID
+  getNotificationById: (id: number) => api.get(`/notifications/${id}`),
+
+  // Delete a notification
+  deleteNotification: (id: number) => api.delete(`/notifications/${id}`),
+};
+
 export default api;

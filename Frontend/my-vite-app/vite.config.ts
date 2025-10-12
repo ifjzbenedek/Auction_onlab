@@ -43,6 +43,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // Proxy notifications endpoints
+      "/notifications": {
+        target: "https://localhost:8081",
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });
