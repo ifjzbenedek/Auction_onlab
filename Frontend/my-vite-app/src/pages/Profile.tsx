@@ -2,8 +2,13 @@
 
 import type React from "react"
 import { useEffect, useState } from "react"
-import { Box, Typography, Paper, CircularProgress, useTheme } from "@mui/material"
+import { useNavigate } from "react-router-dom"
+import { Box, Typography, Paper, CircularProgress, useTheme, Button, Grid, Card, CardContent, CardActions } from "@mui/material"
 import { styled } from "@mui/material/styles"
+import GavelIcon from "@mui/icons-material/Gavel"
+import FavoriteIcon from "@mui/icons-material/Favorite"
+import LocalOfferIcon from "@mui/icons-material/LocalOffer"
+import MailIcon from "@mui/icons-material/Mail"
 
 interface User {
   userName: string
@@ -27,6 +32,7 @@ const Profile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const theme = useTheme()
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -108,7 +114,134 @@ const Profile: React.FC = () => {
               </Typography>
             </Box>
           </StyledPaper>
-        ) : (
+        ) : null}
+
+        {user && (
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="h5" sx={{ mb: 3, fontWeight: "bold", color: theme.palette.text.primary }}>
+              Quick Access
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Card
+                  sx={{
+                    cursor: "pointer",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                    "&:hover": {
+                      transform: "translateY(-5px)",
+                      boxShadow: theme.shadows[8],
+                    },
+                  }}
+                  onClick={() => navigate("/my-auctions")}
+                >
+                  <CardContent sx={{ textAlign: "center", py: 3 }}>
+                    <GavelIcon sx={{ fontSize: 48, color: theme.palette.primary.main, mb: 2 }} />
+                    <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
+                      My Auctions
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      View and manage your auctions
+                    </Typography>
+                  </CardContent>
+                  <CardActions sx={{ justifyContent: "center", pb: 2 }}>
+                    <Button size="small" color="primary">
+                      Go to Auctions
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={3}>
+                <Card
+                  sx={{
+                    cursor: "pointer",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                    "&:hover": {
+                      transform: "translateY(-5px)",
+                      boxShadow: theme.shadows[8],
+                    },
+                  }}
+                  onClick={() => navigate("/my-auctions?tab=bids")}
+                >
+                  <CardContent sx={{ textAlign: "center", py: 3 }}>
+                    <LocalOfferIcon sx={{ fontSize: 48, color: theme.palette.secondary.main, mb: 2 }} />
+                    <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
+                      My Bids
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Track your active bids
+                    </Typography>
+                  </CardContent>
+                  <CardActions sx={{ justifyContent: "center", pb: 2 }}>
+                    <Button size="small" color="primary">
+                      View Bids
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={3}>
+                <Card
+                  sx={{
+                    cursor: "pointer",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                    "&:hover": {
+                      transform: "translateY(-5px)",
+                      boxShadow: theme.shadows[8],
+                    },
+                  }}
+                  onClick={() => navigate("/my-auctions?tab=followed")}
+                >
+                  <CardContent sx={{ textAlign: "center", py: 3 }}>
+                    <FavoriteIcon sx={{ fontSize: 48, color: theme.palette.error.main, mb: 2 }} />
+                    <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
+                      Followed
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Your favorite auctions
+                    </Typography>
+                  </CardContent>
+                  <CardActions sx={{ justifyContent: "center", pb: 2 }}>
+                    <Button size="small" color="primary">
+                      View Followed
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={3}>
+                <Card
+                  sx={{
+                    cursor: "pointer",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                    "&:hover": {
+                      transform: "translateY(-5px)",
+                      boxShadow: theme.shadows[8],
+                    },
+                  }}
+                  onClick={() => navigate("/mailbox")}
+                >
+                  <CardContent sx={{ textAlign: "center", py: 3 }}>
+                    <MailIcon sx={{ fontSize: 48, color: theme.palette.info.main, mb: 2 }} />
+                    <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
+                      Mailbox
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Check your messages
+                    </Typography>
+                  </CardContent>
+                  <CardActions sx={{ justifyContent: "center", pb: 2 }}>
+                    <Button size="small" color="primary">
+                      Open Mailbox
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid>
+            </Grid>
+          </Box>
+        )}
+
+        {!loading && !user && (
           <Typography variant="h6" sx={{ textAlign: "center", color: theme.palette.error.main, userSelect: "none" }}>
             User not found
           </Typography>

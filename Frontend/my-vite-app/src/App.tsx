@@ -7,6 +7,7 @@ import AuctionDetails from "./pages/AuctionDetails.tsx"
 import UploadAuction from "./pages/UploadAuction.tsx"
 import SetDetailsAuction from "./pages/SetDetailsAuction.tsx"
 import UserAuctions from "./pages/UserAuctions.tsx"
+import Mailbox from "./pages/Mailbox.tsx"
 import AuthGuard from "./components/AuthGuard.tsx"
 import { AuctionCreationProvider } from "./contexts/AuctionCreationContext.tsx"
 
@@ -48,6 +49,14 @@ const App: React.FC = () => {
             element={
               <AuthGuard>
                 <Profile />
+              </AuthGuard>
+            } 
+          />
+          <Route 
+            path="/mailbox" 
+            element={
+              <AuthGuard>
+                <Mailbox />
               </AuthGuard>
             } 
           />
