@@ -1,0 +1,119 @@
+### Health Check
+GET http://localhost:5002/health
+
+### Get Available Conditions (All conditions - internal use)
+GET http://localhost:5002/agent/conditions
+
+### Test show_example_conditions (Random 6-8 examples for user)
+POST http://localhost:5002/agent/test-examples
+
+### Test check_condition_availability (Check if condition exists)
+POST http://localhost:5002/agent/test-check
+Content-Type: application/json
+
+{
+  "condition_name": "last_minute_rush"
+}
+
+### Test check_condition_availability (Non-existent condition)
+POST http://localhost:5002/agent/test-check
+Content-Type: application/json
+
+{
+  "condition_name": "auto_snipe_mode"
+}
+
+### Process Chat - Incomplete (Missing auction ID and other details)
+POST http://localhost:5002/agent/process
+Content-Type: application/json
+
+[
+  {
+    "role": "user",
+    "content": "Bid for me maximum 15000, but only during daytime hours, and only if someone outbid me. Send notifications too."
+  }
+]
+
+### Process Chat - Simple Example
+POST http://localhost:5002/agent/process
+Content-Type: application/json
+
+[
+  {
+    "role": "user",
+    "content": "I want to set up automatic bidding for auction #5. Maximum 50000, and always increase by 500. Check every hour."
+  }
+]
+
+### Process Chat - Full Conversation
+POST http://localhost:5002/agent/process
+Content-Type: application/json
+
+[
+  {
+    "role": "user",
+    "content": "Hi! I need help setting up automatic bidding."
+  },
+  {
+    "role": "assistant",
+    "content": "Sure, I'd be happy to help! Which auction would you like to automate?"
+  },
+  {
+    "role": "user",
+    "content": "Auction #12."
+  },
+  {
+    "role": "assistant",
+    "content": "Okay. What's the maximum amount you want to bid?"
+  },
+  {
+    "role": "user",
+    "content": "Maximum 100000. Always increase by 1000, and check every 30 minutes."
+  }
+]
+
+### Process Chat - Complex with Conditions
+POST http://localhost:5002/agent/process
+Content-Type: application/json
+
+[
+  {
+    "role": "user",
+    "content": "I'd like to set up autobid for auction #7. Max 75000, in steps of 750, every 2 hours. But only bid if there are more than 3 days remaining."
+  }
+]
+
+### Process Chat - With Advanced Conditions
+POST http://localhost:5002/agent/process
+Content-Type: application/json
+
+[
+  {
+    "role": "user",
+    "content": "I want automatic bidding for auction #15. Maximum 200000. Initially increase by 1000, but above 50000 increase by 5000. If outbid, wait 30 seconds then bid again. Be more aggressive in the last 2 minutes. And avoid round numbers to be unpredictable."
+  }
+]
+
+### Confirm Configuration
+POST http://localhost:5002/agent/confirm
+Content-Type: application/json
+
+{
+  "id": 0,
+  "auctionId": 15,
+  "userId": 0,
+  "maxBidAmount": 200000,
+  "incrementAmount": 1000,
+  "intervalMinutes": 30,
+  "isActive": true,
+  "conditionsJson": {
+    "increment_step_after": {
+      "50000": 5000
+    },
+    "if_outbid": true,
+    "react_delay_seconds": 30,
+    "near_end_minutes": 2,
+    "last_minute_rush": true,
+    "avoid_round_numbers": true
+  }
+}

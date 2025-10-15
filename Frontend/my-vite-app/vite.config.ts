@@ -49,6 +49,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // Proxy agent endpoints
+      "/agent": {
+        target: "https://localhost:8081",
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });
