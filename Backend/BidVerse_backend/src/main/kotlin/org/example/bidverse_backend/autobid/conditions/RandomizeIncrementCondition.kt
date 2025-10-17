@@ -23,7 +23,7 @@ class RandomizeIncrementCondition : ConditionHandler {
     ): BigDecimal? {
         if (conditionValue != true) return null
 
-        val increment = baseAmount - context.currentPrice
+        val increment = baseAmount - context.getCurrentPrice()
         
         // Add random noise: -10% to +10% of the increment
         val randomFactor = (Random.nextDouble(-0.1, 0.1))

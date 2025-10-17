@@ -27,7 +27,7 @@ class IncrementRelativeToPriceCondition : ConditionHandler {
             else -> return null
         }
 
-        val increment = context.currentPrice.multiply(percentage)
-        return context.currentPrice.add(increment).setScale(0, RoundingMode.HALF_UP)
+        val increment = context.getCurrentPrice().multiply(percentage)
+        return context.getCurrentPrice().add(increment).setScale(0, RoundingMode.HALF_UP)
     }
 }

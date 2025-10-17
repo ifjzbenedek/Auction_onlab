@@ -15,38 +15,28 @@ class IncrementStepAfterCondition : ConditionHandler {
 
     override fun shouldBid(context: AutoBidContext, conditionValue: Any?): Boolean = true
 
-    @Suppress("UNCHECKED_CAST")
     override fun modifyBidAmount(
         context: AutoBidContext,
         conditionValue: Any?,
         baseAmount: BigDecimal
     ): BigDecimal? {
-        if (conditionValue == null) return null
+        val thresholds = (conditionValue as? Map<*, *>) ?: return null
+        
+        val currentPrice = context.getCurrentPrice()
 
-        val thresholds = when (conditionValue) {
-            is Map<*, *> -> conditionValue as Map<String, Any>
-            else -> return null
-        }
-
-        // Sort thresholds descending to find the highest applicable one
-        val sortedThresholds = thresholds.entries
-            .mapNotNull { entry ->
-                val threshold = entry.key.toBigDecimalOrNull() ?: return@mapNotNull null
-                val increment = when (val value = entry.value) {
-                    is Number -> BigDecimal(value.toString())
-                    else -> return@mapNotNull null
-                }
-                threshold to increment
-            }
+        val matchingIncrement = thresholds.entries
+            .mapNotNull { (key, value) -> parseThresholdEntry(key, value) }
             .sortedByDescending { it.first }
+            .firstOrNull { (threshold, _) -> currentPrice >= threshold }
+            ?.second
+            ?: return null
 
-        // Find the first threshold that the current price exceeds
-        for ((threshold, increment) in sortedThresholds) {
-            if (context.currentPrice >= threshold) {
-                return context.currentPrice + increment
-            }
-        }
+        return currentPrice.add(matchingIncrement)
+    }
 
-        return null // No applicable threshold
+    private fun parseThresholdEntry(key: Any?, value: Any?): Pair<BigDecimal, BigDecimal>? {
+        val threshold = (key as? String)?.toBigDecimalOrNull() ?: return null
+        val increment = (value as? Number)?.let { BigDecimal(it.toString()) } ?: return null
+        return threshold to increment
     }
 }

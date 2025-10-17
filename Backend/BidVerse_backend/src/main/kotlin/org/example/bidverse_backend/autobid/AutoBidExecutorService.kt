@@ -6,7 +6,6 @@ import org.example.bidverse_backend.entities.Bid
 import org.example.bidverse_backend.repositories.AuctionRepository
 import org.example.bidverse_backend.repositories.AutoBidRepository
 import org.example.bidverse_backend.repositories.BidRepository
-import org.example.bidverse_backend.services.BidService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -20,7 +19,6 @@ class AutoBidExecutorService(
     private val autoBidRepository: AutoBidRepository,
     private val auctionRepository: AuctionRepository,
     private val bidRepository: BidRepository,
-    private val bidService: BidService,
     private val autoBidProcessor: AutoBidProcessor
 ) {
 

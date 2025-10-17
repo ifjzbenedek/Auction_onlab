@@ -8,7 +8,7 @@ import java.time.Duration
  * if_no_activity_for_dd_hh_mm: If no new bid for dd days hh hours mm minutes, increase
  * Type: string
  * Format: "dd_hh_mm" (e.g., "2_3_30" means 2 days, 3 hours, 30 minutes)
-
+*/
 @Component
 class IfNoActivityForDdHhMmCondition : ConditionHandler {
     override val conditionName = "if_no_activity_for_dd_hh_mm"
@@ -24,7 +24,7 @@ class IfNoActivityForDdHhMmCondition : ConditionHandler {
         // Get the most recent bid
         val lastBid = context.allBids.firstOrNull() ?: return true
 
-        val timeSinceLastBid = Duration.between(lastBid.bidTime, context.currentTime)
+        val timeSinceLastBid = Duration.between(lastBid.timeStamp, context.currentTime)
         
         // Only bid if there's been no activity for the threshold duration
         return timeSinceLastBid >= thresholdDuration
@@ -51,4 +51,3 @@ class IfNoActivityForDdHhMmCondition : ConditionHandler {
         }
     }
 }
-*/

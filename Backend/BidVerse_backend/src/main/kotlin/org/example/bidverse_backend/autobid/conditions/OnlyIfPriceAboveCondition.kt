@@ -19,6 +19,6 @@ class OnlyIfPriceAboveCondition : ConditionHandler {
             else -> return true
         }
 
-        return context.currentPrice >= minPrice
+        return context.getCurrentPrice() >= minPrice
     }
 }

@@ -21,9 +21,9 @@ class PriceRatioToValueCondition : ConditionHandler {
             else -> return true
         }
 
-        val maxAllowedPrice = context.auction.startingPrice.multiply(ratio)
+        val maxAllowedPrice = context.auction.minimumPrice.multiply(ratio)
         
         // Only bid if current price hasn't exceeded the ratio
-        return context.currentPrice <= maxAllowedPrice
+        return context.getCurrentPrice() <= maxAllowedPrice
     }
 }

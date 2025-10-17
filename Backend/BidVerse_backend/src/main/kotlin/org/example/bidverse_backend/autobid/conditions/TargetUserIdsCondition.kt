@@ -24,7 +24,7 @@ class TargetUserIdsCondition : ConditionHandler {
             else -> return true
         }
 
-        val currentHighestBidderId = context.currentHighestBid?.user?.id
+        val currentHighestBidderId = context.currentHighestBid?.bidder?.id
         
         // If no highest bid yet, or it's not from a target user, don't bid
         return currentHighestBidderId in targetUserIds

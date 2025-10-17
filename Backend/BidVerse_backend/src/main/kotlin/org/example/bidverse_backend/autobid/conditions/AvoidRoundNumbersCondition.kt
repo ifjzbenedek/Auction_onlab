@@ -22,23 +22,11 @@ class AvoidRoundNumbersCondition : ConditionHandler {
     ): BigDecimal? {
         if (conditionValue != true) return null
 
-        val amount = baseAmount.setScale(0, RoundingMode.HALF_UP)
+        val roundedAmount = baseAmount.setScale(0, RoundingMode.HALF_UP)
         
-        // Check if it's a round number (divisible by 1000, 500, or 100)
-        val isRound = when {
-            amount.remainder(BigDecimal(1000)) == BigDecimal.ZERO -> true
-            amount.remainder(BigDecimal(500)) == BigDecimal.ZERO -> true
-            amount.remainder(BigDecimal(100)) == BigDecimal.ZERO -> true
-            else -> false
-        }
+        if (roundedAmount.remainder(BigDecimal(100)) != BigDecimal.ZERO) return null
 
-        if (isRound) {
-            // Add a small odd number (e.g., 7, 13, 23)
-            val oddNumbers = listOf(7, 13, 23, 37, 47)
-            val offset = oddNumbers.random()
-            return amount.add(BigDecimal(offset))
-        }
-
-        return null
+        val oddOffset = listOf(7, 11, 13, 17, 23, 29, 37, 47).random()
+        return roundedAmount.add(BigDecimal(oddOffset))
     }
 }

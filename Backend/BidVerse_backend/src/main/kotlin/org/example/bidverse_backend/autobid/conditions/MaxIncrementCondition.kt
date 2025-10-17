@@ -26,11 +26,11 @@ class MaxIncrementCondition : ConditionHandler {
             else -> return null
         }
 
-        val increment = baseAmount - context.currentPrice
+        val increment = baseAmount - context.getCurrentPrice()
         if (increment > maxIncrement) {
-            return context.currentPrice + maxIncrement
+            return context.getCurrentPrice() + maxIncrement
         }
 
-        return null // No modification needed
+        return null
     }
 }

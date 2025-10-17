@@ -9,7 +9,7 @@ import java.math.RoundingMode
  * counter_bid_factor: If someone raised 1000, you raise 1.2x
  * Type: number
  * Example: 1.2
-
+*/
 @Component
 class CounterBidFactorCondition : ConditionHandler {
     override val conditionName = "counter_bid_factor"
@@ -35,10 +35,9 @@ class CounterBidFactorCondition : ConditionHandler {
         val lastBid = bids[0]
         val secondLastBid = bids[1]
         
-        val opponentIncrement = lastBid.amount.subtract(secondLastBid.amount)
+        val opponentIncrement = lastBid.value.subtract(secondLastBid.value)
         val counterIncrement = opponentIncrement.multiply(factor).setScale(0, RoundingMode.HALF_UP)
-        
-        return context.currentPrice.add(counterIncrement)
+
+        return context.getCurrentPrice().add(counterIncrement)
     }
 }
- */

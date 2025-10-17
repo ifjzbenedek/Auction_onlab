@@ -21,11 +21,11 @@ class LastMinuteRushCondition : ConditionHandler {
     ): BigDecimal? {
         if (conditionValue != true) return null
 
-        // If less than 1 minute, increase by 50%
-        if (context.minutesUntilEnd < 1) {
-            val increment = baseAmount - context.currentPrice
-            val aggressiveIncrement = increment.multiply(BigDecimal("1.5"))
-            return context.currentPrice + aggressiveIncrement
+        // If less than 1 minute, increase by 25%
+        if (context.getMinutesUntilEnd() <= 1) {
+            val increment = baseAmount - context.getCurrentPrice()
+            val aggressiveIncrement = increment.multiply(BigDecimal("1.25"))
+            return context.getCurrentPrice() + aggressiveIncrement
         }
 
         return null

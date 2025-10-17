@@ -28,7 +28,7 @@ class MinIncrementCondition : ConditionHandler {
 
         val currentPrice = context.getCurrentPrice()
         val newAmount = currentPrice.add(minIncrement)
-        if (newAmount.compareTo(baseAmount) > 0) {
+        if (newAmount > baseAmount) {
             return baseAmount
         }
         return newAmount

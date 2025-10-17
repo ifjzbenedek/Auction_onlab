@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 /**
  * avoid_user_ids: Don't bid against these (e.g. friends)
  * Type: array of integers
-
+ */
 @Component
 class AvoidUserIdsCondition : ConditionHandler {
     override val conditionName = "avoid_user_ids"
@@ -24,8 +24,7 @@ class AvoidUserIdsCondition : ConditionHandler {
             else -> return true
         }
 
-        val currentHighestBidderId = context.currentHighestBid?.user?.id
+        val currentHighestBidderId = context.currentHighestBid?.bidder?.id
         return currentHighestBidderId !in avoidUserIds
     }
 }
-*/

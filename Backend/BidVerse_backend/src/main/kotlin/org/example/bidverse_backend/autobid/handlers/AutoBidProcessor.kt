@@ -32,18 +32,13 @@ class AutoBidProcessor(
             return AutoBidDecision.SkipBid("User is already the highest bidder")
         }
 
-        val conditions = context.autoBid.conditionsJson
-        if (conditions == null) {
-            return AutoBidDecision.SkipBid("No conditions configured")
-        }
+        val conditions = context.autoBid.conditionsJson ?: return AutoBidDecision.SkipBid("No conditions configured")
 
         // Check all "shouldBid" conditions
         for (handler in conditionHandlers) {
             val conditionValue = conditions[handler.conditionName]
-            if (conditionValue != null) {
-                if (!handler.shouldBid(context, conditionValue)) {
-                    return AutoBidDecision.SkipBid("Condition '${handler.conditionName}' not met")
-                }
+            if (conditionValue != null && !handler.shouldBid(context, conditionValue)) {
+                return AutoBidDecision.SkipBid("Condition '${handler.conditionName}' not met")
             }
         }
 
@@ -53,7 +48,7 @@ class AutoBidProcessor(
 
         // Check if bid exceeds max - if so, cap it at max
         val maxBid = context.autoBid.maxBidAmount
-        if (maxBid != null && bidAmount.compareTo(maxBid) > 0) {
+        if (maxBid != null && bidAmount > maxBid) {
             bidAmount = maxBid
             reason = "Bid capped at maximum bid amount ($maxBid)"
         }
@@ -76,11 +71,8 @@ class AutoBidProcessor(
     private fun calculateBidAmount(context: AutoBidContext, conditions: Map<String, Any>): BigDecimal {
         // Start with current price + increment
         val currentPrice = context.getCurrentPrice()
-        val increment = context.autoBid.incrementAmount
-        if (increment == null) {
-            return currentPrice
-        }
-        
+        val increment = context.autoBid.incrementAmount ?: return currentPrice
+
         var bidAmount = currentPrice.add(increment)
 
         // Apply all condition modifiers in order
