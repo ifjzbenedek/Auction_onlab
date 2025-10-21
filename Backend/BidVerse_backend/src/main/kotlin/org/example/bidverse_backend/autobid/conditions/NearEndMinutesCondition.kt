@@ -1,6 +1,7 @@
 package org.example.bidverse_backend.autobid.conditions
 
 import org.example.bidverse_backend.autobid.AutoBidContext
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 /**
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 class NearEndMinutesCondition : ConditionHandler {
+    private val logger = LoggerFactory.getLogger(NearEndMinutesCondition::class.java)
     override val conditionName = "near_end_minutes"
 
     override fun shouldBid(context: AutoBidContext, conditionValue: Any?): Boolean {
@@ -21,6 +23,10 @@ class NearEndMinutesCondition : ConditionHandler {
 
         // Only bid if we're within the threshold
         val minutesLeft = context.getMinutesUntilEnd()
-        return minutesLeft <= thresholdMinutes
+        val canBid = minutesLeft <= thresholdMinutes
+        
+        logger.info("    [near_end_minutes] Minutes left: $minutesLeft, Threshold: $thresholdMinutes → $canBid")
+        
+        return canBid
     }
 }

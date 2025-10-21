@@ -1,6 +1,7 @@
 package org.example.bidverse_backend.autobid.conditions
 
 import org.example.bidverse_backend.autobid.AutoBidContext
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 
@@ -10,6 +11,7 @@ import java.math.BigDecimal
  */
 @Component
 class MinIncrementCondition : ConditionHandler {
+    private val logger = LoggerFactory.getLogger(MinIncrementCondition::class.java)
     override val conditionName = "min_increment"
 
     override fun shouldBid(context: AutoBidContext, conditionValue: Any?): Boolean = true
@@ -28,9 +30,13 @@ class MinIncrementCondition : ConditionHandler {
 
         val currentPrice = context.getCurrentPrice()
         val newAmount = currentPrice.add(minIncrement)
+        
         if (newAmount > baseAmount) {
+            logger.info("    [min_increment] Base amount $baseAmount already >= min ($currentPrice + $minIncrement = $newAmount), keeping base")
             return baseAmount
         }
+        
+        logger.info("    [min_increment] Enforcing minimum: $currentPrice + $minIncrement = $newAmount (was $baseAmount)")
         return newAmount
     }
 }

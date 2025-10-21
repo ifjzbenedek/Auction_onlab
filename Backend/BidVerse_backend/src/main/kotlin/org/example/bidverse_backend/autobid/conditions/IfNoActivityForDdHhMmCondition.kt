@@ -1,6 +1,7 @@
 package org.example.bidverse_backend.autobid.conditions
 
 import org.example.bidverse_backend.autobid.AutoBidContext
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.time.Duration
 
@@ -11,6 +12,7 @@ import java.time.Duration
 */
 @Component
 class IfNoActivityForDdHhMmCondition : ConditionHandler {
+    private val logger = LoggerFactory.getLogger(IfNoActivityForDdHhMmCondition::class.java)
     override val conditionName = "if_no_activity_for_dd_hh_mm"
 
     override fun shouldBid(context: AutoBidContext, conditionValue: Any?): Boolean {
@@ -22,12 +24,20 @@ class IfNoActivityForDdHhMmCondition : ConditionHandler {
         } ?: return true
 
         // Get the most recent bid
-        val lastBid = context.allBids.firstOrNull() ?: return true
+        val lastBid = context.allBids.firstOrNull()
+        if (lastBid == null) {
+            logger.info("    [if_no_activity_for_dd_hh_mm] No bids yet, allowing bid")
+            return true
+        }
 
         val timeSinceLastBid = Duration.between(lastBid.timeStamp, context.currentTime)
         
         // Only bid if there's been no activity for the threshold duration
-        return timeSinceLastBid >= thresholdDuration
+        val canBid = timeSinceLastBid >= thresholdDuration
+        
+        logger.info("    [if_no_activity_for_dd_hh_mm] Time since last bid: ${timeSinceLastBid.toMinutes()}min, Threshold: ${thresholdDuration.toMinutes()}min → $canBid")
+        
+        return canBid
     }
 
     /**

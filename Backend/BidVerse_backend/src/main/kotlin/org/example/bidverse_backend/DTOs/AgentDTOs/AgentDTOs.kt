@@ -12,6 +12,7 @@ data class AutoBidAgentConfigDTO(
     val auctionId: Int,
     val userId: Int,
     val maxBidAmount: BigDecimal?,
+    val startingBidAmount: BigDecimal?,
     val incrementAmount: BigDecimal?,
     val intervalMinutes: Int?,
     val isActive: Boolean,

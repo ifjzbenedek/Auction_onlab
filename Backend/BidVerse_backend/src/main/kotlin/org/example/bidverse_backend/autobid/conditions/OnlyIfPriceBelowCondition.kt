@@ -1,6 +1,7 @@
 package org.example.bidverse_backend.autobid.conditions
 
 import org.example.bidverse_backend.autobid.AutoBidContext
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 /**
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 class OnlyIfPriceBelowCondition : ConditionHandler {
+    private val logger = LoggerFactory.getLogger(OnlyIfPriceBelowCondition::class.java)
     override val conditionName = "only_if_price_below"
 
     override fun shouldBid(context: AutoBidContext, conditionValue: Any?): Boolean {
@@ -19,6 +21,11 @@ class OnlyIfPriceBelowCondition : ConditionHandler {
             else -> return true
         }
 
-        return context.getCurrentPrice() < maxPrice
+        val currentPrice = context.getCurrentPrice()
+        val canBid = currentPrice < maxPrice
+        
+        logger.info("    [only_if_price_below] Current: $currentPrice, Max: $maxPrice → $canBid")
+        
+        return canBid
     }
 }

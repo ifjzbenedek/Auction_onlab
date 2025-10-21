@@ -1,6 +1,7 @@
 package org.example.bidverse_backend.autobid.conditions
 
 import org.example.bidverse_backend.autobid.AutoBidContext
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 /**
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 class MaxTotalBidsCondition : ConditionHandler {
+    private val logger = LoggerFactory.getLogger(MaxTotalBidsCondition::class.java)
     override val conditionName = "max_total_bids"
 
     override fun shouldBid(context: AutoBidContext, conditionValue: Any?): Boolean {
@@ -20,6 +22,10 @@ class MaxTotalBidsCondition : ConditionHandler {
         }
 
         val currentBidCount = context.getBidCountForThisAutoBid()
-        return currentBidCount < maxBids
+        val canBid = currentBidCount < maxBids
+        
+        logger.info("    [max_total_bids] Current bids: $currentBidCount, Max: $maxBids → $canBid")
+        
+        return canBid
     }
 }

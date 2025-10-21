@@ -4,8 +4,9 @@ import type React from "react"
 import { useState } from "react"
 import TollIcon from "@mui/icons-material/Toll"
 import AccountCircleIcon from "@mui/icons-material/AccountCircle"
-import { Search, Plus, X, ChevronDown, RefreshCw, Image, User, LogOut, Package, DollarSign, Heart, Mail } from "lucide-react"
+import { Search, Plus, X, ChevronDown, RefreshCw, Image, User, LogOut, Package, DollarSign, Heart, Mail, Bot } from "lucide-react"
 import { authService } from "../services/auth-service"
+import { AgentPanel } from "./AgentPanel"
 import {
   Box,
   Typography,
@@ -108,6 +109,9 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
   const [categoryAnchorEl, setCategoryAnchorEl] = useState<null | HTMLElement>(null)
   const categoryMenuOpen = Boolean(categoryAnchorEl)
   const [categorySearchTerm, setCategorySearchTerm] = useState("")
+
+  // Agent panel state
+  const [agentPanelOpen, setAgentPanelOpen] = useState(false)
 
   const filteredCategories = (categories || []).filter(
     (cat) =>
@@ -364,10 +368,11 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
             order: { xs: 2, md: 3 },
           }}
         >
+          {/* Profile Icon */}
           <Box
             sx={{
-              width: 40,
-              height: 40,
+              width: 60,
+              height: 60,
               border: "1px solid #e0e0e0",
               borderRadius: "50%",
               display: "flex",
@@ -383,7 +388,7 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
             }}
             onClick={handleProfileClick}
           >
-            <AccountCircleIcon style={{ fontSize: "40px" }} />          
+            <AccountCircleIcon style={{ fontSize: "60px" }} />          
           </Box>
           <Popover
             open={profileMenuOpen}
@@ -446,11 +451,13 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
             </List>
           </Popover>
           <Box sx={{ display: "flex", gap: 1 }}>
+            {/* Agent/AutoBid Button */}
             <Box
               sx={{
-                width: 32,
-                height: 32,
+                width: 50,
+                height: 50,
                 border: "1px solid #e0e0e0",
+                borderRadius: "8px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -459,16 +466,19 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
                 transition: "all 0.2s ease",
                 "&:hover": {
                   borderColor: "#3498db",
+                  backgroundColor: "#f0f8ff",
                   transform: "scale(1.05)",
                 },
               }}
+              onClick={() => setAgentPanelOpen(true)}
+              title="AutoBid Agent"
             >
-              <X size={20} />
+              <Bot size={24} />
             </Box>
             <Box
               sx={{
-                width: 32,
-                height: 32,
+                width: 50,
+                height: 50,
                 border: "1px solid #e0e0e0",
                 display: "flex",
                 alignItems: "center",
@@ -482,7 +492,7 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
                 },
               }}
             >
-              <X size={20} />
+              <X size={24} />
             </Box>
           </Box>
         </Box>
@@ -649,6 +659,9 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
           </Box>
         </Box>
       </Box>
+
+      {/* Agent Panel */}
+      <AgentPanel open={agentPanelOpen} onClose={() => setAgentPanelOpen(false)} />
     </Box>
   )
 }

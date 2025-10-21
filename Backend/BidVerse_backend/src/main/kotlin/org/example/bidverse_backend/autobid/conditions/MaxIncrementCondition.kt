@@ -1,6 +1,7 @@
 package org.example.bidverse_backend.autobid.conditions
 
 import org.example.bidverse_backend.autobid.AutoBidContext
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 
@@ -10,6 +11,7 @@ import java.math.BigDecimal
  */
 @Component
 class MaxIncrementCondition : ConditionHandler {
+    private val logger = LoggerFactory.getLogger(MaxIncrementCondition::class.java)
     override val conditionName = "max_increment"
 
     override fun shouldBid(context: AutoBidContext, conditionValue: Any?): Boolean = true
@@ -26,11 +28,16 @@ class MaxIncrementCondition : ConditionHandler {
             else -> return null
         }
 
-        val increment = baseAmount - context.getCurrentPrice()
+        val currentPrice = context.getCurrentPrice()
+        val increment = baseAmount - currentPrice
+        
         if (increment > maxIncrement) {
-            return context.getCurrentPrice() + maxIncrement
+            val cappedAmount = currentPrice + maxIncrement
+            logger.info("    [max_increment] Capping increment: $increment > $maxIncrement, bid $baseAmount → $cappedAmount")
+            return cappedAmount
         }
 
+        logger.debug("    [max_increment] Increment $increment <= max $maxIncrement, OK")
         return null
     }
 }

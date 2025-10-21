@@ -10,7 +10,7 @@ export default defineConfig({
       "/api": {
         target: "https://localhost:8081",
         changeOrigin: true,
-        secure: false, // Accept self-signed certificates if needed
+        secure: false,
         rewrite: (path) => path.replace(/^\/api/, ""),
       },
       // Proxy authentication endpoints

@@ -162,4 +162,10 @@ export const notificationApi = {
   deleteNotification: (id: number) => api.delete(`/notifications/${id}`),
 };
 
+export const agentApi = {
+  // Process chat messages and create AutoBid
+  processChat: (messages: Array<{ role: string; content: string }>) => 
+    api.post("/agent/chat", messages),
+};
+
 export default api;

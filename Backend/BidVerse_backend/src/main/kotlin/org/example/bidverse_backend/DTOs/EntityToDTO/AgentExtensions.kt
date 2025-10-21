@@ -9,6 +9,7 @@ fun AutoBid.toAutobidAgentConfigDTO(): AutoBidAgentConfigDTO {
         auctionId = this.auction.id!!,
         userId = this.user.id!!,
         maxBidAmount = this.maxBidAmount,
+        startingBidAmount = this.startingBidAmount,
         incrementAmount = this.incrementAmount,
         intervalMinutes = this.intervalMinutes,
         isActive = this.isActive,

@@ -25,7 +25,7 @@ class User(
     @Column(nullable = false, length = 25)
     var userName: String,
 
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 50, unique = true)
     var emailAddress: String,
 
     @Column(nullable = false, length = 16)

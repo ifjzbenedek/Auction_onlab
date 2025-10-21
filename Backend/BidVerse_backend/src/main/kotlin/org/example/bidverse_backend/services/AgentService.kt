@@ -65,6 +65,7 @@ class AgentService(
             user = user,
             auction = auction,
             maxBidAmount = llmConfig.maxBidAmount,
+            startingBidAmount = llmConfig.startingBidAmount,
             incrementAmount = llmConfig.incrementAmount,
             intervalMinutes = llmConfig.intervalMinutes,
             isActive = llmConfig.isActive,

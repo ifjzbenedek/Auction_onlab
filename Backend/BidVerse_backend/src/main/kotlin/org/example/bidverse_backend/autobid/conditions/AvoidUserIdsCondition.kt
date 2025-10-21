@@ -1,6 +1,7 @@
 package org.example.bidverse_backend.autobid.conditions
 
 import org.example.bidverse_backend.autobid.AutoBidContext
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 /**
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 class AvoidUserIdsCondition : ConditionHandler {
+    private val logger = LoggerFactory.getLogger(AvoidUserIdsCondition::class.java)
     override val conditionName = "avoid_user_ids"
 
     override fun shouldBid(context: AutoBidContext, conditionValue: Any?): Boolean {
@@ -25,6 +27,10 @@ class AvoidUserIdsCondition : ConditionHandler {
         }
 
         val currentHighestBidderId = context.currentHighestBid?.bidder?.id
-        return currentHighestBidderId !in avoidUserIds
+        val canBid = currentHighestBidderId !in avoidUserIds
+        
+        logger.info("    [avoid_user_ids] Current highest bidder: $currentHighestBidderId, Avoid: $avoidUserIds → $canBid")
+        
+        return canBid
     }
 }

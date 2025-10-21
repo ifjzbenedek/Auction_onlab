@@ -1,6 +1,7 @@
 package org.example.bidverse_backend.autobid.conditions
 
 import org.example.bidverse_backend.autobid.AutoBidContext
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -11,6 +12,7 @@ import java.math.RoundingMode
  */
 @Component
 class AvoidRoundNumbersCondition : ConditionHandler {
+    private val logger = LoggerFactory.getLogger(AvoidRoundNumbersCondition::class.java)
     override val conditionName = "avoid_round_numbers"
 
     override fun shouldBid(context: AutoBidContext, conditionValue: Any?): Boolean = true
@@ -24,9 +26,16 @@ class AvoidRoundNumbersCondition : ConditionHandler {
 
         val roundedAmount = baseAmount.setScale(0, RoundingMode.HALF_UP)
         
-        if (roundedAmount.remainder(BigDecimal(100)) != BigDecimal.ZERO) return null
+        if (roundedAmount.remainder(BigDecimal(100)) != BigDecimal.ZERO) {
+            logger.debug("    [avoid_round_numbers] $baseAmount is not a round number, OK")
+            return null
+        }
 
         val oddOffset = listOf(7, 11, 13, 17, 23, 29, 37, 47).random()
-        return roundedAmount.add(BigDecimal(oddOffset))
+        val adjustedAmount = roundedAmount.add(BigDecimal(oddOffset))
+        
+        logger.info("    [avoid_round_numbers] Avoiding round number: $baseAmount → $adjustedAmount (+$oddOffset)")
+        
+        return adjustedAmount
     }
 }

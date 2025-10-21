@@ -26,6 +26,9 @@ class AutoBid(
     var maxBidAmount: BigDecimal?,
 
     @Column(nullable = true, precision = 18, scale = 2)
+    var startingBidAmount: BigDecimal?,
+
+    @Column(nullable = true, precision = 18, scale = 2)
     var incrementAmount: BigDecimal?,
 
     @Column(nullable = true)

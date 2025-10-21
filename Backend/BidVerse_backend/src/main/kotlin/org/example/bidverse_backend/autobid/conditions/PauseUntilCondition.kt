@@ -1,6 +1,7 @@
 package org.example.bidverse_backend.autobid.conditions
 
 import org.example.bidverse_backend.autobid.AutoBidContext
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 
@@ -11,6 +12,7 @@ import java.time.LocalDateTime
  */
 @Component
 class PauseUntilCondition : ConditionHandler {
+    private val logger = LoggerFactory.getLogger(PauseUntilCondition::class.java)
     override val conditionName = "pause_until"
 
     override fun shouldBid(context: AutoBidContext, conditionValue: Any?): Boolean {
@@ -20,12 +22,17 @@ class PauseUntilCondition : ConditionHandler {
             is String -> try {
                 LocalDateTime.parse(conditionValue)
             } catch (e: Exception) {
+                logger.warn("    [pause_until] Invalid datetime format: $conditionValue")
                 return true // Invalid format, ignore condition
             }
             else -> return true
         }
 
         // Only bid if current time is after the pause time
-        return context.currentTime.isAfter(pauseUntil)
+        val canBid = context.currentTime.isAfter(pauseUntil)
+        
+        logger.info("    [pause_until] Current: ${context.currentTime}, Pause until: $pauseUntil → $canBid")
+        
+        return canBid
     }
 }

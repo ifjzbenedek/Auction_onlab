@@ -13,8 +13,12 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
+# Debug: Check if API key is loaded
+api_key = os.getenv('GEMINI_API_KEY')
+print(f"DEBUG: API key loaded: {api_key[:20] if api_key else 'None'}...")
+
 # Initialize the agent
-agent = AutobidAgent(api_key=os.getenv('GEMINI_API_KEY'))
+agent = AutobidAgent(api_key=api_key)
 
 """
 AI Agent Microservice - Clean Architecture
@@ -312,6 +316,27 @@ def test_check():
         return jsonify({"message": result}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/agent/reset', methods=['POST'])
+def reset_conversation():
+    """
+    Reset the conversation history.
+    Call this when user starts a new autobid configuration.
+    """
+    global agent
+    try:
+        # Reinitialize the agent to clear any chat history
+        api_key = os.getenv('GEMINI_API_KEY')
+        agent = AutobidAgent(api_key=api_key)
+        
+        return jsonify({
+            "status": "success",
+            "message": "Conversation history cleared"
+        }), 200
+    except Exception as e:
+        print(f"Error resetting conversation: {str(e)}")
+        return jsonify({"error": f"Failed to reset: {str(e)}"}), 500
 
 
 @app.route('/health', methods=['GET'])

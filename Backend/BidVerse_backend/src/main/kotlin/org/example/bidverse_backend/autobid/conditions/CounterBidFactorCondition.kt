@@ -1,6 +1,7 @@
 package org.example.bidverse_backend.autobid.conditions
 
 import org.example.bidverse_backend.autobid.AutoBidContext
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -12,6 +13,7 @@ import java.math.RoundingMode
 */
 @Component
 class CounterBidFactorCondition : ConditionHandler {
+    private val logger = LoggerFactory.getLogger(CounterBidFactorCondition::class.java)
     override val conditionName = "counter_bid_factor"
 
     override fun shouldBid(context: AutoBidContext, conditionValue: Any?): Boolean = true
@@ -30,14 +32,21 @@ class CounterBidFactorCondition : ConditionHandler {
 
         // Get the last two bids to calculate the opponent's increment
         val bids = context.allBids
-        if (bids.size < 2) return null
+        if (bids.size < 2) {
+            logger.debug("    [counter_bid_factor] Not enough bids to calculate opponent increment")
+            return null
+        }
 
         val lastBid = bids[0]
         val secondLastBid = bids[1]
         
         val opponentIncrement = lastBid.value.subtract(secondLastBid.value)
         val counterIncrement = opponentIncrement.multiply(factor).setScale(0, RoundingMode.HALF_UP)
+        val currentPrice = context.getCurrentPrice()
+        val newAmount = currentPrice.add(counterIncrement)
+        
+        logger.info("    [counter_bid_factor] Opponent raised $opponentIncrement, countering with ${factor}x = $counterIncrement → $newAmount")
 
-        return context.getCurrentPrice().add(counterIncrement)
+        return newAmount
     }
 }

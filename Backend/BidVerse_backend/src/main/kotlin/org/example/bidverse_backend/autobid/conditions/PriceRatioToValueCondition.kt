@@ -1,6 +1,7 @@
 package org.example.bidverse_backend.autobid.conditions
 
 import org.example.bidverse_backend.autobid.AutoBidContext
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 
@@ -11,6 +12,7 @@ import java.math.BigDecimal
  */
 @Component
 class PriceRatioToValueCondition : ConditionHandler {
+    private val logger = LoggerFactory.getLogger(PriceRatioToValueCondition::class.java)
     override val conditionName = "price_ratio_to_value"
 
     override fun shouldBid(context: AutoBidContext, conditionValue: Any?): Boolean {
@@ -21,9 +23,14 @@ class PriceRatioToValueCondition : ConditionHandler {
             else -> return true
         }
 
-        val maxAllowedPrice = context.auction.minimumPrice.multiply(ratio)
+        val minPrice = context.auction.minimumPrice
+        val maxAllowedPrice = minPrice.multiply(ratio)
+        val currentPrice = context.getCurrentPrice()
         
-        // Only bid if current price hasn't exceeded the ratio
-        return context.getCurrentPrice() <= maxAllowedPrice
+        val canBid = currentPrice <= maxAllowedPrice
+        
+        logger.info("    [price_ratio_to_value] Current: $currentPrice, Max allowed: $maxAllowedPrice (${minPrice} × ${ratio}) → $canBid")
+        
+        return canBid
     }
 }

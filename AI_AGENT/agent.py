@@ -12,84 +12,59 @@ class AutobidAgent:
     def __init__(self, api_key: str):
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel(
-            'gemini-2.0-flash',
-            tools=self._build_gemini_tools()
+            'gemini-2.0-flash-exp',
+            tools=[self._build_tool_declarations()]
         )
         self.chat = None
         
-    def _build_gemini_tools(self):
-        """Build Gemini-compatible tool definitions"""
-        gemini_tools = []
-        
-        # Tool 1: get_available_conditions (internal use)
-        gemini_tools.append(
-            genai.protos.Tool(
-                function_declarations=[
-                    genai.protos.FunctionDeclaration(
-                        name="get_available_conditions",
-                        description="INTERNAL USE - Gets ALL available conditions. Use this IMMEDIATELY at the start of conversation to know what conditions exist. User does NOT see this."
-                    )
-                ]
-            )
-        )
-        
-        # Tool 2: show_example_conditions (show to user)
-        gemini_tools.append(
-            genai.protos.Tool(
-                function_declarations=[
-                    genai.protos.FunctionDeclaration(
-                        name="show_example_conditions",
-                        description="Shows 6-8 RANDOM examples to the user in a friendly format. Use when: 1) User asks for examples, 2) User doesn't know what they can configure, 3) Conversation gets stuck. User SEES this."
-                    )
-                ]
-            )
-        )
-        
-        # Tool 3: check_condition_availability (validate user request)
-        gemini_tools.append(
-            genai.protos.Tool(
-                function_declarations=[
-                    genai.protos.FunctionDeclaration(
-                        name="check_condition_availability",
-                        description="Checks if a SPECIFIC condition exists. Use when user requests a SPECIFIC feature and you're not sure if it's available. Reports back if it doesn't exist.",
-                        parameters=genai.protos.Schema(
-                            type=genai.protos.Type.OBJECT,
-                            properties={
-                                "condition_name": genai.protos.Schema(
-                                    type=genai.protos.Type.STRING,
-                                    description="The condition name to check"
-                                )
-                            },
-                            required=["condition_name"]
-                        )
-                    )
-                ]
-            )
-        )
-        
-        # Tool 4: generate_confirmation_message (show summary to user)
-        gemini_tools.append(
-            genai.protos.Tool(
-                function_declarations=[
-                    genai.protos.FunctionDeclaration(
-                        name="generate_confirmation_message",
-                        description="Generates a nice, readable summary of the extracted configuration. Use AFTER you have the complete configuration for user confirmation.",
-                        parameters=genai.protos.Schema(
-                            type=genai.protos.Type.OBJECT,
-                            properties={
-                                "config": genai.protos.Schema(
-                                    type=genai.protos.Type.OBJECT,
-                                    description="The complete extracted autobid configuration JSON object"
-                                )
-                            },
-                            required=["config"]
-                        )
-                    )
-                ]
-            )
-        )
-        
-        return gemini_tools
+    def _build_tool_declarations(self):
+        """Build tool function declarations for Gemini"""
+        return [
+            {
+                "name": "get_available_conditions",
+                "description": "INTERNAL USE - Gets ALL available conditions. Use this IMMEDIATELY at the start of conversation to know what conditions exist. User does NOT see this.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {}
+                }
+            },
+            {
+                "name": "show_example_conditions",
+                "description": "Shows 6-8 RANDOM examples to the user in a friendly format. Use when: 1) User asks for examples, 2) User doesn't know what they can configure, 3) Conversation gets stuck. User SEES this.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {}
+                }
+            },
+            {
+                "name": "check_condition_availability",
+                "description": "Checks if a SPECIFIC condition exists. Use when user requests a SPECIFIC feature and you're not sure if it's available. Reports back if it doesn't exist.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "condition_name": {
+                            "type": "string",
+                            "description": "The condition name to check"
+                        }
+                    },
+                    "required": ["condition_name"]
+                }
+            },
+            {
+                "name": "generate_confirmation_message",
+                "description": "Generates a nice, readable summary of the extracted configuration. Use AFTER you have the complete configuration for user confirmation.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "config": {
+                            "type": "object",
+                            "description": "The complete extracted autobid configuration JSON object"
+                        }
+                    },
+                    "required": ["config"]
+                }
+            }
+        ]
     
     def _get_system_instruction(self):
         """Get the system instruction for the agent"""
@@ -239,50 +214,80 @@ class AutobidAgent:
         # Get available conditions first
         conditions_info = TOOL_FUNCTIONS["get_available_conditions"]()
         
-        prompt = f"""{self._get_system_instruction()}
+        prompt = f"""You are an AI assistant that extracts autobid configuration from natural language.
 
-Available conditions:
+Available conditions (IMPORTANT - Use these condition names exactly as shown):
 {json.dumps(conditions_info['conditions'], indent=2, ensure_ascii=False)}
 
 Conversation:
 {conversation_text}
 
-Analyze the conversation and extract what you can. Respond with a JSON object containing:
-1. "config": The autobid configuration (fill what you can, use null for missing required fields)
-2. "response": Your friendly response to the user explaining what's configured and what's still needed
-3. "is_complete": true if you have ALL required fields (auctionId, maxBidAmount, incrementAmount, intervalMinutes), false otherwise
+EXTRACTION RULES:
+1. Extract basic fields: auctionId, maxBidAmount, incrementAmount, intervalMinutes
+2. Detect conditions from user's natural language:
+   - "nappal" / "daytime" / "only during day" → active_hours: [9,10,11,12,13,14,15,16,17,18]
+   - "csak ha licitáltak" / "only if outbid" → if_outbid: true
+   - "minimum X lépés" / "minimum X increment" → min_increment: X
+   - "maximum Y lépés" / "maximum Y increment" → max_increment: Y
+   - "csak X perc alatt" / "only in last X minutes" → near_end_minutes: X
+   - Look for other patterns matching the available conditions
 
-Required fields:
+3. Put extracted conditions in "conditionsJson" object with exact condition names
+
+Required fields (all must be present for is_complete=true):
 - auctionId (which auction)
 - maxBidAmount (maximum bid amount) 
+- startingBidAmount (initial bid amount, where to start bidding from)
 - incrementAmount (how much to increase each bid)
 - intervalMinutes (how often to check)
 
-Example response format:
+Respond with a JSON object:
 {{
   "config": {{
     "id": 0,
-    "auctionId": null,
+    "auctionId": <number or null>,
     "userId": 0,
-    "maxBidAmount": 15000,
-    "incrementAmount": null,
-    "intervalMinutes": null,
+    "maxBidAmount": <number or null>,
+    "startingBidAmount": <number or null>,
+    "incrementAmount": <number or null>,
+    "intervalMinutes": <number or null>,
     "isActive": true,
-    "conditionsJson": {{"if_outbid": true, "active_hours": [9,10,11,12,13,14,15,16,17,18], "notify_on_action": true}}
+    "conditionsJson": {{<condition_name>: <value>, ...}} or null
   }},
-  "response": "Great! I've set up bidding with a maximum of 15000, only during daytime hours, only when outbid, with notifications. However, I still need: 1) Which auction number? 2) How much to increase each bid? 3) How often should I check (in minutes)? Do you have any other requirements?",
-  "is_complete": false
-}}"""
+  "response": "<friendly response in Hungarian>",
+  "is_complete": <true or false>
+}}
 
-        generation_config = genai.GenerationConfig(
-            temperature=0.3,
-            response_mime_type="application/json"
-        )
+Example:
+User says: "Maximum 600000ért szeretnék csak nappal mindig, Emeld percennként 150000-ről percenként 1000-rel."
+Extract:
+- maxBidAmount: 600000
+- startingBidAmount: 150000 (kezdőérték - "150000-ről")
+- incrementAmount: 1000 (emelés mértéke - "1000-rel")
+- intervalMinutes: 1 (percenként = every minute)
+- conditionsJson: {{"active_hours": [9,10,11,12,13,14,15,16,17,18]}}
+- is_complete: false (missing auctionId)"""
+
+        generation_config = {
+            "temperature": 0.3
+        }
         
-        model = genai.GenerativeModel('gemini-2.0-flash')
-        response = model.generate_content(
+        # Use the same model instance (no tools needed for direct extraction)
+        response = self.model.generate_content(
             prompt,
             generation_config=generation_config
         )
         
-        return json.loads(response.text)
+        print(f"DEBUG: Gemini response: {response.text[:200]}")
+        
+        # Clean response text (remove markdown code blocks if present)
+        response_text = response.text.strip()
+        if response_text.startswith("```json"):
+            response_text = response_text[7:]  # Remove ```json
+        if response_text.startswith("```"):
+            response_text = response_text[3:]  # Remove ```
+        if response_text.endswith("```"):
+            response_text = response_text[:-3]  # Remove trailing ```
+        response_text = response_text.strip()
+        
+        return json.loads(response_text)

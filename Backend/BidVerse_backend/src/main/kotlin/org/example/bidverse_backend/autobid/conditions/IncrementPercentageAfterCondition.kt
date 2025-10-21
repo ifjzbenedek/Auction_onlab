@@ -1,6 +1,7 @@
 package org.example.bidverse_backend.autobid.conditions
 
 import org.example.bidverse_backend.autobid.AutoBidContext
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -12,6 +13,7 @@ import java.math.RoundingMode
 */
 @Component
 class IncrementPercentageAfterCondition : ConditionHandler {
+    private val logger = LoggerFactory.getLogger(IncrementPercentageAfterCondition::class.java)
     override val conditionName = "increment_percentage_after"
 
     override fun shouldBid(context: AutoBidContext, conditionValue: Any?): Boolean = true
@@ -30,10 +32,18 @@ class IncrementPercentageAfterCondition : ConditionHandler {
             .sortedByDescending { it.first }
             .firstOrNull { (threshold, _) -> currentPrice >= threshold }
             ?.second
-            ?: return null
+
+        if (matchingPercentage == null) {
+            logger.debug("    [increment_percentage_after] No matching threshold for price $currentPrice")
+            return null
+        }
 
         val increment = currentPrice.multiply(matchingPercentage)
-        return currentPrice.add(increment).setScale(0, RoundingMode.HALF_UP)
+        val newAmount = currentPrice.add(increment).setScale(0, RoundingMode.HALF_UP)
+        
+        logger.info("    [increment_percentage_after] Price $currentPrice → ${(matchingPercentage * BigDecimal(100))}% increment → $newAmount")
+        
+        return newAmount
     }
 
     private fun parseThresholdEntry(key: Any?, value: Any?): Pair<BigDecimal, BigDecimal>? {

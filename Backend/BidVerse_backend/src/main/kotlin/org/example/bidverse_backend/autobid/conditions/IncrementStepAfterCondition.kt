@@ -1,6 +1,7 @@
 package org.example.bidverse_backend.autobid.conditions
 
 import org.example.bidverse_backend.autobid.AutoBidContext
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 
@@ -11,6 +12,7 @@ import java.math.BigDecimal
  */
 @Component
 class IncrementStepAfterCondition : ConditionHandler {
+    private val logger = LoggerFactory.getLogger(IncrementStepAfterCondition::class.java)
     override val conditionName = "increment_step_after"
 
     override fun shouldBid(context: AutoBidContext, conditionValue: Any?): Boolean = true
@@ -29,9 +31,17 @@ class IncrementStepAfterCondition : ConditionHandler {
             .sortedByDescending { it.first }
             .firstOrNull { (threshold, _) -> currentPrice >= threshold }
             ?.second
-            ?: return null
 
-        return currentPrice.add(matchingIncrement)
+        if (matchingIncrement == null) {
+            logger.debug("    [increment_step_after] No matching threshold for price $currentPrice")
+            return null
+        }
+
+        val newAmount = currentPrice.add(matchingIncrement)
+        
+        logger.info("    [increment_step_after] Price $currentPrice → increment $matchingIncrement → $newAmount")
+        
+        return newAmount
     }
 
     private fun parseThresholdEntry(key: Any?, value: Any?): Pair<BigDecimal, BigDecimal>? {
