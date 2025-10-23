@@ -42,10 +42,13 @@ data class AutoBidContext(
 
     /**
      * Has this autobid been outbid?
+     * Returns true if:
+     * - User has never bid (should place initial bid)
+     * - User has bid but is no longer winning
      */
     fun isOutbid(): Boolean {
         if (lastBidByThisAutoBid == null) {
-            return false
+            return true
         }
         return !isUserWinning()
     }

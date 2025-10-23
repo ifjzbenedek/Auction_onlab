@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import TollIcon from "@mui/icons-material/Toll"
 import AccountCircleIcon from "@mui/icons-material/AccountCircle"
 import { Search, Plus, X, ChevronDown, RefreshCw, Image, User, LogOut, Package, DollarSign, Heart, Mail, Bot } from "lucide-react"
@@ -113,6 +113,9 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
   // Agent panel state
   const [agentPanelOpen, setAgentPanelOpen] = useState(false)
 
+  // Debounce timer ref for search
+  const searchDebounceTimer = useRef<NodeJS.Timeout | null>(null)
+
   const filteredCategories = (categories || []).filter(
     (cat) =>
       cat.toLowerCase().includes(categorySearchTerm.toLowerCase()) && // cat már string
@@ -122,14 +125,37 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setSearchTerm(value)
+    
+    // Clear previous timer
+    if (searchDebounceTimer.current) {
+      clearTimeout(searchDebounceTimer.current)
+    }
+    
     // Only trigger regular search when smart search is disabled
     if (onSearch && !smartSearch) {
-      onSearch(value, isImageSearch)
+      // Wait 500ms before triggering search
+      searchDebounceTimer.current = setTimeout(() => {
+        onSearch(value, isImageSearch)
+      }, 500)
     }
   }
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (searchDebounceTimer.current) {
+        clearTimeout(searchDebounceTimer.current)
+      }
+    }
+  }, [])
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && onSearch) {
+      // Clear debounce timer on Enter
+      if (searchDebounceTimer.current) {
+        clearTimeout(searchDebounceTimer.current)
+      }
+      
       const trimmedTerm = searchTerm.trim()
       
       if (trimmedTerm === '') {
@@ -147,9 +173,18 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
 
   const toggleSearchType = () => {
     setIsImageSearch(!isImageSearch)
+    
+    // Clear previous timer
+    if (searchDebounceTimer.current) {
+      clearTimeout(searchDebounceTimer.current)
+    }
+    
     // Only trigger search when smart search is disabled
-    if (onSearch && !smartSearch) {
-      onSearch(searchTerm, !isImageSearch)
+    if (onSearch && !smartSearch && searchTerm) {
+      // Wait 500ms before triggering search with new type
+      searchDebounceTimer.current = setTimeout(() => {
+        onSearch(searchTerm, !isImageSearch)
+      }, 500)
     }
   }
 
