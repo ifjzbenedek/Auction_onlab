@@ -95,10 +95,10 @@ AVAILABLE_CONDITIONS = {
         "type": "array",
         "example": [15, 18]
     },
-    "react_delay_seconds": {
-        "description": "Don't bid immediately, wait X seconds",
+    "react_delay_minutes": {
+        "description": "Don't bid immediately, wait X minutes",
         "type": "number",
-        "example": 15
+        "example": 5
     },
     "counter_bid_factor": {
         "description": "If someone raised 1000, you raise 1.2x",

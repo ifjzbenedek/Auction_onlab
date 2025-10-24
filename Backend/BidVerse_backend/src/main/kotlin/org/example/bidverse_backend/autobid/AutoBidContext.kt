@@ -88,4 +88,14 @@ data class AutoBidContext(
         }
         return count
     }
+
+    /**
+     * Get the most recent bid placed by other users (not this user)
+     * Used for react_delay_seconds condition
+     */
+    fun getLastBidByOthers(): Bid? {
+        return allBids
+            .filter { it.bidder.id != user.id }
+            .maxByOrNull { it.timeStamp }
+    }
 }
