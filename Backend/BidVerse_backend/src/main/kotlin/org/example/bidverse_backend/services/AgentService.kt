@@ -27,13 +27,23 @@ class AgentService(
     private val restTemplate: RestTemplate
 ) {
 
-    fun processChat(messages: List<ChatMessageDTO>): AgentProcessResponseDTO {
+    fun processChat(auctionId: Int, messages: List<ChatMessageDTO>): AgentProcessResponseDTO {
         // Get current logged-in user
         val currentUserId = securityUtils.getCurrentUserId()
         val user = userRepository.findById(currentUserId)
             .orElseThrow { UserNotFoundException("Current user not found.") }
 
-        // Call LLM microservice
+        // Validate auction exists FIRST
+        val auction = auctionRepository.findById(auctionId)
+            .orElseThrow { AuctionNotFoundException("Auction with id $auctionId not found.") }
+
+        // Check if autobid already exists for this user and auction
+        val existingAutoBid = autoBidRepository.findByUserIdAndAuctionId(currentUserId, auctionId)
+        if (existingAutoBid != null) {
+            throw AutoBidAlreadyExistsException("AutoBid already exists for this auction.")
+        }
+
+        // Call LLM microservice - AI NO LONGER needs to extract auctionId
         val llmServiceUrl = "http://localhost:5002/agent/process"
         val agentProcessResponse: AgentProcessResponseDTO = try {
             restTemplate.postForObject(llmServiceUrl, messages, AgentProcessResponseDTO::class.java)
@@ -49,21 +59,17 @@ class AgentService(
 
         val llmConfig = agentProcessResponse.config
 
-        // Validate auction exists (only if complete)
-        val auction = auctionRepository.findById(llmConfig.auctionId)
-            .orElseThrow { AuctionNotFoundException("Auction with id ${llmConfig.auctionId} not found.") }
+        // IMPORTANT: Use auctionId from frontend, NOT from AI extraction
+        // The AI is NOT responsible for extracting auctionId anymore
 
-        // Check if autobid already exists for this user and auction
-        val existingAutoBid = autoBidRepository.findByUserIdAndAuctionId(currentUserId, llmConfig.auctionId)
-        if (existingAutoBid != null) {
-            throw AutoBidAlreadyExistsException("AutoBid already exists for this auction.")
-        }
+        // IMPORTANT: Use auctionId from frontend, NOT from AI extraction
+        // The AI is NOT responsible for extracting auctionId anymore
 
-        // Create AutoBid entity from LLM response
+        // Create AutoBid entity from LLM response + frontend auctionId
         val autoBid = AutoBid(
             id = null,
             user = user,
-            auction = auction,
+            auction = auction, // Use auction from frontend auctionId
             maxBidAmount = llmConfig.maxBidAmount,
             startingBidAmount = llmConfig.startingBidAmount,
             incrementAmount = llmConfig.incrementAmount,
@@ -79,9 +85,10 @@ class AgentService(
         // Save to database
         val savedAutoBid = autoBidRepository.save(autoBid)
         
-        // Return success response with saved config
+        // Return success response with saved config (update auctionId to the actual one used)
+        val finalConfig = savedAutoBid.toAutobidAgentConfigDTO()
         return AgentProcessResponseDTO(
-            config = savedAutoBid.toAutobidAgentConfigDTO(),
+            config = finalConfig.copy(auctionId = auctionId), // Ensure we return the correct auctionId
             agentResponse = "Autobid successfully created and activated!",
             isComplete = true,
             needsMoreInfo = false

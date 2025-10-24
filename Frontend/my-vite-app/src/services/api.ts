@@ -164,8 +164,9 @@ export const notificationApi = {
 
 export const agentApi = {
   // Process chat messages and create AutoBid
-  processChat: (messages: Array<{ role: string; content: string }>) => 
-    api.post("/agent/chat", messages),
+  // Now includes auctionId from frontend selection
+  processChat: (auctionId: number, messages: Array<{ role: string; content: string }>) => 
+    api.post("/agent/chat", { auctionId, messages }),
 };
 
 export default api;

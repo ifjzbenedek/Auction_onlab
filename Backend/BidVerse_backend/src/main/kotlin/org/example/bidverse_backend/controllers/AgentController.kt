@@ -14,10 +14,15 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/agent")
 class AgentController(private val agentService: AgentService) {
 
+    data class AgentChatRequest(
+        val auctionId: Int,
+        val messages: List<ChatMessageDTO>
+    )
+
     @PostMapping("/chat")
-    fun processChat(@RequestBody messages: List<ChatMessageDTO>): ResponseEntity<Any> {
+    fun processChat(@RequestBody request: AgentChatRequest): ResponseEntity<Any> {
         return try {
-            val autobidConfig = agentService.processChat(messages)
+            val autobidConfig = agentService.processChat(request.auctionId, request.messages)
             ResponseEntity.status(HttpStatus.CREATED).body(autobidConfig)
         } catch (e: UserNotFoundException) {
             ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message)

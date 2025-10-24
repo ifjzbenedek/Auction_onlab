@@ -129,8 +129,8 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ open, onClose }) => {
     setIsProcessing(true)
 
     try {
-      // Call backend API
-      const response = await agentApi.processChat(newChatHistory)
+      // Call backend API with auctionId from frontend selection
+      const response = await agentApi.processChat(selectedAuctionId as number, newChatHistory)
       
       // Add agent response
       const agentResponse = response.data.agentResponse || 'AutoBid létrehozva! ✅'

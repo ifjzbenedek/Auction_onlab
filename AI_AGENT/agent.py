@@ -100,30 +100,32 @@ class AutobidAgent:
 **CONVERSATION FLOW:**
 
 1. Call `get_available_conditions` (internal)
-2. Greet the user, ask about basics:
-   - Which auction? (auctionId)
+2. Greet the user (auction is already selected by frontend!)
+3. Ask about basics:
    - Maximum amount? (maxBidAmount)
+   - Starting bid amount? (startingBidAmount)
    - Bid increment? (incrementAmount)
    - Check frequency? (intervalMinutes)
-3. If user doesn't know what to configure → `show_example_conditions`
-4. If user requests something specific → `check_condition_availability`
-5. Gather information through natural conversation
-6. When you have everything → extract JSON configuration
-7. Call `generate_confirmation_message`
-8. Show to user and ask: "Is everything correct?"
+4. If user doesn't know what to configure → `show_example_conditions`
+5. If user requests something specific → `check_condition_availability`
+6. Gather information through natural conversation
+7. When you have everything → extract JSON configuration
+8. Call `generate_confirmation_message`
+9. Show to user and ask: "Is everything correct?"
 
 **RULES:**
 - Be friendly and natural
 - DON'T make up info! If something is missing, ask!
 - ONLY use conditions that exist (see: get_available_conditions)
 - If uncertain → use the tools!
+- DO NOT ask for auctionId - it's already selected!
 
 **JSON FORMAT:**
 {
     "id": 0,
-    "auctionId": <integer>,
     "userId": 0,
     "maxBidAmount": <number or null>,
+    "startingBidAmount": <number or null>,
     "incrementAmount": <number or null>,
     "intervalMinutes": <integer or null>,
     "isActive": true,
@@ -223,8 +225,9 @@ Conversation:
 {conversation_text}
 
 EXTRACTION RULES:
-1. Extract basic fields: auctionId, maxBidAmount, incrementAmount, intervalMinutes
-2. Detect conditions from user's natural language:
+1. Extract basic fields: maxBidAmount, incrementAmount, intervalMinutes, startingBidAmount
+2. DO NOT extract auctionId - it comes from the frontend!
+3. Detect conditions from user's natural language:
    - "nappal" / "daytime" / "only during day" → active_hours: [9,10,11,12,13,14,15,16,17,18]
    - "csak ha licitáltak" / "only if outbid" → if_outbid: true
    - "minimum X lépés" / "minimum X increment" → min_increment: X
@@ -235,17 +238,17 @@ EXTRACTION RULES:
 3. Put extracted conditions in "conditionsJson" object with exact condition names
 
 Required fields (all must be present for is_complete=true):
-- auctionId (which auction)
 - maxBidAmount (maximum bid amount) 
 - startingBidAmount (initial bid amount, where to start bidding from)
 - incrementAmount (how much to increase each bid)
 - intervalMinutes (how often to check)
 
+NOTE: auctionId is NOT required - it comes from the frontend selection!
+
 Respond with a JSON object:
 {{
   "config": {{
     "id": 0,
-    "auctionId": <number or null>,
     "userId": 0,
     "maxBidAmount": <number or null>,
     "startingBidAmount": <number or null>,
@@ -266,7 +269,7 @@ Extract:
 - incrementAmount: 1000 (emelés mértéke - "1000-rel")
 - intervalMinutes: 1 (percenként = every minute)
 - conditionsJson: {{"active_hours": [9,10,11,12,13,14,15,16,17,18]}}
-- is_complete: false (missing auctionId)"""
+- is_complete: true (all required fields present - auctionId comes from frontend!)"""
 
         generation_config = {
             "temperature": 0.3

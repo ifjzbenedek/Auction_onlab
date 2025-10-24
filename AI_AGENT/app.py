@@ -44,20 +44,22 @@ def build_conditions_prompt():
 
 SYSTEM_PROMPT = """You are an assistant that extracts autobid configuration from a conversation.
 Based on the user's messages, extract the following information:
-- auctionId: The ID of the auction (integer)
 - maxBidAmount: Maximum amount the user wants to bid (decimal, can be null)
+- startingBidAmount: Initial/starting bid amount (decimal, can be null)
 - incrementAmount: Amount to increment each bid (decimal, can be null)
 - intervalMinutes: How often to check and bid in minutes (integer, can be null)
 - isActive: Whether the autobid should be active (boolean, default true)
 - conditionsJson: Additional conditions as a JSON object (can be null)
+
+IMPORTANT: DO NOT extract auctionId - it is provided by the frontend!
 """ + build_conditions_prompt() + """
 
 Respond ONLY with a valid JSON object matching this structure:
 {
     "id": 0,
-    "auctionId": <integer>,
     "userId": 0,
     "maxBidAmount": <number or null>,
+    "startingBidAmount": <number or null>,
     "incrementAmount": <number or null>,
     "intervalMinutes": <integer or null>,
     "isActive": <boolean>,
