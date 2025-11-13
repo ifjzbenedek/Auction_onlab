@@ -135,6 +135,16 @@ const SetDetailsAuction: React.FC = () => {
     setDescriptionFromContext(auctionData.description);
     setFilesForUpload(auctionData.images.map(uploadedImage => uploadedImage.file));
     
+    // Auto-fill the form with AI-generated data if available
+    if (auctionData.category || auctionData.itemState || auctionData.condition !== 50) {
+      setDetailsData(prev => ({
+        ...prev,
+        category: auctionData.category || prev.category,
+        status: auctionData.itemState || prev.status,
+        condition: auctionData.condition || prev.condition,
+      }));
+    }
+    
     // Jelzi, hogy az első adatfeldolgozási kísérlet/renderelés megtörtént.
     // Ezt csak egyszer kellene true-ra állítani, de ha az auctionData később is változik,
     // és ez a hook újra lefut, a setHasLoadedInitialData(true) nem okoz problémát, ha már true.
@@ -216,9 +226,8 @@ const SetDetailsAuction: React.FC = () => {
         throw new Error("Selected category not found or category ID is missing.");
       }
 
-      // ⭐ A felhasználó által kiválasztott dátumokat ugyanúgy kezeljük
       // Nem konvertálunk UTC-be, hanem úgy küldjük, ahogy a felhasználó beállította
-      const expiredDateFormatted = detailsData.expiredDate; // Ne konvertáljuk!
+      const expiredDateFormatted = detailsData.expiredDate;
       const startDateFormatted = detailsData.startDate || null;
       const extraTimeValue = auctionType === "EXTENDED" && detailsData.extraTime
         ? detailsData.extraTime.toString()
@@ -238,7 +247,6 @@ const SetDetailsAuction: React.FC = () => {
         itemName: detailsData.name,
         minimumPrice: Number(detailsData.minimumPrice),
         status: "PENDING", 
-        // ⭐ createDate: TÖRÖLVE - backend automatikusan beállítja
         expiredDate: expiredDateFormatted,
         startDate: startDateFormatted, 
         description: descriptionFromContext,

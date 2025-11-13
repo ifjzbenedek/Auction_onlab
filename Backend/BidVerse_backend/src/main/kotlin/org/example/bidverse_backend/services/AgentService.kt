@@ -43,7 +43,6 @@ class AgentService(
             throw AutoBidAlreadyExistsException("AutoBid already exists for this auction.")
         }
 
-        // Call LLM microservice - AI NO LONGER needs to extract auctionId
         val llmServiceUrl = "http://localhost:5002/agent/process"
         val agentProcessResponse: AgentProcessResponseDTO = try {
             restTemplate.postForObject(llmServiceUrl, messages, AgentProcessResponseDTO::class.java)
@@ -58,12 +57,6 @@ class AgentService(
         }
 
         val llmConfig = agentProcessResponse.config
-
-        // IMPORTANT: Use auctionId from frontend, NOT from AI extraction
-        // The AI is NOT responsible for extracting auctionId anymore
-
-        // IMPORTANT: Use auctionId from frontend, NOT from AI extraction
-        // The AI is NOT responsible for extracting auctionId anymore
 
         // Create AutoBid entity from LLM response + frontend auctionId
         val autoBid = AutoBid(

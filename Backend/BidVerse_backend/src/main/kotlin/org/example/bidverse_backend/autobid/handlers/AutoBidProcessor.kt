@@ -81,7 +81,7 @@ class AutoBidProcessor(
             return AutoBidDecision.SkipBid("Calculated bid ($bidAmount) is not higher than current price ($currentPrice)")
         }
 
-        logger.info("AutoBid ${context.autoBid.id}: ✅ Placing bid: $bidAmount - $reason")
+        logger.info("AutoBid ${context.autoBid.id}: Placing bid: $bidAmount - $reason")
         return AutoBidDecision.PlaceBid(
             amount = bidAmount,
             reason = reason
@@ -95,27 +95,27 @@ class AutoBidProcessor(
         val currentPrice = context.getCurrentPrice()
         val increment = context.autoBid.incrementAmount ?: return currentPrice
         
-        logger.info("  → Current price: $currentPrice, Increment: $increment")
+        logger.info("Current price: $currentPrice, Increment: $increment")
 
         // If user hasn't bid yet and startingBidAmount is set, use that
         val hasUserBid = context.lastBidByThisAutoBid != null
-        logger.info("  → User has bid before: $hasUserBid")
+        logger.info("User has bid before: $hasUserBid")
         
         if (!hasUserBid && context.autoBid.startingBidAmount != null) {
             val startingBid = context.autoBid.startingBidAmount!!
-            logger.info("  → Starting bid amount configured: $startingBid")
+            logger.info("Starting bid amount configured: $startingBid")
             // Only use starting bid if it's higher than current price
             if (startingBid.compareTo(currentPrice) > 0) {
-                logger.info("  → ✅ Using starting bid: $startingBid (higher than current price)")
+                logger.info(" Using starting bid: $startingBid (higher than current price)")
                 return startingBid
             } else {
-                logger.info("  → Starting bid $startingBid is not higher than current price $currentPrice, using increment")
+                logger.info("Starting bid $startingBid is not higher than current price $currentPrice, using increment")
             }
         }
 
         // Otherwise, start with current price + increment
         var bidAmount = currentPrice.add(increment)
-        logger.info("  → Base bid amount: $bidAmount (currentPrice + increment)")
+        logger.info("Base bid amount: $bidAmount (currentPrice + increment)")
 
         // Apply all condition modifiers in order
         for (handler in conditionHandlers) {
@@ -125,12 +125,12 @@ class AutoBidProcessor(
                 val modifiedAmount = handler.modifyBidAmount(context, conditionValue, bidAmount)
                 if (modifiedAmount != null) {
                     bidAmount = modifiedAmount
-                    logger.info("  → Modifier '${handler.conditionName}' changed bid: $originalAmount → $bidAmount")
+                    logger.info("Modifier '${handler.conditionName}' changed bid: $originalAmount → $bidAmount")
                 }
             }
         }
 
-        logger.info("  → Final calculated bid amount: $bidAmount")
+        logger.info("Final calculated bid amount: $bidAmount")
         return bidAmount
     }
 }

@@ -11,12 +11,18 @@ interface UploadedImage {
 interface AuctionCreationState {
   description: string;
   images: UploadedImage[];
+  category: string;
+  itemState: string;
+  condition: number;
 }
 
 interface AuctionCreationContextType {
   auctionData: AuctionCreationState;
   setAuctionDescription: (description: string) => void;
   setAuctionImages: (images: UploadedImage[]) => void;
+  setAuctionCategory: (category: string) => void;
+  setAuctionItemState: (itemState: string) => void;
+  setAuctionCondition: (condition: number) => void;
   clearAuctionData: () => void;
 }
 
@@ -26,6 +32,9 @@ export const AuctionCreationProvider: React.FC<{ children: React.ReactNode }> = 
   const [auctionData, setAuctionData] = useState<AuctionCreationState>({
     description: "",
     images: [],
+    category: "",
+    itemState: "Brand new",
+    condition: 50,
   });
 
   const setAuctionDescription = useCallback((description: string) => {
@@ -36,16 +45,37 @@ export const AuctionCreationProvider: React.FC<{ children: React.ReactNode }> = 
     setAuctionData(prev => ({ ...prev, images }));
   }, []); // Üres függőségi tömb
 
+  const setAuctionCategory = useCallback((category: string) => {
+    setAuctionData(prev => ({ ...prev, category }));
+  }, []);
+
+  const setAuctionItemState = useCallback((itemState: string) => {
+    setAuctionData(prev => ({ ...prev, itemState }));
+  }, []);
+
+  const setAuctionCondition = useCallback((condition: number) => {
+    setAuctionData(prev => ({ ...prev, condition }));
+  }, []);
+
   const clearAuctionData = useCallback(() => {
-    setAuctionData({ description: "", images: [] });
+    setAuctionData({ 
+      description: "", 
+      images: [], 
+      category: "", 
+      itemState: "Brand new", 
+      condition: 50 
+    });
   }, []); // Üres függőségi tömb
 
   const contextValue = useMemo(() => ({
     auctionData,
     setAuctionDescription,
     setAuctionImages,
+    setAuctionCategory,
+    setAuctionItemState,
+    setAuctionCondition,
     clearAuctionData,
-  }), [auctionData, setAuctionDescription, setAuctionImages, clearAuctionData]); // A függőségek most már stabil függvények
+  }), [auctionData, setAuctionDescription, setAuctionImages, setAuctionCategory, setAuctionItemState, setAuctionCondition, clearAuctionData]); // A függőségek most már stabil függvények
 
   return (
     <AuctionCreationContext.Provider value={contextValue}>
