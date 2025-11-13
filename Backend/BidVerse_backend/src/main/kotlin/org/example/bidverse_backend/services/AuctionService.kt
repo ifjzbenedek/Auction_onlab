@@ -40,13 +40,29 @@ class AuctionService(
     private val restTemplate: RestTemplate
 
 ) {
-    fun getAllAuctions(statuses: String?, categories: String?): List<AuctionCardDTO> {
+    fun getAllAuctions(statuses: String?, categories: String?, search: String?): List<AuctionCardDTO> {
         val statusList = statuses?.split(",") ?: emptyList()
         val categoryList = categories?.split(",") ?: emptyList()
 
         return auctionRepository.findAll().filter { auction ->
-            (statusList.isEmpty() || auction.status in statusList) &&
-                    (categoryList.isEmpty() || auction.category.categoryName in categoryList)
+                val statusFilter = if (statusList.isEmpty())
+            {
+                auction.status != "CLOSED"
+            } else {
+                auction.status in statusList
+            }
+            val categoryFilter = categoryList.isEmpty() || auction.category.categoryName in categoryList
+            
+            val searchFilter = if (search.isNullOrBlank()) {
+                true
+            } else {
+                val searchLower = search.lowercase()
+                auction.itemName.lowercase().contains(searchLower) ||
+                auction.description.lowercase().contains(searchLower) ||
+                auction.tags?.lowercase()?.contains(searchLower) == true
+            }
+
+            statusFilter && categoryFilter && searchFilter
         }.map { it.toAuctionCardDTO() }
     }
 

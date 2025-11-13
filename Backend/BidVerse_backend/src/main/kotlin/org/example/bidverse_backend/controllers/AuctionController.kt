@@ -19,10 +19,11 @@ class AuctionController(private val auctionService: AuctionService) {
     @GetMapping
     fun getAllAuctions(
         @RequestParam status: String?,
-        @RequestParam category: String?
+        @RequestParam category: String?,
+        @RequestParam search: String?
     ): ResponseEntity<List<AuctionCardDTO>> {
         return try {
-            val auctions = auctionService.getAllAuctions(status, category)
+            val auctions = auctionService.getAllAuctions(status, category, search)
             ResponseEntity.ok(auctions)
         } catch (e: Exception) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()

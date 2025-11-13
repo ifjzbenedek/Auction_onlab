@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param
 interface BidRepository : JpaRepository<Bid, Int> {
     fun findByBidderId(userId: Int): List<Bid>
     fun findByAuctionId(auctionId: Int): List<Bid>
+    fun findByAuctionIdOrderByValueDesc(auctionId: Int): List<Bid>
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT b FROM Bid b WHERE b.auction.id = :auctionId AND b.isWinning = true")

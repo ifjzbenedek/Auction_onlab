@@ -1,11 +1,12 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import TollIcon from "@mui/icons-material/Toll"
 import AccountCircleIcon from "@mui/icons-material/AccountCircle"
-import { Search, Plus, X, ChevronDown, RefreshCw, Image, User, LogOut, Package, DollarSign, Heart, Mail } from "lucide-react"
+import { Search, Plus, X, ChevronDown, RefreshCw, Image, User, LogOut, Package, DollarSign, Heart, Mail, Bot } from "lucide-react"
 import { authService } from "../services/auth-service"
+import { AgentPanel } from "./AgentPanel"
 import {
   Box,
   Typography,
@@ -109,6 +110,12 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
   const categoryMenuOpen = Boolean(categoryAnchorEl)
   const [categorySearchTerm, setCategorySearchTerm] = useState("")
 
+  // Agent panel state
+  const [agentPanelOpen, setAgentPanelOpen] = useState(false)
+
+  // Debounce timer ref for search
+  const searchDebounceTimer = useRef<NodeJS.Timeout | null>(null)
+
   const filteredCategories = (categories || []).filter(
     (cat) =>
       cat.toLowerCase().includes(categorySearchTerm.toLowerCase()) && // cat már string
@@ -118,14 +125,37 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setSearchTerm(value)
+    
+    // Clear previous timer
+    if (searchDebounceTimer.current) {
+      clearTimeout(searchDebounceTimer.current)
+    }
+    
     // Only trigger regular search when smart search is disabled
     if (onSearch && !smartSearch) {
-      onSearch(value, isImageSearch)
+      // Wait 500ms before triggering search
+      searchDebounceTimer.current = setTimeout(() => {
+        onSearch(value, isImageSearch)
+      }, 500)
     }
   }
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (searchDebounceTimer.current) {
+        clearTimeout(searchDebounceTimer.current)
+      }
+    }
+  }, [])
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && onSearch) {
+      // Clear debounce timer on Enter
+      if (searchDebounceTimer.current) {
+        clearTimeout(searchDebounceTimer.current)
+      }
+      
       const trimmedTerm = searchTerm.trim()
       
       if (trimmedTerm === '') {
@@ -143,9 +173,18 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
 
   const toggleSearchType = () => {
     setIsImageSearch(!isImageSearch)
+    
+    // Clear previous timer
+    if (searchDebounceTimer.current) {
+      clearTimeout(searchDebounceTimer.current)
+    }
+    
     // Only trigger search when smart search is disabled
-    if (onSearch && !smartSearch) {
-      onSearch(searchTerm, !isImageSearch)
+    if (onSearch && !smartSearch && searchTerm) {
+      // Wait 500ms before triggering search with new type
+      searchDebounceTimer.current = setTimeout(() => {
+        onSearch(searchTerm, !isImageSearch)
+      }, 500)
     }
   }
 
@@ -364,10 +403,11 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
             order: { xs: 2, md: 3 },
           }}
         >
+          {/* Profile Icon */}
           <Box
             sx={{
-              width: 40,
-              height: 40,
+              width: 60,
+              height: 60,
               border: "1px solid #e0e0e0",
               borderRadius: "50%",
               display: "flex",
@@ -383,7 +423,7 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
             }}
             onClick={handleProfileClick}
           >
-            <AccountCircleIcon style={{ fontSize: "40px" }} />          
+            <AccountCircleIcon style={{ fontSize: "60px" }} />          
           </Box>
           <Popover
             open={profileMenuOpen}
@@ -446,11 +486,13 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
             </List>
           </Popover>
           <Box sx={{ display: "flex", gap: 1 }}>
+            {/* Agent/AutoBid Button */}
             <Box
               sx={{
-                width: 32,
-                height: 32,
+                width: 50,
+                height: 50,
                 border: "1px solid #e0e0e0",
+                borderRadius: "8px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -459,16 +501,19 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
                 transition: "all 0.2s ease",
                 "&:hover": {
                   borderColor: "#3498db",
+                  backgroundColor: "#f0f8ff",
                   transform: "scale(1.05)",
                 },
               }}
+              onClick={() => setAgentPanelOpen(true)}
+              title="AutoBid Agent"
             >
-              <X size={20} />
+              <Bot size={24} />
             </Box>
             <Box
               sx={{
-                width: 32,
-                height: 32,
+                width: 50,
+                height: 50,
                 border: "1px solid #e0e0e0",
                 display: "flex",
                 alignItems: "center",
@@ -482,7 +527,7 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
                 },
               }}
             >
-              <X size={20} />
+              <X size={24} />
             </Box>
           </Box>
         </Box>
@@ -649,6 +694,9 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
           </Box>
         </Box>
       </Box>
+
+      {/* Agent Panel */}
+      <AgentPanel open={agentPanelOpen} onClose={() => setAgentPanelOpen(false)} />
     </Box>
   )
 }

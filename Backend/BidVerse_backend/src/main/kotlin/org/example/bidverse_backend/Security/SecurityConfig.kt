@@ -62,8 +62,11 @@ class SecurityConfig(private val customOAuth2UserService: CustomOAuth2UserServic
             }
             .oauth2Login { oauth2 ->
                 oauth2
-                    .userInfoEndpoint { it.userService(customOAuth2UserService) }
+                    .userInfoEndpoint { userInfo ->
+                        userInfo.oidcUserService(customOAuth2UserService)
+                    }
                     .defaultSuccessUrl("http://localhost:5173/", true)
+                    .failureUrl("http://localhost:5173/login?error=true")
             }
             .logout { logout ->
                 logout

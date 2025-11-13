@@ -19,3 +19,7 @@ Ezek közül az előbbi microservicet megvalósítottam.
 Sikerült a másik microservice-t is megvalósítani, működik a vektor alapú keresés. Ezen kívül
 javítottam kisebb frontend hibákat (túl hosszú skála, összefolyt elemek, rövid keresősáv, stb.). Utánanéztem hogyan lehetne elkészíteni
 az agent-et.
+
+5.-6.hét
+Az agent működik, magvalósítottam hozzá az új microservice-t. Sikerült a notification-t megvalósítani frontend-backend-en.
+Továbbá fixáltam a regisztrációs problémákat. 

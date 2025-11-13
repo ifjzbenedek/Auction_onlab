@@ -76,6 +76,13 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
     fetchCategories()
   }, [])
 
+  // Update form when initialData changes (e.g., from AI generation)
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    }
+  }, [initialData]);
+
   useEffect(() => {
     // Only notify parent of changes when we have a complete form
     onChange(formData)

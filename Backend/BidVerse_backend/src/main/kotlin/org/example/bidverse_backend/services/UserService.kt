@@ -8,6 +8,7 @@ import org.example.bidverse_backend.Security.SecurityUtils
 import org.example.bidverse_backend.entities.User
 import org.example.bidverse_backend.repositories.UserRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class UserService(private val userRepository: UserRepository,
@@ -54,6 +55,7 @@ class UserService(private val userRepository: UserRepository,
             .orElseThrow { UserNotFoundException("User not found.") }
     }
 
+    @Transactional
     fun register(userRegistrationDTO: UserRegistrationDTO): User {
         // Ellenőrizzük, hogy a jelszavak megegyeznek-e
         /*
@@ -62,10 +64,11 @@ class UserService(private val userRepository: UserRepository,
         }*/
 
         // Ellenőrizzük, hogy az email vagy a felhasználónév már foglalt-e
-        require(!userRepository.existsByEmailAddress(userRegistrationDTO.emailAddress)){
-            throw IllegalArgumentException("Email address already in use.")}
+        if (userRepository.existsByEmailAddress(userRegistrationDTO.emailAddress)) {
+            throw IllegalArgumentException("Email address already in use.")
+        }
 
-        require (!userRepository.existsByUserName(userRegistrationDTO.userName)) {
+        if (userRepository.existsByUserName(userRegistrationDTO.userName)) {
             throw IllegalArgumentException("Username already in use.")
         }
 

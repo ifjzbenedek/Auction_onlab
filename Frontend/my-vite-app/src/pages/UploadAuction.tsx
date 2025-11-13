@@ -137,7 +137,14 @@ const StepIcon = styled(Box)(({ theme }) => ({
 const UploadAuction: React.FC = () => {
   const navigate = useNavigate()
   const theme = useTheme()
-  const { auctionData, setAuctionDescription, setAuctionImages } = useAuctionCreation();
+  const { 
+    auctionData, 
+    setAuctionDescription, 
+    setAuctionImages, 
+    setAuctionCategory, 
+    setAuctionItemState, 
+    setAuctionCondition 
+  } = useAuctionCreation();
 
   // Helyi állapotok a komponens számára, inicializálva a kontextusból
   const [localUploadedImages, setLocalUploadedImages] = useState<UploadedImage[]>(auctionData.images);
@@ -191,13 +198,26 @@ const UploadAuction: React.FC = () => {
   
        const response = await auctionApi.post('/auctions/generate-description', formData);
       
+      console.log('Raw response from AI:', response.data);
+      
       if (response.data) {
-        const generatedDesc = typeof response.data === 'object' && response.data.description 
-          ? response.data.description 
-          : typeof response.data === 'string' 
-          ? response.data 
-          : '';
-        setLocalDescription(generatedDesc); // Helyi állapot frissítése, ami triggereli a kontextus frissítését
+        // Handle the new JSON structure from AI
+        if (typeof response.data === 'object') {
+          const generatedDesc = response.data.description || '';
+          const category = response.data.category || '';
+          const itemState = response.data.itemState || 'Brand new';
+          const condition = response.data.condition || 50;
+          
+          console.log('Parsed AI data:', { generatedDesc, category, itemState, condition });
+          
+          setLocalDescription(generatedDesc);
+          setAuctionCategory(category);
+          setAuctionItemState(itemState);
+          setAuctionCondition(condition);
+        } else if (typeof response.data === 'string') {
+          // Fallback for old format
+          setLocalDescription(response.data);
+        }
       }
     } catch (error) {
       console.error("Error generating description:", error);
