@@ -104,10 +104,10 @@ const AuctionCard: React.FC<AuctionCardDTO> = ({
         {/* Price */}
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" color="text.secondary">
-            Aktuális ár:
+            Actual price:
           </Typography>
           <Typography variant="h6" color="primary" sx={{ fontWeight: "bold" }}>
-            {lastBid ? `${formatPrice(lastBid)} Ft` : "Nincs licit"}
+            {lastBid ? `$${formatPrice(lastBid)}` : "No bid yet"}
           </Typography>
         </Box>
 

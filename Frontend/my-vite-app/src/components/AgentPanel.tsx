@@ -41,7 +41,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ open, onClose }) => {
         {
           id: '1',
           sender: 'agent',
-          text: 'Szia! 👋 Segítek beállítani az automatikus licitálást. Válassz egy aukciót a legördülő menüből!',
+          text: 'Hi! I will help you set your automatic bidding agent! Choose and Auction from the panel!',
           timestamp: new Date(),
         },
       ])
@@ -65,7 +65,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ open, onClose }) => {
         {
           id: Date.now().toString(),
           sender: 'agent',
-          text: 'Hiba történt az aukciók betöltésekor. 😞',
+          text: 'Error during Auction recognition.',
           timestamp: new Date(),
         },
       ])
@@ -78,8 +78,8 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ open, onClose }) => {
     
     const auction = auctions.find((a) => a.id === auctionId)
     if (auction) {
-      const userMessage = `Kiválasztottam: ${auction.itemName} (ID: ${auction.id})`
-      const agentMessage = `Rendben! Most írd be, hogy mit szeretnél. Például:\n"Maximum 50000 Ft-ot szeretnék licitálni, 500 Ft-os lépésekben, 5 percenként."`
+      const userMessage = `Auction chosen: ${auction.itemName} (ID: ${auction.id})`
+      const agentMessage = `Alright! Now write how would you like to bid. For example:\n"I would like to bid up to maximum 1000 dollars, in 50 dollar steps, checked every 5 minutes."`
       
       setMessages((prev) => [
         ...prev,
@@ -133,7 +133,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ open, onClose }) => {
       const response = await agentApi.processChat(selectedAuctionId as number, newChatHistory)
       
       // Add agent response
-      const agentResponse = response.data.agentResponse || 'AutoBid létrehozva! ✅'
+      const agentResponse = response.data.agentResponse || 'AutoBid successfully created!'
       setMessages((prev) => [
         ...prev,
         {
@@ -150,7 +150,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ open, onClose }) => {
       // If complete, show success details
       if (response.data.isComplete) {
         const config = response.data.config
-        const successMessage = `Sikeres beállítás!\n\n📊 AutoBid részletei:\n• Aukció ID: ${config.auctionId}\n• Kezdő licit: ${config.startingBidAmount || 'Nincs megadva'} Ft\n• Licitlépés: ${config.incrementAmount} Ft\n• Maximum licit: ${config.maxBidAmount} Ft\n• Intervallum: ${config.intervalMinutes} perc\n• AutoBid ID: ${config.id}\n\nAz AutoBid aktív és automatikusan licitál helyetted! 🚀`
+        const successMessage = `Autobid set successfully!\n\n AutoBid details:\n• Auction ID: ${config.auctionId}\n• Starting bid: ${config.startingBidAmount || 'Not given'}\n• Step amount: ${config.incrementAmount} \n• Maximum bid: ${config.maxBidAmount} \n• Interval: ${config.intervalMinutes} minutes\n• AutoBid ID: ${config.id}\n\n The Autobid is on and it will start bidding for you!`
         
         setMessages((prev) => [
           ...prev,
@@ -170,15 +170,15 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ open, onClose }) => {
       }
     } catch (error) {
       const axiosError = error as { response?: { status: number; data?: { message?: string } } }
-      let errorMessage = 'Hiba történt az AutoBid létrehozása során. 😞'
+      let errorMessage = 'Error during creation of this Autobid.'
 
       if (axiosError.response) {
         if (axiosError.response.status === 409) {
-          errorMessage = '⚠️ Ezen az aukción már létezik AutoBid beállítás!'
+          errorMessage = 'There is already an Autobid for this auction!'
         } else if (axiosError.response.status === 404) {
-          errorMessage = '⚠️ Az aukció nem található.'
+          errorMessage = ' Auction not found.'
         } else if (axiosError.response.data?.message) {
-          errorMessage = `❌ Hiba: ${axiosError.response.data.message}`
+          errorMessage = ` Error: ${axiosError.response.data.message}`
         }
       }
 
@@ -275,7 +275,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ open, onClose }) => {
               </MenuItem>
               {auctions.map((auction) => (
                 <MenuItem key={auction.id} value={auction.id}>
-                  {auction.itemName} - {auction.lastBid || auction.minimumPrice} Ft ({auction.status})
+                  {auction.itemName} - {auction.lastBid || auction.minimumPrice} ({auction.status})
                 </MenuItem>
               ))}
             </Select>
@@ -348,7 +348,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ open, onClose }) => {
           <TextField
             fullWidth
             size="small"
-            placeholder={selectedAuctionId ? "Írd le, mit szeretnél..." : "Először válassz egy aukciót!"}
+            placeholder={selectedAuctionId ? "Write what you have in mind..." : "First choose an Auction!"}
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}

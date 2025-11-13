@@ -48,6 +48,6 @@ class AutoBidSchedulerService(
             
         } catch (e: Exception) {
             logger.error("Error during scheduled autobid execution", e)
-        }
+        }  
     }
 }

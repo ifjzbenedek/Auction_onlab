@@ -17,9 +17,9 @@ class CustomOAuth2UserService(
 
     init {
         println("========================================")
-        println("🚀 CustomOAuth2UserService INITIALIZED!")
+        println("CustomOAuth2UserService INITIALIZED!")
         println("========================================")
-        logger.warn("🚀 CustomOAuth2UserService INITIALIZED!")
+        logger.warn("CustomOAuth2UserService INITIALIZED!")
     }
 
     override fun loadUser(userRequest: OidcUserRequest): OidcUser {
@@ -75,10 +75,10 @@ class CustomOAuth2UserService(
             val savedUser = userRepository.save(newUser)
             userRepository.flush()
             
-            logger.info("✅ User saved successfully: ID=${savedUser.id}, Email=${savedUser.emailAddress}")
+            logger.info(" User saved successfully: ID=${savedUser.id}, Email=${savedUser.emailAddress}")
             
         } catch (e: Exception) {
-            logger.error("❌ Failed to create user!", e)
+            logger.error(" Failed to create user!", e)
             logger.error("Exception: ${e.javaClass.name} - ${e.message}")
             throw e
         }
