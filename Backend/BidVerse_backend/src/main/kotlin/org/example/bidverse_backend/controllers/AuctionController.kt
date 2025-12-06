@@ -152,23 +152,6 @@ class AuctionController(private val auctionService: AuctionService) {
         }
     }
 
-    @PatchMapping("/{auctionId}/status")
-    fun updateAuctionStatus(
-        @PathVariable auctionId: Int,
-        @RequestBody statusRequest: Map<String, String>
-    ): ResponseEntity<Any> {
-        return try {
-            val newStatus = statusRequest["newStatus"] ?: throw StatusNotFoundInRequestException("Status is required")
-            auctionService.updateAuctionStatus(auctionId, newStatus)
-            ResponseEntity.ok().build()
-        } catch (e: AuctionNotFoundException) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message)
-        } catch (e: StatusNotFoundInRequestException) {
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message)
-
-        }
-    }
-
     @GetMapping("/smart-search")
     fun smartSearch(@RequestParam query: String): ResponseEntity<Any> {
         return try {

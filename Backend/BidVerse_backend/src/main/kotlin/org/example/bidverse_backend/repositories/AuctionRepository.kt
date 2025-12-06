@@ -10,8 +10,6 @@ import java.time.LocalDateTime
 
 interface AuctionRepository : JpaRepository<Auction, Int>{
 
-    fun findByStatus(status: String): List<Auction>
-
     fun findByCategoryIn(category: List<Category>): List<Auction>
 
     fun findByOwner(user: User): List<Auction>

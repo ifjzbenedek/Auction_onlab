@@ -39,11 +39,11 @@ export const AuctionCreationProvider: React.FC<{ children: React.ReactNode }> = 
 
   const setAuctionDescription = useCallback((description: string) => {
     setAuctionData(prev => ({ ...prev, description }));
-  }, []); // Üres függőségi tömb, mivel setAuctionData stabil
+  }, []);
 
   const setAuctionImages = useCallback((images: UploadedImage[]) => {
     setAuctionData(prev => ({ ...prev, images }));
-  }, []); // Üres függőségi tömb
+  }, []);
 
   const setAuctionCategory = useCallback((category: string) => {
     setAuctionData(prev => ({ ...prev, category }));
@@ -65,7 +65,7 @@ export const AuctionCreationProvider: React.FC<{ children: React.ReactNode }> = 
       itemState: "Brand new", 
       condition: 50 
     });
-  }, []); // Üres függőségi tömb
+  }, []);
 
   const contextValue = useMemo(() => ({
     auctionData,

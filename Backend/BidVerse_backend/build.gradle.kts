@@ -42,6 +42,7 @@ dependencies {
 	implementation("org.springframework.retry:spring-retry")
 	implementation("org.apache.httpcomponents.client5:httpclient5")
 	implementation("com.cloudinary:cloudinary-http44:1.33.0")
+	implementation("org.jboss.logging:jboss-logging:3.5.3.Final")
 }
 
 kotlin {

@@ -1,52 +1,21 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
 import { Clock } from 'lucide-react';
 import { useTimer } from './TimeHook';
 import { TimeDisplayProps } from '../types/TimeUtils/TimeDisplayProps';
 import { calculateSmartTimeLeft } from '../utils/timeUtils';
-import { AuctionStatus, calculateAuctionStatus } from '../utils/auctionStatusUtils';
 
-interface ExtendedTimeDisplayProps extends TimeDisplayProps {
-  auctionId?: number;
-  currentStatus?: AuctionStatus | string;
-  onStatusChange?: (auctionId: number, newStatus: string) => void;
-}
-
-const TimeDisplay: React.FC<ExtendedTimeDisplayProps> = ({
+const TimeDisplay: React.FC<TimeDisplayProps> = ({
   expiredDate,
   startDate,
   variant = 'compact',
   showIcon = true,
-  size = 'medium',
-  auctionId,
-  currentStatus,
-  onStatusChange
+  size = 'medium'
 }) => {
-  const prevStatusRef = useRef<string | null>(null);
-  
   useTimer(1000);
   
   // Státusz alapján dönt, hogy startDate-ig vagy expiredDate-ig számoljon
   const { timeString, isExpired, totalSeconds, targetEvent, status: smartStatus } = calculateSmartTimeLeft(startDate, expiredDate);
-  
-  // Kiszámoljuk az aktuális státuszt az időpontok alapján
-  const { status: calculatedStatus } = calculateAuctionStatus(startDate, expiredDate);
-
-  // Automatic status change logic - csak frontend státusz frissítés
-  useEffect(() => {
-    if (!auctionId || !currentStatus || !onStatusChange) return;
-
-    const currentStatusStr = typeof currentStatus === 'string' ? currentStatus : currentStatus;
-    
-    // Ha a számított státusz eltér a jelenlegi státusztól és még nem frissítettük
-    if (calculatedStatus !== currentStatusStr.toUpperCase() && prevStatusRef.current !== calculatedStatus) {
-      prevStatusRef.current = calculatedStatus;
-      
-      // Frontend + Backend státusz frissítés a StatusHook-on keresztül
-      onStatusChange(auctionId, calculatedStatus);
-      console.log(`🔄 Auction ${auctionId} status automatically updated from ${currentStatusStr} to ${calculatedStatus}`);
-    }
-  }, [auctionId, currentStatus, calculatedStatus, onStatusChange]);
 
   // Szöveg meghatározása aszerint, hogy mihez számolunk vissza
   const getDisplayLabel = () => {

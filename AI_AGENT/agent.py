@@ -12,7 +12,7 @@ class AutobidAgent:
     def __init__(self, api_key: str):
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel(
-            'gemini-2.0-flash-exp',
+            'gemini-2.0-flash',
             tools=[self._build_tool_declarations()]
         )
         self.chat = None

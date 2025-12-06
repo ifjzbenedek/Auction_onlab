@@ -3,11 +3,9 @@ package org.example.bidverse_backend.services
 import org.springframework.transaction.annotation.Transactional
 import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionBasicDTO
 import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionCardDTO
-import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionStatusResponseDTO
 import org.example.bidverse_backend.DTOs.BidDTOs.BidBasicDTO
 import org.example.bidverse_backend.DTOs.EntityToDTO.toAuctionBasicDTO
 import org.example.bidverse_backend.DTOs.EntityToDTO.toAuctionCardDTO
-import org.example.bidverse_backend.DTOs.EntityToDTO.toAuctionStatusResponseDTO
 import org.example.bidverse_backend.DTOs.EntityToDTO.toBidBasicDTO
 import org.example.bidverse_backend.Exceptions.*
 import org.example.bidverse_backend.Security.SecurityUtils
@@ -45,11 +43,12 @@ class AuctionService(
         val categoryList = categories?.split(",") ?: emptyList()
 
         return auctionRepository.findAll().filter { auction ->
-                val statusFilter = if (statusList.isEmpty())
-            {
-                auction.status != "CLOSED"
+            val calculatedStatus = AllAuctionUtils.calculateStatus(auction.startDate, auction.expiredDate)
+            
+            val statusFilter = if (statusList.isEmpty()) {
+                calculatedStatus != "CLOSED"
             } else {
-                auction.status in statusList
+                calculatedStatus in statusList
             }
             val categoryFilter = categoryList.isEmpty() || auction.category.categoryName in categoryList
             
@@ -80,7 +79,6 @@ class AuctionService(
             category = category,
             itemName = auctionBasic.itemName,
             minimumPrice = auctionBasic.minimumPrice,
-            status = AllAuctionUtils.getStatusWhenCreatingAuction(auctionBasic.startDate),
             createDate = LocalDateTime.now(),
             expiredDate = auctionBasic.expiredDate,
             description = auctionBasic.description,
@@ -123,18 +121,6 @@ class AuctionService(
             throw NotOnlyExtraDescriptionException("Original description can only be extended.")
 
         return auctionRepository.save(auction).toAuctionBasicDTO()
-    }
-
-    fun updateAuctionStatus(auctionId: Int, newStatus: String): AuctionStatusResponseDTO {
-        val auction = auctionRepository.findById(auctionId)
-            .orElseThrow { AuctionNotFoundException("Auction not found.") }
-
-        if (!AllAuctionUtils.isValidStatusChange(auction.status, newStatus)) {
-            throw InvalidAuctionDataException("Invalid status change from ${auction.status} to $newStatus.")
-        }
-
-        auction.status = newStatus
-        return auctionRepository.save(auction).toAuctionStatusResponseDTO()
     }
 
 
@@ -198,7 +184,8 @@ class AuctionService(
         val auction = auctionRepository.findAuctionWithLock(auctionId)
             ?: throw AuctionNotFoundException("Auction not found.")
 
-        if (auction.status != "ACTIVE") {
+        // Ellenőrizzük, hogy az aukció aktív-e az időpontok alapján
+        if (!AllAuctionUtils.isAuctionActive(auction.startDate, auction.expiredDate)) {
             throw InvalidAuctionDataException("Auction is not active.")
         }
 
@@ -212,9 +199,9 @@ class AuctionService(
         }
 
         val minStep = auction.minStep?.toBigDecimal() ?: BigDecimal.ZERO
-        val requiredMinimum = currentWinningBid?.value?.add(minStep) ?: auction.minimumPrice
+        val requiredMinimum = currentWinningBid?.value?.add(minStep) ?: auction.minimumPrice.add(minStep)
 
-        if (bidValue <= requiredMinimum) {
+        if (bidValue < requiredMinimum) {
             throw InvalidBidException("Bid amount must be higher than ${requiredMinimum}.")
         }
 

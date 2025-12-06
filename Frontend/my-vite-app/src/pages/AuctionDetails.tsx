@@ -30,7 +30,6 @@ import type { AuctionImageDTO } from "../types/image"
 import TimeDisplay from "../components/TimeDisplay"
 import { calculateAuctionStatus, getStatusColor as utilGetStatusColor } from '../utils/auctionStatusUtils';
 import { parseBackendDate, debugTimezoneIssues } from '../utils/timezoneUtils';
-import { useAuctionStatusManager } from '../components/StatusHook';
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -57,7 +56,6 @@ function TabPanel(props: TabPanelProps) {
 const AuctionDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { handleStatusChange } = useAuctionStatusManager(); // Státusz kezelő hook
   const [auction, setAuction] = useState<AuctionBasicDTO | null>(null);
   const [bids, setBids] = useState<BidDTO[]>([])
   const [loading, setLoading] = useState(true)
@@ -111,7 +109,7 @@ const AuctionDetails: React.FC = () => {
       // Ha az aukciós adatok nem tartalmazzák a képeket
       if (!imageURLs.length) {
         try {
-          console.log('🔍 Fetching images for auction:', id);
+          console.log('Fetching images for auction:', id);
           const imagesResponse = await imageApi.getAuctionImages(Number(id));
           const images: AuctionImageDTO[] = imagesResponse.data || [];
           imageURLs = images.map(img => img.cloudinaryUrl);
@@ -129,16 +127,16 @@ const AuctionDetails: React.FC = () => {
 
       console.log(' Final auction object:', finalAuction); 
 
-      // ⭐ DEBUG: Timezone-korrigált időadatok ellenőrzése
+      //DEBUG: Timezone-korrigált időadatok ellenőrzése
       debugTimezoneIssues(finalAuction.startDate, finalAuction.expiredDate);
       
-      // ⭐ HIBA ELLENŐRZÉS: Hibás dátumok ellenőrzése timezone-korrigált verzióval
+      //HIBA ELLENŐRZÉS: Hibás dátumok ellenőrzése timezone-korrigált verzióval
       if (finalAuction.startDate) {
         const startTime = parseBackendDate(finalAuction.startDate);
         const endTime = parseBackendDate(finalAuction.expiredDate);
         
         if (startTime.getTime() >= endTime.getTime()) {
-          console.error('🚨 HIBÁS AUKCIÓ ADATOK: A startDate későbbi, mint az expiredDate!');
+          console.error('HIBÁS AUKCIÓ ADATOK: A startDate későbbi, mint az expiredDate!');
           console.error('- startDate:', finalAuction.startDate, '→', startTime.toISOString());
           console.error('- expiredDate:', finalAuction.expiredDate, '→', endTime.toISOString());
           console.error('- Ez backend hiba! Az aukciót nem lehet így létrehozni.');
@@ -563,9 +561,6 @@ const AuctionDetails: React.FC = () => {
                   variant="compact" 
                   size="medium"
                   showIcon={true}
-                  auctionId={auction.id}
-                  currentStatus={auction.status}
-                  onStatusChange={handleStatusChange}
                 />
               </Box>
             </Box>

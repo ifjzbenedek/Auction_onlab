@@ -107,8 +107,7 @@ class ImageService(
     }
 
     private fun extractPublicIdFromUrl(url: String): String {
-        // Példa: https://res.cloudinary.com/demo/image/upload/v1234567890/auction_images/auction_123_uuid.jpg
-        // A public_id: auction_images/auction_123_uuid
+
         return url.substringAfter("/upload/")
             .substringAfter("/") // version eltávolítása ha van
             .substringBeforeLast(".") // fájlkiterjesztés eltávolítása

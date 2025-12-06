@@ -43,7 +43,7 @@ class SecurityConfig(private val customOAuth2UserService: CustomOAuth2UserServic
                     
                     // Protected auction endpoints - authentication required
                     .requestMatchers(HttpMethod.POST, "/auctions").authenticated()              // Create auction
-                    .requestMatchers(HttpMethod.GET, "/auctions/smart-search").permitAll() // Ezt add hozzá
+                    .requestMatchers(HttpMethod.GET, "/auctions/smart-search").permitAll()
                     .requestMatchers(HttpMethod.PUT, "/auctions/{id}").authenticated()          // Update auction
                     .requestMatchers(HttpMethod.DELETE, "/auctions/{id}").authenticated()       // Delete auction
                     .requestMatchers(HttpMethod.GET, "/auctions/my/**").authenticated()         // My auctions/watched/bidded

@@ -36,9 +36,6 @@ class Auction(
     @Column(nullable = false, precision = 12, scale = 2)
     var minimumPrice: BigDecimal,
 
-    @Column(nullable = false, length = 20)
-    var status: String,
-
     @Column(nullable = false)
     var createDate: LocalDateTime,
 

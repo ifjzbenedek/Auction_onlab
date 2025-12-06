@@ -9,7 +9,6 @@ import {
 } from "@mui/material";
 import { AuctionCardDTO } from "../types/auction";
 import TimeDisplay from './TimeDisplay';
-import { useAuctionStatusManager } from './StatusHook';
 import { calculateAuctionStatus, getStatusColor, getStatusLabel } from '../utils/auctionStatusUtils';
 
 const AuctionCard: React.FC<AuctionCardDTO> = ({ 
@@ -22,7 +21,6 @@ const AuctionCard: React.FC<AuctionCardDTO> = ({
   startDate
 }) => {
   const navigate = useNavigate();
-  const { handleStatusChange } = useAuctionStatusManager();
 
   const handleCardClick = () => {
     navigate(`/auction/${id}`);
@@ -35,11 +33,8 @@ const AuctionCard: React.FC<AuctionCardDTO> = ({
   // Használj imageUrl-t vagy az első képet az images tömbből
   const displayImage = imageUrl || (images && images.length > 0 ? images[0] : null);
 
-  // ⭐ ÚJ: Kiszámoljuk az aktuális státuszt az időpontok alapján
-  const { status: calculatedStatus } = calculateAuctionStatus(startDate, expiredDate);
-  
-  // Az adatbázisból érkező státusz helyett a számított státuszt használjuk
-  const currentStatus = calculatedStatus;
+  // Kiszámoljuk az aktuális státuszt az időpontok alapján
+  const { status: currentStatus } = calculateAuctionStatus(startDate, expiredDate);
 
   return (
     <Card 
@@ -95,9 +90,6 @@ const AuctionCard: React.FC<AuctionCardDTO> = ({
             startDate={startDate}
             variant="compact" 
             size="small"
-            auctionId={id} 
-            currentStatus={currentStatus} 
-            onStatusChange={handleStatusChange} 
           />
         </Box>
 
