@@ -13,22 +13,21 @@ import {
   Slider,
   FormHelperText,
   CircularProgress,
-  Alert,
-  Grid,
+  Grid2,
   InputAdornment,
 } from "@mui/material"
 import { Calendar, DollarSign, Timer } from "lucide-react"
 import type { AuctionDetailsDTO } from "../types/auction"
 import type { CategoryDTO } from "../types/category"
-import { auctionApi } from "../services/api"
 
 interface AuctionDetailsFormProps {
   onChange: (data: AuctionDetailsDTO) => void;
   auctionType: "FIXED" | "EXTENDED" | null;
-  initialData?: AuctionDetailsDTO; // Add initialData prop
+  initialData?: AuctionDetailsDTO;
+  categories: CategoryDTO[]; // Categories passed from parent
 }
 
-const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, auctionType, initialData }) => {
+const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, auctionType, initialData, categories }) => {
   const [formData, setFormData] = useState<AuctionDetailsDTO>(
     initialData || {
       name: "",
@@ -53,46 +52,21 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
     extraTime: false,
   })
 
-  const [categories, setCategories] = useState<CategoryDTO[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  // Fetch categories from API
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setLoading(true)
-        const response = await auctionApi.getCategories()
-        setCategories(response.data)
-        setError(null)
-      } catch (err) {
-        console.error("Error fetching categories:", err)
-        setError("Failed to load categories. Please try refreshing the page.")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchCategories()
-  }, [])
-
-  // Update form when initialData changes (e.g., from AI generation)
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
     }
   }, [initialData]);
 
-  useEffect(() => {
-    // Only notify parent of changes when we have a complete form
-    onChange(formData)
-  }, [formData, onChange])
-
   const handleChange = (field: string, value: string | number) => {
-    setFormData({
+    const updatedData = {
       ...formData,
       [field]: value,
-    })
+    };
+    setFormData(updatedData);
+    
+    // Notify parent immediately with updated data
+    onChange(updatedData);
 
     // Clear error when field is filled
     if (field in errors) {
@@ -111,9 +85,34 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
     } else if (field === "minimumPrice" || field === "minStep") {
       hasError = typeof value === "number" && value <= 0
     } else if (field === "expiredDate") {
-      hasError = typeof value === "string" && value.trim().length === 0
+      if (typeof value === "string") {
+        if (value.trim().length === 0) {
+          hasError = true
+        } else {
+          // Check if the date is in the past
+          const selectedDate = new Date(value)
+          const now = new Date()
+          if (selectedDate < now) {
+            hasError = true
+          }
+          // Check if end date is before start date
+          if (formData.startDate) {
+            const startDate = new Date(formData.startDate)
+            if (selectedDate < startDate) {
+              hasError = true
+            }
+          }
+        }
+      }
     } else if (field === "startDate") {
-      hasError = false
+      if (typeof value === "string" && value.trim().length > 0) {
+        // Check if start date is in the past
+        const selectedDate = new Date(value)
+        const now = new Date()
+        if (selectedDate < now) {
+          hasError = true
+        }
+      }
     } else if (field === "extraTime" && auctionType === "EXTENDED") {
       hasError = typeof value === "string" && (value.trim().length === 0 || Number(value) <= 0)
     }
@@ -131,19 +130,12 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
     { value: 100, label: "perfect" },
   ]
 
-  if (loading) {
+  // Show loading state if categories haven't been loaded yet
+  if (categories.length === 0) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
         <CircularProgress />
       </Box>
-    )
-  }
-
-  if (error) {
-    return (
-      <Alert severity="error" sx={{ mb: 3 }}>
-        {error}
-      </Alert>
     )
   }
 
@@ -192,7 +184,11 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
       <Box sx={{ px: 1, pr: 4, overflow: "hidden" }}>
         <Slider
           value={formData.condition}
-          onChange={(_, value) => handleChange("condition", Array.isArray(value) ? value[0] : value)}
+          onChange={(_, value) => {
+            // Update immediately for smooth visual feedback
+            const newValue = Array.isArray(value) ? value[0] : value;
+            setFormData(prev => ({ ...prev, condition: newValue }));
+          }}
           marks={conditionMarks}
           step={1}
           min={0}
@@ -264,8 +260,8 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
               : "In an Auto-Extended Auction, if a bid is placed within the specified extension time before the end, the auction is automatically extended by that amount of time. This prevents 'sniping' (last-second bidding) and gives all bidders a fair chance to respond."}
           </Typography>
 
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+          <Grid2 container spacing={3}>
+            <Grid2 size={{ xs: 12, md: 6 }}>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 Minimum Price
               </Typography>
@@ -292,9 +288,9 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
               {errors.minimumPrice && (
                 <FormHelperText error>Please enter a valid minimum price</FormHelperText>
               )}
-            </Grid>
+            </Grid2>
 
-            <Grid item xs={12} md={6}>
+            <Grid2 size={{ xs: 12, md: 6 }}>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 Minimum Bid Increment
               </Typography>
@@ -321,9 +317,9 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
               {errors.minStep && (
                 <FormHelperText error>Please enter a valid minimum increment</FormHelperText>
               )}
-            </Grid>
+            </Grid2>
 
-            <Grid item xs={12} md={6}>
+            <Grid2 size={{ xs: 12, md: 6 }}>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 Start Date and Time (Optional)
               </Typography>
@@ -341,15 +337,18 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
                 InputLabelProps={{
                   shrink: true,
                 }}
+                inputProps={{
+                  min: new Date().toISOString().slice(0, 16),
+                }}
                 value={formData.startDate || ""} 
                 onChange={(e) => handleChange("startDate", e.target.value || "")} 
                 onBlur={() => validateField("startDate", formData.startDate)}
                 error={errors.startDate}
-                helperText="Leave empty to start immediately"
+                helperText={errors.startDate ? "Start date cannot be in the past" : "Leave empty to start immediately"}
               />
-            </Grid>
+            </Grid2>
 
-            <Grid item xs={12} md={6}>
+            <Grid2 size={{ xs: 12, md: 6 }}>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 End Date and Time
               </Typography>
@@ -367,18 +366,21 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
                 InputLabelProps={{
                   shrink: true,
                 }}
+                inputProps={{
+                  min: formData.startDate || new Date().toISOString().slice(0, 16),
+                }}
                 value={formData.expiredDate || ""} 
                 onChange={(e) => handleChange("expiredDate", e.target.value || "")} 
                 onBlur={() => validateField("expiredDate", formData.expiredDate)}
                 error={errors.expiredDate}
               />
               {errors.expiredDate && (
-                <FormHelperText error>Please select an end date and time</FormHelperText>
+                <FormHelperText error>End date must be in the future and after start date</FormHelperText>
               )}
-            </Grid>
+            </Grid2>
 
             {auctionType === "EXTENDED" && (
-              <Grid item xs={12} md={6}>
+              <Grid2 size={{ xs: 12, md: 6 }}>
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>
                   Extension Time (minutes)
                 </Typography>
@@ -405,9 +407,9 @@ const AuctionDetailsForm: React.FC<AuctionDetailsFormProps> = ({ onChange, aucti
                 {errors.extraTime && (
                   <FormHelperText error>Please enter a valid extension time</FormHelperText>
                 )}
-              </Grid>
+              </Grid2>
             )}
-          </Grid>
+          </Grid2>
         </Box>
       )}
     </Paper>

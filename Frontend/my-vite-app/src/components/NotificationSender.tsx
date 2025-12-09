@@ -82,7 +82,6 @@ const NotificationSender: React.FC<NotificationSenderProps> = ({
         }
       }, 1500)
     } catch (err) {
-      console.error("Error sending notification:", err)
       const errorMessage = err instanceof Error ? err.message : "Failed to send notification. Please try again."
       setError(errorMessage)
     } finally {

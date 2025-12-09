@@ -1,74 +1,66 @@
-import React from 'react';
-import { Box, Typography, Chip } from '@mui/material';
-import { Clock } from 'lucide-react';
-import { useTimer } from './TimeHook';
-import { TimeDisplayProps } from '../types/TimeUtils/TimeDisplayProps';
-import { calculateSmartTimeLeft } from '../utils/timeUtils';
+import { Box, Typography, Chip } from '@mui/material'
+import { Clock } from 'lucide-react'
+import { useTimer } from './TimeHook'
+import { TimeDisplayProps } from '../types/TimeUtils/TimeDisplayProps'
+import { calculateSmartTimeLeft } from '../utils/timeUtils'
 
-const TimeDisplay: React.FC<TimeDisplayProps> = ({
+const TimeDisplay = ({
   expiredDate,
   startDate,
   variant = 'compact',
   showIcon = true,
   size = 'medium'
-}) => {
-  useTimer(1000);
+}: TimeDisplayProps) => {
+  useTimer(1000)
   
-  // Státusz alapján dönt, hogy startDate-ig vagy expiredDate-ig számoljon
-  const { timeString, isExpired, totalSeconds, targetEvent, status: smartStatus } = calculateSmartTimeLeft(startDate, expiredDate);
+  const { timeString, isExpired, totalSeconds, targetEvent, status: smartStatus } = calculateSmartTimeLeft(startDate, expiredDate)
 
-  // Szöveg meghatározása aszerint, hogy mihez számolunk vissza
   const getDisplayLabel = () => {
     if (isExpired) {
-      return smartStatus === 'UPCOMING' ? "Starting now" : "Expired";
+      return smartStatus === 'UPCOMING' ? "Starting now" : "Expired"
     }
     
     switch (targetEvent) {
       case 'start':
-        return "Starts in";
+        return "Starts in"
       case 'end':
-        return "Ends in";
+        return "Ends in"
       case 'expired':
-        return "Expired";
+        return "Expired"
       default:
-        return "Time left";
+        return "Time left"
     }
-  };
+  }
 
-  // Chip label
   const getChipLabel = () => {
     if (isExpired) {
-      return smartStatus === 'UPCOMING' ? "Starting" : "Expired";
+      return smartStatus === 'UPCOMING' ? "Starting" : "Expired"
     }
-    return timeString;
-  };
+    return timeString
+  }
 
-  // Színek meghatározása
   const getColor = () => {
-    if (isExpired) return '#f44336'; // Piros
-    if (totalSeconds < 86400) return '#ff9800'; // Narancs (kevesebb mint 1 nap)
-    return '#00c853'; // Zöld
-  };
+    if (isExpired) return '#f44336'
+    if (totalSeconds < 86400) return '#ff9800'
+    return '#00c853'
+  }
 
-  // Szöveg méret - use proper MUI typography variants
   const getTextVariant = (): "body2" | "body1" | "h6" => {
     switch (size) {
-      case 'small': return 'body2';
-      case 'large': return 'h6';
-      default: return 'body1';
+      case 'small': return 'body2'
+      case 'large': return 'h6'
+      default: return 'body1'
     }
-  };
+  }
 
-  // Ikon méret
   const getIconSize = () => {
     switch (size) {
-      case 'small': return 14;
-      case 'large': return 24;
-      default: return 18;
+      case 'small': return 14
+      case 'large': return 24
+      default: return 18
     }
-  };
+  }
 
-  // Chip variant
   if (variant === 'chip') {
     return (
       <Chip
@@ -84,10 +76,9 @@ const TimeDisplay: React.FC<TimeDisplayProps> = ({
           }
         }}
       />
-    );
+    )
   }
 
-  // Detailed variant
   if (variant === 'detailed') {
     return (
       <Box sx={{ textAlign: 'center', p: 2, border: '1px solid #e0e0e0', borderRadius: 2 }}>
@@ -118,10 +109,9 @@ const TimeDisplay: React.FC<TimeDisplayProps> = ({
           </Typography>
         )}
       </Box>
-    );
+    )
   }
 
-  // Compact variant (default)
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
       {showIcon && (
@@ -138,7 +128,7 @@ const TimeDisplay: React.FC<TimeDisplayProps> = ({
         {isExpired ? getDisplayLabel() : `${getDisplayLabel()}: ${timeString}`}
       </Typography>
     </Box>
-  );
-};
+  )
+}
 
-export default TimeDisplay;
+export default TimeDisplay

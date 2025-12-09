@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import {
   Box,
@@ -26,8 +25,11 @@ import {
   Snackbar,
   TextField,
   AlertTitle,
+  AppBar,
+  Toolbar,
+  IconButton,
 } from "@mui/material"
-import Header from "../components/Header"
+import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import MyAuctionItem from "../components/auction-list-items/MyAuctionItem"
 import MyBidItem from "../components/auction-list-items/MyBidItem"
 import FollowedAuctionItem from "../components/auction-list-items/FollowedAuctionItem"
@@ -47,10 +49,19 @@ interface EditAuctionFormData {
   minStep: number
 }
 
-const UserAuctions: React.FC = () => {
+function UserAuctions() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [tabValue, setTabValue] = useState(0)
+  
+  // Calculate tabValue directly from URL using useMemo to avoid recalculation
+  const tabValue = useMemo(() => {
+    const params = new URLSearchParams(location.search)
+    const tab = params.get("tab")
+    if (tab === "bids") return 1
+    if (tab === "followed") return 2
+    return 0
+  }, [location.search])
+  
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [auctions, setAuctions] = useState<AuctionWithTime[]>([])
@@ -76,37 +87,6 @@ const UserAuctions: React.FC = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false)
   const [snackbarMessage, setSnackbarMessage] = useState("")
 
-  // Set initial tab based on URL query parameter and fetch data accordingly
-  useEffect(() => {
-    const params = new URLSearchParams(location.search)
-    const tab = params.get("tab")
-
-    let initialTabValue = 0
-    if (tab === "bids") {
-      initialTabValue = 1
-    } else if (tab === "followed") {
-      initialTabValue = 2
-    }
-
-    // Set the tab value first
-    setTabValue(initialTabValue)
-
-    // Then update the URL to match (if needed)
-    const newParams = new URLSearchParams()
-    if (initialTabValue === 1) {
-      newParams.set("tab", "bids")
-    } else if (initialTabValue === 2) {
-      newParams.set("tab", "followed")
-    }
-
-    const newUrl = newParams.toString() ? `${location.pathname}?${newParams.toString()}` : location.pathname
-    if (location.search !== `?${newParams.toString()}`) {
-      navigate(newUrl, { replace: true })
-    }
-
-    // We don't need to fetch data here as it will be triggered by the tabValue change
-  }, [location.search, navigate, location.pathname])
-
   // Calculate remaining time for an auction
   const calculateTimeLeft = (expiredDate: string): string => {
     const now = new Date()
@@ -123,16 +103,16 @@ const UserAuctions: React.FC = () => {
   }
 
   // Format auction data for display
-  const formatAuctionData = (auctions: AuctionCardDTO[]): AuctionWithTime[] => {
+  const formatAuctionData = useCallback((auctions: AuctionCardDTO[]): AuctionWithTime[] => {
     return auctions.map((auction) => ({
       ...auction,
       remainingTime: calculateTimeLeft(auction.expiredDate),
       highestBid: auction.lastBid || 0,
     }))
-  }
+  }, [])
 
   // Fetch auctions based on current tab
-  const fetchAuctions = async () => {
+  const fetchAuctions = useCallback(async () => {
     setLoading(true)
     setError(null)
 
@@ -149,16 +129,12 @@ const UserAuctions: React.FC = () => {
           setAuctions(formatAuctionData(response.data))
           break
         case 2: // Followed
-          // Since there's no backend endpoint for watched auctions yet
           setSnackbarMessage("Followed auctions functionality is not fully implemented on the backend")
           setSnackbarOpen(true)
           setAuctions([])
           break
       }
     } catch (err: unknown) {
-      console.error("Error fetching auctions:", err)
-
-      // Check if this is an authentication error
       if (typeof err === "object" && err !== null && "isAuthError" in err && (err as { isAuthError?: boolean }).isAuthError) {
         setError("Authentication required. Please log in to view your auctions.")
       } else if (
@@ -175,12 +151,12 @@ const UserAuctions: React.FC = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [tabValue, formatAuctionData])
 
-  // Fetch auctions when tab changes
+  // Fetch auctions when tab changes OR on initial mount
   useEffect(() => {
     fetchAuctions()
-  }, [tabValue])
+  }, [tabValue, fetchAuctions])
 
   // Add a function to refresh the timer for auctions
   useEffect(() => {
@@ -200,8 +176,6 @@ const UserAuctions: React.FC = () => {
   }, [auctions.length])
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue)
-
     // Update URL to reflect current tab
     const params = new URLSearchParams()
     if (newValue === 1) {
@@ -211,7 +185,7 @@ const UserAuctions: React.FC = () => {
     }
 
     const newUrl = params.toString() ? `${location.pathname}?${params.toString()}` : location.pathname
-    navigate(newUrl, { replace: true })
+    navigate(newUrl)
   }
 
   const handleViewAuction = (id: number) => {
@@ -237,8 +211,7 @@ const UserAuctions: React.FC = () => {
       })
 
       setEditDialogOpen(true)
-    } catch (err) {
-      console.error("Error fetching auction details:", err)
+    } catch {
       setSnackbarMessage("Failed to load auction details for editing")
       setSnackbarOpen(true)
     } finally {
@@ -291,8 +264,6 @@ const UserAuctions: React.FC = () => {
       // Refresh the auctions list
       fetchAuctions()
     } catch (err: unknown) {
-      console.error("Error updating auction:", err)
-
       if (
         typeof err === "object" &&
         err !== null &&
@@ -326,8 +297,7 @@ const UserAuctions: React.FC = () => {
 
       // Refresh the auctions list
       fetchAuctions()
-    } catch (err) {
-      console.error("Error deleting auction:", err)
+    } catch {
       setSnackbarMessage("Failed to delete auction. Please try again.")
       setSnackbarOpen(true)
     }
@@ -339,10 +309,8 @@ const UserAuctions: React.FC = () => {
       setSnackbarMessage("Unfollow functionality is not implemented yet")
       setSnackbarOpen(true)
 
-      // For demo purposes, we'll remove it from the UI
       setAuctions(auctions.filter((auction) => auction.id !== id))
-    } catch (err) {
-      console.error("Error unfollowing auction:", err)
+    } catch {
       setSnackbarMessage("Failed to unfollow auction. Please try again.")
       setSnackbarOpen(true)
     }
@@ -371,10 +339,25 @@ const UserAuctions: React.FC = () => {
 
   return (
     <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh", userSelect: "none" }}>
-      <Header
-        onFilterChange={(filter) => console.log("Filter changed:", filter)}
-        onSearch={(query) => console.log("Search query:", query)}
-      />
+      <AppBar position="static" sx={{ bgcolor: "white", boxShadow: 1 }}>
+        <Toolbar>
+          <IconButton
+            edge="start"
+            onClick={() => navigate("/")}
+            sx={{ mr: 2, color: "#3498db" }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography
+            variant="h6"
+            component="div"
+            sx={{ flexGrow: 1, color: "#2c3e50", fontWeight: "bold", cursor: "pointer" }}
+            onClick={() => navigate("/")}
+          >
+            BidVerse
+          </Typography>
+        </Toolbar>
+      </AppBar>
 
       <Box sx={{ maxWidth: 1200, mx: "auto", p: { xs: 2, md: 3 } }}>
         <Tabs

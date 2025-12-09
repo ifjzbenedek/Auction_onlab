@@ -77,8 +77,7 @@ class UserService(private val userRepository: UserRepository,
             emailAddress = userRegistrationDTO.emailAddress,
             phoneNumber = "", // Opcionális érték
             auctions = mutableListOf(),
-            bids = mutableListOf(),
-            watches = mutableListOf()
+            bids = mutableListOf()
         )
 
         return userRepository.save(user)

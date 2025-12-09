@@ -1,101 +1,78 @@
-import { parseBackendDate } from './timezoneUtils';
+import { parseBackendDate } from './timezoneUtils'
 
-export type AuctionStatus = 'UPCOMING' | 'ACTIVE' | 'CLOSED';
+export type AuctionStatus = 'UPCOMING' | 'ACTIVE' | 'CLOSED'
 
 export interface AuctionStatusInfo {
-  status: AuctionStatus;
-  isExpired: boolean;
-  hasStarted: boolean;
+  status: AuctionStatus
+  isExpired: boolean
+  hasStarted: boolean
 }
 
-/**
- * Kiszámolja az aukció aktuális státuszát az időpontok alapján
- * @param startDate - Az aukció kezdési időpontja (opcionális)
- * @param expiredDate - Az aukció befejezési időpontja
- * @returns Az aktuális státusz információ
- */
 export const calculateAuctionStatus = (
   startDate: string | null | undefined, 
   expiredDate: string
 ): AuctionStatusInfo => {
-  const now = new Date();
+  const now = new Date()
+  const endTime = parseBackendDate(expiredDate)
   
-  // ⭐ ÚJ: Időzóna-tudatos dátum kezelés
-  const endTime = parseBackendDate(expiredDate);
-  
-  // ⭐ VÉDEKEZŐ LOGIKA: Ellenőrizzük, hogy az adatok érvényesek-e
   if (startDate) {
-    const startTime = parseBackendDate(startDate);
+    const startTime = parseBackendDate(startDate)
     
-    // Ha a startDate későbbi, mint az expiredDate, akkor rossz adatok vannak
     if (startTime.getTime() >= endTime.getTime()) {
-      
-      // Ebben az esetben kezeljük úgy, mintha nincs startDate
-      return calculateAuctionStatus(null, expiredDate);
+      return calculateAuctionStatus(null, expiredDate)
     }
   }
   
-  // Ha nincs startDate megadva, akkor az aukció azonnal aktív
-  let startTime: Date;
+  let startTime: Date
   
   if (startDate) {
-    startTime = parseBackendDate(startDate);
+    startTime = parseBackendDate(startDate)
   } else {
-    // Ha nincs startDate, akkor az aukció azonnal aktív (régi viselkedés)
-    startTime = new Date(0); // 1970-01-01, tehát minden "now" későbbi lesz
+    startTime = new Date(0)
   }
   
-  const hasStarted = now >= startTime;
-  const isExpired = now >= endTime;
+  const hasStarted = now >= startTime
+  const isExpired = now >= endTime
   
-  let status: AuctionStatus;
+  let status: AuctionStatus
   
   if (!hasStarted) {
-    // Az aukció még nem kezdődött el
-    status = 'UPCOMING';
+    status = 'UPCOMING'
   } else if (hasStarted && !isExpired) {
-    // Az aukció elkezdődött, de még nem járt le
-    status = 'ACTIVE';
+    status = 'ACTIVE'
   } else {
-    // Az aukció lejárt
-    status = 'CLOSED';
+    status = 'CLOSED'
   }
   
   return {
     status,
     isExpired,
     hasStarted
-  };
-};
+  }
+}
 
-/**
- * Meghatározza a státusz színét a MUI színpaletta alapján
- */
 export const getStatusColor = (status: AuctionStatus): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
   switch (status) {
     case 'ACTIVE':
-      return 'success';
+      return 'success'
     case 'CLOSED':
-      return 'error';
+      return 'error'
     case 'UPCOMING':
-      return 'warning';
+      return 'warning'
     default:
-      return 'default';
+      return 'default'
   }
-};
+}
 
-/**
- * Meghatározza a státusz megjelenített szövegét
- */
 export const getStatusLabel = (status: AuctionStatus): string => {
   switch (status) {
     case 'ACTIVE':
-      return 'Ongoing';
+      return 'Ongoing'
     case 'CLOSED':
-      return 'Finished';
+      return 'Finished'
     case 'UPCOMING':
-      return 'Upcoming';
+      return 'Upcoming'
     default:
-      return 'Unknown';
+      return 'Unknown'
   }
-};
+}

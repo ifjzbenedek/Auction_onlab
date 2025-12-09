@@ -1,6 +1,5 @@
 "use client"
 
-import type React from "react"
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import {
@@ -12,7 +11,7 @@ import {
   Step,
   StepLabel,
   Alert,
-  Grid,
+  Grid2,
   useTheme,
   alpha,
   Chip,
@@ -77,15 +76,15 @@ const ActionButton = styled(Button)(({ theme }) => ({
 }));
 
 const AuctionTypeCard = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
+  padding: theme.spacing(4),
   borderRadius: theme.shape.borderRadius * 2,
   cursor: "pointer",
   transition: "all 0.2s ease",
-  height: "100%",
+  minHeight: "240px",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  justifyContent: "center",
+  justifyContent: "flex-start",
   textAlign: "center",
 }));
 
@@ -101,16 +100,17 @@ const StepIcon = styled(Box)(({ theme }) => ({
 }));
 
 
-const SetDetailsAuction: React.FC = () => {
+function SetDetailsAuction() {
   const navigate = useNavigate()
   const theme = useTheme()
   const { auctionData, clearAuctionData } = useAuctionCreation(); // Kontextus használata
 
   const [auctionType, setAuctionType] = useState<"FIXED" | "EXTENDED" | null>(null)
   const [formValid, setFormValid] = useState(false)
+  // Default item settings
   const [detailsData, setDetailsData] = useState<AuctionDetailsDTO>({
     name: "",
-    status: "Brand new", // Default item status
+    status: "Brand new", 
     condition: 50,
     category: "",
     minimumPrice: 0,
@@ -126,12 +126,10 @@ const SetDetailsAuction: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
-  const [, setCategories] = useState<CategoryDTO[]>([]); // Új állapot a kategóriák tárolására
+  const [categories, setCategories] = useState<CategoryDTO[]>([]); // Store categories to pass to child component
 
-  // 1. useEffect: Adatok szinkronizálása és a betöltött állapot jelzése
   useEffect(() => {
-    // Ez a hook az auctionData változásakor lefut.
-    // Frissíti a helyi állapotokat a kontextusból származó adatokkal.
+
     setDescriptionFromContext(auctionData.description);
     setFilesForUpload(auctionData.images.map(uploadedImage => uploadedImage.file));
     
@@ -145,23 +143,15 @@ const SetDetailsAuction: React.FC = () => {
       }));
     }
     
-    // Jelzi, hogy az első adatfeldolgozási kísérlet/renderelés megtörtént.
-    // Ezt csak egyszer kellene true-ra állítani, de ha az auctionData később is változik,
-    // és ez a hook újra lefut, a setHasLoadedInitialData(true) nem okoz problémát, ha már true.
-    // Azonban, hogy elkerüljük a felesleges settert, ellenőrizhetjük:
+   
     if (!hasLoadedInitialData) {
         setHasLoadedInitialData(true);
     }
-  }, [auctionData, hasLoadedInitialData]); // hasLoadedInitialData itt maradhat, hogy biztosítsa a flag beállítását, de óvatosan
+  }, [auctionData, hasLoadedInitialData]);
 
-  // 2. useEffect: Visszanavigálási logika
   useEffect(() => {
-    // Ez a hook akkor fut le, ha a hasLoadedInitialData vagy az auctionData megváltozik.
-    // Csak akkor navigálunk vissza, ha az "adatbetöltési kísérlet" (hasLoadedInitialData = true) már megtörtént,
-    // de az auctionData még mindig nem tartalmazza a szükséges adatokat.
     if (hasLoadedInitialData) {
       if (!auctionData.description && auctionData.images.length === 0) {
-        console.warn("No auction creation data found in context after initial load attempt, redirecting to upload step.");
         navigate("/upload-auction");
       }
     }
@@ -192,7 +182,6 @@ const SetDetailsAuction: React.FC = () => {
   }
 
   const handleBackToUpload = () => {
-    // A kontextus miatt az adatok megmaradnak az előző oldalon
     navigate("/upload-auction")
   }
 
@@ -218,15 +207,21 @@ const SetDetailsAuction: React.FC = () => {
       }
 
       const categoriesResponse = await auctionApi.getCategories();
-      const selectedCategoryObject = categoriesResponse.data.find(
-        (cat: CategoryDTO) => cat.categoryName?.toLowerCase() === detailsData.category.toLowerCase()
+      
+      let selectedCategoryObject = categoriesResponse.data.find(
+        (cat: CategoryDTO) => cat.categoryName === detailsData.category
       );
-
-      if (!selectedCategoryObject || !selectedCategoryObject.id) {
-        throw new Error("Selected category not found or category ID is missing.");
+      
+      if (!selectedCategoryObject) {
+        selectedCategoryObject = categoriesResponse.data.find(
+          (cat: CategoryDTO) => cat.categoryName?.toLowerCase().trim() === detailsData.category.toLowerCase().trim()
+        );
       }
 
-      // Nem konvertálunk UTC-be, hanem úgy küldjük, ahogy a felhasználó beállította
+      if (!selectedCategoryObject || selectedCategoryObject.id === null || selectedCategoryObject.id === undefined) {
+        throw new Error(`Selected category "${detailsData.category}" not found. Please select from the dropdown list.`);
+      }
+
       const expiredDateFormatted = detailsData.expiredDate;
       const startDateFormatted = detailsData.startDate || null;
       const extraTimeValue = auctionType === "EXTENDED" && detailsData.extraTime
@@ -258,8 +253,6 @@ const SetDetailsAuction: React.FC = () => {
         condition: Number(detailsData.condition), 
       };
 
-      console.log('🔍 Submitting auction payload:', auctionPayload); // Debug log
-
       const createdAuctionResponse = await auctionApi.createAuction(auctionPayload);
       const createdAuction = createdAuctionResponse.data;
       
@@ -269,7 +262,6 @@ const SetDetailsAuction: React.FC = () => {
       
       const auctionId: number = createdAuction.id;
 
-      // Image upload logic...
       if (filesForUpload && filesForUpload.length > 0) {
         const imageFormData = new FormData();
         filesForUpload.forEach((fileObject) => {
@@ -290,7 +282,6 @@ const SetDetailsAuction: React.FC = () => {
       }, 2000);
 
     } catch (err: unknown) {
-      console.error("Error creating auction:", err);
       if (axios.isAxiosError(err)) {
         if (err.response) {
           const apiErrorMessage = (err.response.data as { message?: string })?.message || 
@@ -318,28 +309,24 @@ const SetDetailsAuction: React.FC = () => {
   };
 
 
-  // Check for auction data and navigate if needed
   useEffect(() => {
     if (!filesForUpload.length && !auctionData.description && !auctionType) {
-      console.log("No auction creation data found in context after initial load attempt, redirecting to upload step.");
       navigate('/upload-auction');
     }
   }, [filesForUpload.length, auctionData.description, auctionType, navigate]);
 
-  // Fetch categories once on component mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await auctionApi.getCategories();
         setCategories(response.data);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
+      } catch {
         setError('Failed to load categories');
       }
     };
 
     fetchCategories();
-  }, []); // Empty dependency array - fetch categories only once
+  }, []);
 
   if (!hasLoadedInitialData) {
     return (
@@ -351,6 +338,34 @@ const SetDetailsAuction: React.FC = () => {
 
   return (
     <PageContainer>
+      {/* Loading Overlay */}
+      {isSubmitting && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            zIndex: 9999,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 3,
+          }}
+        >
+          <CircularProgress size={60} thickness={4} />
+          <Typography variant="h5" fontWeight="600" color="primary">
+            Creating your auction...
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Please wait while we process your auction and upload images
+          </Typography>
+        </Box>
+      )}
+
       <Snackbar 
         open={!!error} 
         autoHideDuration={6000} 
@@ -419,8 +434,8 @@ const SetDetailsAuction: React.FC = () => {
             <Clock size={80} />
           </StepIcon>
           <StepTitle variant="h5">Choose Auction Type</StepTitle>
-          <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={6}>
+          <Grid2 container spacing={3} sx={{ mb: 3 }}>
+            <Grid2 size={{ xs: 12, md: 6 }} sx={{ mb: { xs: 3, md: 0 } }}>
               <AuctionTypeCard
                 elevation={auctionType === "FIXED" ? 4 : 1}
                 onClick={() => handleAuctionTypeSelect("FIXED")}
@@ -428,7 +443,6 @@ const SetDetailsAuction: React.FC = () => {
                   border: auctionType === "FIXED" ? `2px solid ${theme.palette.primary.main}` : "none",
                   backgroundColor:
                     auctionType === "FIXED" ? alpha(theme.palette.primary.main, 0.05) : theme.palette.background.paper,
-                  minHeight: 220,
                   pb: 3,
                 }}
               >
@@ -463,8 +477,8 @@ const SetDetailsAuction: React.FC = () => {
                   />
                 )}
               </AuctionTypeCard>
-            </Grid>
-            <Grid item xs={12} md={6}>
+            </Grid2>
+            <Grid2 size={{ xs: 12, md: 6 }} sx={{ mb: { xs: 3, md: 0 } }}>
               <AuctionTypeCard
                 elevation={auctionType === "EXTENDED" ? 4 : 1}
                 onClick={() => handleAuctionTypeSelect("EXTENDED")}
@@ -474,7 +488,6 @@ const SetDetailsAuction: React.FC = () => {
                     auctionType === "EXTENDED"
                       ? alpha(theme.palette.primary.main, 0.05)
                       : theme.palette.background.paper,
-                  minHeight: 220,
                   pb: 3,
                 }}
               >
@@ -509,8 +522,8 @@ const SetDetailsAuction: React.FC = () => {
                   />
                 )}
               </AuctionTypeCard>
-            </Grid>
-          </Grid>
+            </Grid2>
+          </Grid2>
           {!auctionType && (
             <Alert
               severity="info"
@@ -527,7 +540,7 @@ const SetDetailsAuction: React.FC = () => {
             <Tag size={80} />
           </StepIcon>
           <StepTitle variant="h5">Item Details</StepTitle>
-          <AuctionDetailsForm onChange={handleDetailsChange} auctionType={auctionType} initialData={detailsData} />
+          <AuctionDetailsForm onChange={handleDetailsChange} auctionType={auctionType} initialData={detailsData} categories={categories} />
         </StepContainer>
 
         {/* Summary and Actions */}

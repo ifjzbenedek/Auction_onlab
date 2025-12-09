@@ -46,9 +46,8 @@ class SecurityConfig(private val customOAuth2UserService: CustomOAuth2UserServic
                     .requestMatchers(HttpMethod.GET, "/auctions/smart-search").permitAll()
                     .requestMatchers(HttpMethod.PUT, "/auctions/{id}").authenticated()          // Update auction
                     .requestMatchers(HttpMethod.DELETE, "/auctions/{id}").authenticated()       // Delete auction
-                    .requestMatchers(HttpMethod.GET, "/auctions/my/**").authenticated()         // My auctions/watched/bidded
+                    .requestMatchers(HttpMethod.GET, "/auctions/my/**").authenticated()         // My auctions/bidded
                     .requestMatchers(HttpMethod.POST, "/auctions/{id}/bids").authenticated()    // Place bid
-                    .requestMatchers("/auctions/{id}/watch").authenticated()                    // Watch/unwatch auction
                     
                     // User endpoints - authentication required
                     .requestMatchers(HttpMethod.GET, "/users/me").authenticated()               // Current user info

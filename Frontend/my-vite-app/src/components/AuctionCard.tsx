@@ -1,17 +1,10 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  Chip
-} from "@mui/material";
-import { AuctionCardDTO } from "../types/auction";
-import TimeDisplay from './TimeDisplay';
-import { calculateAuctionStatus, getStatusColor, getStatusLabel } from '../utils/auctionStatusUtils';
+import { useNavigate } from "react-router-dom"
+import { Card, CardContent, Typography, Box, Chip } from "@mui/material"
+import { AuctionCardDTO } from "../types/auction"
+import TimeDisplay from './TimeDisplay'
+import { calculateAuctionStatus, getStatusColor, getStatusLabel } from '../utils/auctionStatusUtils'
 
-const AuctionCard: React.FC<AuctionCardDTO> = ({ 
+const AuctionCard = ({ 
   id, 
   itemName, 
   expiredDate,
@@ -19,22 +12,19 @@ const AuctionCard: React.FC<AuctionCardDTO> = ({
   imageUrl,
   images,
   startDate
-}) => {
-  const navigate = useNavigate();
+}: AuctionCardDTO) => {
+  const navigate = useNavigate()
 
   const handleCardClick = () => {
-    navigate(`/auction/${id}`);
-  };
+    navigate(`/auction/${id}`)
+  }
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('hu-HU').format(price);
-  };
+    return new Intl.NumberFormat('hu-HU').format(price)
+  }
 
-  // Használj imageUrl-t vagy az első képet az images tömbből
-  const displayImage = imageUrl || (images && images.length > 0 ? images[0] : null);
-
-  // Kiszámoljuk az aktuális státuszt az időpontok alapján
-  const { status: currentStatus } = calculateAuctionStatus(startDate, expiredDate);
+  const displayImage = imageUrl || (images && images.length > 0 ? images[0] : null)
+  const { status: currentStatus } = calculateAuctionStatus(startDate, expiredDate)
 
   return (
     <Card 
@@ -51,7 +41,6 @@ const AuctionCard: React.FC<AuctionCardDTO> = ({
       }}
       onClick={handleCardClick}
     >
-      {/* Image section */}
       <Box sx={{ position: "relative", height: 200, overflow: "hidden" }}>
         <img
           src={displayImage || "/placeholder-image.jpg"}
@@ -62,14 +51,13 @@ const AuctionCard: React.FC<AuctionCardDTO> = ({
             objectFit: "cover"
           }}
           onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = "/placeholder-image.jpg";
+            const target = e.target as HTMLImageElement
+            target.src = "/placeholder-image.jpg"
           }}
         />
       </Box>
       
       <CardContent sx={{ flexGrow: 1, p: 2 }}>
-        {/* Auction title */}
         <Typography 
           variant="h6" 
           sx={{ 
@@ -83,7 +71,6 @@ const AuctionCard: React.FC<AuctionCardDTO> = ({
           {itemName}
         </Typography>
 
-        {/* Time display */}
         <Box sx={{ mb: 2 }}>
           <TimeDisplay 
             expiredDate={expiredDate}
@@ -93,7 +80,6 @@ const AuctionCard: React.FC<AuctionCardDTO> = ({
           />
         </Box>
 
-        {/* Price */}
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" color="text.secondary">
             Actual price:
@@ -103,7 +89,6 @@ const AuctionCard: React.FC<AuctionCardDTO> = ({
           </Typography>
         </Box>
 
-        {/* Status chip */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Chip
             label={getStatusLabel(currentStatus)}
@@ -114,7 +99,7 @@ const AuctionCard: React.FC<AuctionCardDTO> = ({
         </Box>
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
-export default AuctionCard;
+export default AuctionCard

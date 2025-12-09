@@ -113,8 +113,9 @@ const NotificationList: React.FC<NotificationListProps> = ({
                     </Box>
                   }
                   secondary={
-                    <Box>
+                    <Box component="span">
                       <Typography
+                        component="span"
                         variant="body2"
                         color="text.secondary"
                         sx={{
@@ -127,11 +128,11 @@ const NotificationList: React.FC<NotificationListProps> = ({
                       >
                         {getMessagePreview(notification.messageText)}
                       </Typography>
-                      <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
-                        <Typography variant="caption" color="text.secondary">
+                      <Box component="span" sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+                        <Typography component="span" variant="caption" color="text.secondary">
                           From: {notification.sender?.userName || "System"}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography component="span" variant="caption" color="text.secondary">
                           {formatDate(notification.createdAt)}
                         </Typography>
                       </Box>

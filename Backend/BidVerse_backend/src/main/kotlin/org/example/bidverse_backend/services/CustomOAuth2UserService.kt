@@ -63,7 +63,6 @@ class CustomOAuth2UserService(
                 id = null,
                 auctions = mutableListOf(),
                 bids = mutableListOf(),
-                watches = mutableListOf(),
                 uploadedImages = mutableListOf(),
                 userName = userName,
                 emailAddress = email,

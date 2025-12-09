@@ -33,10 +33,8 @@ class AuctionService(
     private val userRepository: UserRepository,
     private val bidRepository: BidRepository,
     private val categoryRepository: CategoryRepository,
-    private val watchRepository: WatchRepository,
     private val securityUtils: SecurityUtils,
     private val restTemplate: RestTemplate
-
 ) {
     fun getAllAuctions(statuses: String?, categories: String?, search: String?): List<AuctionCardDTO> {
         val statusList = statuses?.split(",") ?: emptyList()
@@ -74,6 +72,23 @@ class AuctionService(
         val category = categoryRepository.findById(categoryId)
             .orElseThrow { CategoryNotFoundException("Category not found.") }
 
+        // Validate dates
+        val now = LocalDateTime.now()
+        val startDate = auctionBasic.startDate ?: now
+        val expiredDate = auctionBasic.expiredDate
+        
+        if (startDate.isBefore(now.minusMinutes(1))) {
+            throw IllegalArgumentException("Start date cannot be in the past.")
+        }
+        
+        if (expiredDate.isBefore(now)) {
+            throw IllegalArgumentException("End date cannot be in the past.")
+        }
+        
+        if (expiredDate.isBefore(startDate)) {
+            throw IllegalArgumentException("End date must be after start date.")
+        }
+
         val auction = Auction(
             owner = user,
             category = category,
@@ -102,7 +117,7 @@ class AuctionService(
 
     fun getAuctionById(auctionId: Int): AuctionBasicDTO {
         val auction = auctionRepository.findById(auctionId)
-            .orElseThrow { UserNotFoundException("Auction not found.") }
+            .orElseThrow { AuctionNotFoundException("Auction not found.") }
 
         return auction.toAuctionBasicDTO()
     }
@@ -140,16 +155,6 @@ class AuctionService(
             .orElseThrow { UserNotFoundException("User not found.") }
 
         return auctionRepository.findByOwner(user).map { it.toAuctionBasicDTO() }
-    }
-
-    fun getWatchedAuctions(): List<AuctionCardDTO> {
-        val user = userRepository.findById(securityUtils.getCurrentUserId())
-            .orElseThrow { UserNotFoundException("User not found.") }
-
-        val watchedAuctions = watchRepository.findByUserId(user.id!!) // Nem lehet null, mert autogenerált az id a Userhez, és már megtaláltuk a usert
-            .map { it.auction }
-
-        return watchedAuctions.map { it.toAuctionCardDTO() }
     }
 
     fun getBiddedAuctions(): List<AuctionBasicDTO>
@@ -229,10 +234,10 @@ class AuctionService(
     }
 
     fun generateAuctionDescription(images: List<MultipartFile>): String {
-        if (images.isEmpty()) throw IllegalArgumentException("No images provided")
+        if (images.isEmpty()) throw DescriptionGenerationException("No images provided")
         images.forEach { file ->
             if (file.isEmpty || file.contentType?.startsWith("image/") != true) {
-                throw IllegalArgumentException("Invalid image file: ${file.originalFilename}")
+                throw DescriptionGenerationException("Invalid image file: ${file.originalFilename}")
             }
         }
 

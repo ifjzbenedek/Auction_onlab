@@ -4,7 +4,7 @@ import jakarta.persistence.*
 
 
 @Entity
-@Table(name = "AuctionImages", schema = "dbo")
+@Table(name = "AuctionImages")
 class AuctionImage(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

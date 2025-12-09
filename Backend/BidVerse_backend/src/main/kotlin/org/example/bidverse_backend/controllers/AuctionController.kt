@@ -91,16 +91,6 @@ class AuctionController(private val auctionService: AuctionService) {
         }
     }
 
-    @GetMapping("/my/watchedAuctions")
-    fun getWatchedAuctions(): ResponseEntity<Any> {
-        return try {
-            val auctions = auctionService.getWatchedAuctions()
-            ResponseEntity.ok(auctions)
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error retrieving auctions.")
-        }
-    }
-
     @GetMapping("/my/biddedAuctions")
     fun getBiddedAuctions(): ResponseEntity<Any> {
         return try {

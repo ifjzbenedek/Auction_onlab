@@ -20,8 +20,14 @@ class IfNoActivityForDdHhMmCondition : ConditionHandler {
 
         val thresholdDuration = when (conditionValue) {
             is String -> parseDuration(conditionValue)
-            else -> return true
-        } ?: return true
+            else -> {
+                logger.warn("    [if_no_activity_for_dd_hh_mm] Invalid condition value type: ${conditionValue::class.simpleName}, skipping bid")
+                return false
+            }
+        } ?: run {
+            logger.warn("    [if_no_activity_for_dd_hh_mm] Failed to parse duration format: $conditionValue, skipping bid")
+            return false
+        }
 
         // Get the most recent bid
         val lastBid = context.allBids.firstOrNull()

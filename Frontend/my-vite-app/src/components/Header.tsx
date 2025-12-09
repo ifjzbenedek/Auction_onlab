@@ -214,28 +214,22 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
   }
 
   const handleProfileClick = (event: React.MouseEvent<HTMLElement>) => {
-    console.log("Profile button clicked!")
     setProfileAnchorEl(event.currentTarget)
   }
 
   const handleProfileClose = () => {
-    console.log("Profile menu closed")
     setProfileAnchorEl(null)
   }
 
   const handleProfileMenuItemClick = async (action: string) => {
-    console.log("Profile menu item clicked:", action)
     handleProfileClose()
     if (action === "profile") {
       navigate("/users/me")
     } else if (action === "logout") {
-      // Handle logout with explicit call
-      console.log("Logout action triggered!")
       try {
         await authService.logout()
-        console.log("Logout completed")
-      } catch (error) {
-        console.error("Logout failed:", error)
+      } catch {
+        // Logout failed silently
       }
     } else if (action === "mailbox") {
       navigate("/mailbox")
@@ -258,7 +252,6 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
   }
 
   const handleNewAuctionClick = () => {
-    console.log("Navigating to upload auction")
     navigate("/upload-auction")
   }
 
@@ -292,7 +285,6 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
             cursor: "pointer",
           }}
           onClick={() => {
-            console.log("Navigating to home")
             navigate("/")
           }}
         >

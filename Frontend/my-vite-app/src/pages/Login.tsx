@@ -1,25 +1,23 @@
 "use client"
 
-import type React from "react"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Box, Typography, Button, Paper, Alert, CircularProgress } from "@mui/material"
 import { authService } from "../services/auth-service"
 
-const Login: React.FC = () => {
+function Login() {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    // Process authentication callback if present
-    const { success, error } = authService.handleAuthCallback()
-
-    if (success) {
-      navigate("/")
-    } else if (error) {
-      setError(`Authentication error: ${error}`)
+    const checkAuth = async () => {
+      const isAuth = await authService.isAuthenticated()
+      if (isAuth) {
+        navigate("/")
+      }
     }
+    checkAuth()
   }, [navigate])
 
   const handleGoogleLogin = () => {

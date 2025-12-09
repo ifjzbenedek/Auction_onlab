@@ -4,7 +4,7 @@ import jakarta.persistence.*
 import java.time.LocalDateTime
 
 @Entity
-@Table(name = "Notification", schema="dbo")
+@Table(name = "Notification")
 class Notification(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

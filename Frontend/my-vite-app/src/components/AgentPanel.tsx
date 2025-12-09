@@ -58,8 +58,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ open, onClose }) => {
     try {
       const response = await auctionApi.getAuctions()
       setAuctions(response.data || [])
-    } catch (error) {
-      console.error('Error loading auctions:', error)
+    } catch {
       setMessages((prev) => [
         ...prev,
         {
@@ -264,14 +263,14 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ open, onClose }) => {
         {/* Auction Selector */}
         <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', backgroundColor: 'white' }}>
           <FormControl fullWidth size="small">
-            <InputLabel>Válassz egy aukciót</InputLabel>
+            <InputLabel>Select an auction</InputLabel>
             <Select
               value={selectedAuctionId}
-              label="Válassz egy aukciót"
+              label="Select an auction"
               onChange={handleAuctionChange}
             >
               <MenuItem value="">
-                <em>Válassz...</em>
+                <em>Choose...</em>
               </MenuItem>
               {auctions.map((auction) => (
                 <MenuItem key={auction.id} value={auction.id}>

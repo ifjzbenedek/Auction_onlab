@@ -25,14 +25,12 @@ class LastMinuteRushCondition : ConditionHandler {
 
         val minutesLeft = context.getMinutesUntilEnd()
         
-        // If less than 1 minute, increase by 25%
+        // If less than 1 minute, increase the entire bid amount by 25%
         if (minutesLeft <= 1) {
             val currentPrice = context.getCurrentPrice()
-            val increment = baseAmount - currentPrice
-            val aggressiveIncrement = increment.multiply(BigDecimal("1.25"))
-            val newAmount = currentPrice + aggressiveIncrement
+            val newAmount = currentPrice.multiply(BigDecimal("1.25"))
             
-            logger.info("    [last_minute_rush] ${minutesLeft}min left, increasing bid by 25%: $baseAmount → $newAmount")
+            logger.info("    [last_minute_rush] ${minutesLeft}min left, increasing current price by 25%: $currentPrice → $newAmount")
             
             return newAmount
         }

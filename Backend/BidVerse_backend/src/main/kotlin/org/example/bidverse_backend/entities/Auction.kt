@@ -5,7 +5,7 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 
 @Entity
-@Table(name="Auction", schema="dbo")
+@Table(name="Auction")
 class Auction(
 
     @Id
@@ -23,9 +23,6 @@ class Auction(
 
     @OneToMany(mappedBy = "auction", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     var bids: MutableList<Bid> = mutableListOf(),
-
-    @OneToMany(mappedBy = "auction", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    var watchedAuctions: MutableList<Watch> = mutableListOf(),
 
     @OneToMany(mappedBy = "auction", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     val images: MutableList<AuctionImage> = mutableListOf(),

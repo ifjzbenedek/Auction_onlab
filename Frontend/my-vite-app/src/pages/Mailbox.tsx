@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import {
   Box,
   Typography,
@@ -18,7 +18,7 @@ import type { NotificationDTO } from "../types/notification"
 import { notificationApi } from "../services/api"
 import { useNavigate } from "react-router-dom"
 
-const Mailbox: React.FC = () => {
+function Mailbox() {
   const navigate = useNavigate()
   const [notifications, setNotifications] = useState<NotificationDTO[]>([])
   const [loading, setLoading] = useState(true)
@@ -35,8 +35,7 @@ const Mailbox: React.FC = () => {
       setError(null)
       const response = await notificationApi.getMyNotifications()
       setNotifications(response.data)
-    } catch (err) {
-      console.error("Error fetching notifications:", err)
+    } catch {
       setError("Failed to load notifications. Please try again.")
     } finally {
       setLoading(false)
@@ -55,8 +54,8 @@ const Mailbox: React.FC = () => {
       try {
         await notificationApi.getNotificationById(notification.id)
         fetchNotifications()
-      } catch (err) {
-        console.error("Error marking notification as read:", err)
+      } catch {
+        // Continue even if marking as read fails
       }
     }
   }
@@ -65,8 +64,7 @@ const Mailbox: React.FC = () => {
     try {
       await notificationApi.deleteNotification(id)
       fetchNotifications()
-    } catch (err) {
-      console.error("Error deleting notification:", err)
+    } catch {
       setError("Failed to delete notification. Please try again.")
     }
   }

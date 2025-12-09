@@ -7,7 +7,7 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 
 @Entity
-@Table(name = "AutoBid", schema="dbo")
+@Table(name = "AutoBid")
 class AutoBid(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -42,7 +42,7 @@ class ReactDelayMinutesCondition : ConditionHandler {
 
         // Calculate time since last competing bid
         val lastBidTime = lastBidByOthers.timeStamp
-        val now = LocalDateTime.now()
+        val now = context.currentTime
         val timeSinceLastBid = Duration.between(lastBidTime, now).toMinutes()
 
         logger.info("Last bid by others was $timeSinceLastBid minutes ago (delay required: $delayMinutes minutes)")

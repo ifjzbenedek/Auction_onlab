@@ -32,11 +32,11 @@ class MinIncrementCondition : ConditionHandler {
         val newAmount = currentPrice.add(minIncrement)
         
         if (newAmount > baseAmount) {
-            logger.info("    [min_increment] Base amount $baseAmount already >= min ($currentPrice + $minIncrement = $newAmount), keeping base")
-            return baseAmount
+            logger.info("    [min_increment] Enforcing minimum: $baseAmount < min ($currentPrice + $minIncrement = $newAmount)")
+            return newAmount
         }
         
-        logger.info("    [min_increment] Enforcing minimum: $currentPrice + $minIncrement = $newAmount (was $baseAmount)")
-        return newAmount
+        logger.info("    [min_increment] Base amount $baseAmount already >= min ($newAmount), no change needed")
+        return null
     }
 }

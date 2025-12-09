@@ -1,9 +1,8 @@
 "use client"
 
-import type React from "react"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Box, Typography, Paper, CircularProgress, useTheme, Button, Grid, Card, CardContent, CardActions } from "@mui/material"
+import { Box, Typography, Paper, CircularProgress, useTheme, Button, Grid2, Card, CardContent, CardActions } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import GavelIcon from "@mui/icons-material/Gavel"
 import FavoriteIcon from "@mui/icons-material/Favorite"
@@ -16,7 +15,7 @@ interface User {
   phoneNumber: string
 }
 
-// Styled Paper komponens animációval és árnyékkal
+// Styled Paper component with animation and shadow
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
   borderRadius: theme.shape.borderRadius * 2,
@@ -28,7 +27,7 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   },
 }))
 
-const Profile: React.FC = () => {
+function Profile() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const theme = useTheme()
@@ -37,7 +36,6 @@ const Profile: React.FC = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // Az AuthGuard már ellenőrizte az auth státuszt, itt csak a user adatokat kérjük le
         const response = await fetch('/users/me', {
           credentials: 'include'
         })
@@ -47,11 +45,9 @@ const Profile: React.FC = () => {
         }
         
         const userData = await response.json()
-        console.log('User data loaded:', userData)
         setUser(userData)
-      } catch (error) {
-        console.error('Error fetching user data:', error)
-        // Ha itt hiba van, valami nincs rendben
+      } catch {
+        setUser(null)
       } finally {
         setLoading(false)
       }
@@ -121,8 +117,8 @@ const Profile: React.FC = () => {
             <Typography variant="h5" sx={{ mb: 3, fontWeight: "bold", color: theme.palette.text.primary }}>
               Quick Access
             </Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6} md={3}>
+            <Grid2 container spacing={3}>
+              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
                 <Card
                   sx={{
                     cursor: "pointer",
@@ -149,9 +145,9 @@ const Profile: React.FC = () => {
                     </Button>
                   </CardActions>
                 </Card>
-              </Grid>
+              </Grid2>
 
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
                 <Card
                   sx={{
                     cursor: "pointer",
@@ -178,9 +174,9 @@ const Profile: React.FC = () => {
                     </Button>
                   </CardActions>
                 </Card>
-              </Grid>
+              </Grid2>
 
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
                 <Card
                   sx={{
                     cursor: "pointer",
@@ -207,9 +203,9 @@ const Profile: React.FC = () => {
                     </Button>
                   </CardActions>
                 </Card>
-              </Grid>
+              </Grid2>
 
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
                 <Card
                   sx={{
                     cursor: "pointer",
@@ -236,8 +232,8 @@ const Profile: React.FC = () => {
                     </Button>
                   </CardActions>
                 </Card>
-              </Grid>
-            </Grid>
+              </Grid2>
+            </Grid2>
           </Box>
         )}
 
