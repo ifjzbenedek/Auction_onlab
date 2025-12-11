@@ -9,53 +9,27 @@ class OnlyIfPriceAboveConditionTest {
     private val condition = OnlyIfPriceAboveCondition()
 
     @Test
-    fun `should return true when condition is not configured (null)`() {
+    fun `null config allows bidding`() {
         val context = ConditionTestHelpers.createSimpleContext()
         assertTrue(condition.shouldBid(context, null))
     }
 
     @Test
-    fun `should return true when price is above minimum`() {
-        val context = ConditionTestHelpers.createSimpleContext(
-            currentPrice = BigDecimal("1000.00")
-        )
+    fun `bids when price above or equal to minimum`() {
+        val context1000 = ConditionTestHelpers.createSimpleContext(currentPrice = BigDecimal("1000.00"))
+        assertTrue(condition.shouldBid(context1000, 500))
+        assertTrue(condition.shouldBid(context1000, 1000))
         
-        assertTrue(condition.shouldBid(context, 500))
+        val context500 = ConditionTestHelpers.createSimpleContext(currentPrice = BigDecimal("500.00"))
+        assertFalse(condition.shouldBid(context500, 1000))
     }
 
     @Test
-    fun `should return true when price equals minimum`() {
-        val context = ConditionTestHelpers.createSimpleContext(
-            currentPrice = BigDecimal("1000.00")
-        )
+    fun `handles different price thresholds`() {
+        val contextLow = ConditionTestHelpers.createSimpleContext(currentPrice = BigDecimal("100.00"))
+        assertTrue(condition.shouldBid(contextLow, 50))
         
-        assertTrue(condition.shouldBid(context, 1000))
-    }
-
-    @Test
-    fun `should return false when price is below minimum`() {
-        val context = ConditionTestHelpers.createSimpleContext(
-            currentPrice = BigDecimal("500.00")
-        )
-        
-        assertFalse(condition.shouldBid(context, 1000))
-    }
-
-    @Test
-    fun `should handle large minimum price`() {
-        val context = ConditionTestHelpers.createSimpleContext(
-            currentPrice = BigDecimal("5000.00")
-        )
-        
-        assertFalse(condition.shouldBid(context, 10000))
-    }
-
-    @Test
-    fun `should handle small minimum price`() {
-        val context = ConditionTestHelpers.createSimpleContext(
-            currentPrice = BigDecimal("100.00")
-        )
-        
-        assertTrue(condition.shouldBid(context, 50))
+        val contextHigh = ConditionTestHelpers.createSimpleContext(currentPrice = BigDecimal("5000.00"))
+        assertFalse(condition.shouldBid(contextHigh, 10000))
     }
 }

@@ -34,7 +34,9 @@ class AuctionService(
     private val bidRepository: BidRepository,
     private val categoryRepository: CategoryRepository,
     private val securityUtils: SecurityUtils,
-    private val restTemplate: RestTemplate
+    private val restTemplate: RestTemplate,
+    private val imageService: ImageService,
+    private val imageRepository: ImageRepository
 ) {
     fun getAllAuctions(statuses: String?, categories: String?, search: String?): List<AuctionCardDTO> {
         val statusList = statuses?.split(",") ?: emptyList()
@@ -109,8 +111,27 @@ class AuctionService(
 
         val savedAuction = auctionRepository.save(auction)
         
-        // Index the auction for search - allow exception to propagate to controller
-        indexAuctionForSearch(savedAuction)
+        // Index the auction for search with rollback on failure
+        try {
+            indexAuctionForSearch(savedAuction)
+        } catch (e: Exception) {
+            
+            // Rollback: Get images before deleting auction
+            val images = imageRepository.findByAuctionIdOrderByOrderIndexAsc(savedAuction.id!!)
+            
+            // Rollback: Delete auction from DB (cascades to auction_images via JPA)
+            auctionRepository.delete(savedAuction)
+            
+            // Rollback: Delete images from Cloudinary
+            try {
+                imageService.rollbackCloudinaryUploads(images)
+            } catch (cloudinaryError: Exception) {
+                // Silently continue - main error will be thrown below
+            }
+            
+            // Re-throw with clear message
+            throw SearchIndexingException("Failed to create auction: search indexing failed. All changes rolled back.")
+        }
 
         return savedAuction.toAuctionBasicDTO()
     }
@@ -185,19 +206,19 @@ class AuctionService(
     @Transactional
     fun placeBid(auctionId: Int, bidValue: BigDecimal): Bid {
 
-        // 1. Pesszimista zárolás az aukcióra
+        // 1. Pessimistic lock on the auction
         val auction = auctionRepository.findAuctionWithLock(auctionId)
             ?: throw AuctionNotFoundException("Auction not found.")
 
-        // Ellenőrizzük, hogy az aukció aktív-e az időpontok alapján
+        // Check if the auction is active based on dates
         if (!AllAuctionUtils.isAuctionActive(auction.startDate, auction.expiredDate)) {
             throw InvalidAuctionDataException("Auction is not active.")
         }
 
-        // 2. Pesszimista zárolás a jelenlegi nyerő licitre
+        // 2. Pessimistic lock on the current winning bid
         val currentWinningBid = bidRepository.findCurrentWinningBidWithLock(auctionId)
 
-        // 3. Validációk
+        // 3. Validations
         val currentUserId = securityUtils.getCurrentUserId()
         if (auction.owner.id == currentUserId) {
             throw InvalidBidException("You cannot bid on your own auction.")
@@ -210,13 +231,13 @@ class AuctionService(
             throw InvalidBidException("Bid amount must be higher than ${requiredMinimum}.")
         }
 
-        // 4. Jelenlegi nyerő frissítése (optimista zárolás használatával)
+        // 4. Update current winner (using optimistic locking)
         currentWinningBid?.let {
             it.isWinning = false
-            // Itt NEM kell explicit save, mert a tranzakció végén automatikusan flush lesz
+            // No explicit save needed, transaction will flush automatically
         }
 
-        // 5. Új licit létrehozása
+        // 5. Create new bid
         val bidder = userRepository.getReferenceById(currentUserId)
 
         val newBid = Bid(
@@ -227,7 +248,7 @@ class AuctionService(
             isWinning = true
         )
 
-        // 6. Aukció frissítése
+        // 6. Update auction
         auction.lastBid = bidValue
 
         return bidRepository.save(newBid)
@@ -303,7 +324,7 @@ class AuctionService(
         }
 
         val requestBody = mapOf(
-            "product_id" to auction.id.toString(),
+            "product_id" to auction.id,
             "title" to auction.itemName,
             "description" to auction.description,
             "category" to auction.category.categoryName,

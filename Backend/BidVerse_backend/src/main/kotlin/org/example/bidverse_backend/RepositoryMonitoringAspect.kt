@@ -13,10 +13,10 @@ class RepositoryMonitoringAspect {
 
     private val logger = LoggerFactory.getLogger(RepositoryMonitoringAspect::class.java)
 
-    // Utolsó hívások időbélyege entitás ID-k szerint
+    // Timestamps of last calls by entity IDs
     private val lastSaveTimestamps = ConcurrentHashMap<String, Long>()
 
-    // Időablak versenyhelyzet gyanúhoz (én most 100 ms-ra rakom, de persze írd át)
+    // Time window for race condition detection (currently 100 ms, adjust as needed)
     private val raceConditionThresholdMs = 100
 
     @Around("execution(* org.example.bidverse_backend.repositories.AuctionRepository.save(..)) || " +
@@ -33,7 +33,7 @@ class RepositoryMonitoringAspect {
             "unknown"
         }
 
-        // Azonosítjuk, melyik repository-ról van szó
+        // Identify which repository is being called
         val repositoryName = when (joinPoint.signature.declaringTypeName) {
             "org.example.bidverse_backend.repositories.AuctionRepository" -> "Auction"
             "org.example.bidverse_backend.repositories.BidRepository" -> "Bid"

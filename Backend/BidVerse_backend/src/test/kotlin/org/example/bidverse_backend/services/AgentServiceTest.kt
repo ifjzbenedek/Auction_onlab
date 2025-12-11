@@ -262,8 +262,6 @@ class AgentServiceTest {
         verify(autoBidRepository).save(any(AutoBid::class.java))
     }
 
-    // ==================== Error Scenarios ====================
-
     @Test
     fun `processChat should throw when user not found`() {
         `when`(userRepository.findById(2)).thenReturn(Optional.empty())
@@ -342,7 +340,7 @@ class AgentServiceTest {
 
         // LLM might extract wrong auctionId or null
         val llmConfig = AutoBidAgentConfigDTO(
-            id = 0, auctionId = 0, userId = 0,  // Use 0 instead of null for non-nullable Int
+            id = 0, auctionId = 0, userId = 0,
             maxBidAmount = BigDecimal("1000.00"),
             startingBidAmount = null,
             incrementAmount = BigDecimal("50.00"),
@@ -374,10 +372,10 @@ class AgentServiceTest {
 
         `when`(autoBidRepository.save(any(AutoBid::class.java))).thenReturn(savedAutoBid)
 
-        // Execute - note we pass auctionId=100 from frontend
+        // Execute
         val result = agentService.processChat(100, messages)
 
-        // Verify - should use 100, not 999 from LLM
+        // Verify
         assertEquals(100, result.config.auctionId)
     }
 }

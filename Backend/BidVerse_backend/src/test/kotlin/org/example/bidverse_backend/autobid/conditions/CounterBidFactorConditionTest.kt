@@ -10,7 +10,7 @@ class CounterBidFactorConditionTest {
     private val condition = CounterBidFactorCondition()
 
     @Test
-    fun `shouldBid should always return true`() {
+    fun `shouldBid is always true`() {
         val context = ConditionTestHelpers.createContextWithBidHistory(
             bidValues = listOf(BigDecimal("150.00"), BigDecimal("100.00")),
             bidders = listOf(TestUsers.competitor1, TestUsers.competitor2)
@@ -19,25 +19,17 @@ class CounterBidFactorConditionTest {
     }
 
     @Test
-    fun `modifyBidAmount should return null when conditionValue is null`() {
+    fun `null or invalid config returns null`() {
         val context = ConditionTestHelpers.createContextWithBidHistory(
             bidValues = listOf(BigDecimal("150.00"), BigDecimal("100.00")),
             bidders = listOf(TestUsers.competitor1, TestUsers.competitor2)
         )
         assertNull(condition.modifyBidAmount(context, null, BigDecimal("160.00")))
-    }
-
-    @Test
-    fun `modifyBidAmount should return null when conditionValue is not a number`() {
-        val context = ConditionTestHelpers.createContextWithBidHistory(
-            bidValues = listOf(BigDecimal("150.00"), BigDecimal("100.00")),
-            bidders = listOf(TestUsers.competitor1, TestUsers.competitor2)
-        )
         assertNull(condition.modifyBidAmount(context, "not a number", BigDecimal("160.00")))
     }
 
     @Test
-    fun `modifyBidAmount should return null when less than 2 bids`() {
+    fun `requires at least 2 bids`() {
         val context = ConditionTestHelpers.createContextWithBidHistory(
             bidValues = listOf(BigDecimal("150.00")),
             bidders = listOf(TestUsers.competitor1)
@@ -46,62 +38,39 @@ class CounterBidFactorConditionTest {
     }
 
     @Test
-    fun `modifyBidAmount should calculate counter bid with factor 1_2`() {
-        // Opponent raised from 100 to 150 (increment = 50)
-        // Counter with factor 1.2: 50 * 1.2 = 60
-        // New amount: 150 + 60 = 210
-        val context = ConditionTestHelpers.createContextWithBidHistory(
+    fun `calculates counter bid with factor`() {
+        val context1 = ConditionTestHelpers.createContextWithBidHistory(
             bidValues = listOf(BigDecimal("150.00"), BigDecimal("100.00")),
             bidders = listOf(TestUsers.competitor1, TestUsers.competitor2)
         )
-        val result = condition.modifyBidAmount(context, 1.2, BigDecimal("160.00"))
+        val result1 = condition.modifyBidAmount(context1, 1.2, BigDecimal("160.00"))
+        assertEquals(0, BigDecimal("210").compareTo(result1))
         
-        assertNotNull(result)
-        assertEquals(0, BigDecimal("210").compareTo(result))
-    }
-
-    @Test
-    fun `modifyBidAmount should calculate counter bid with factor 1_5`() {
-        // Opponent raised from 200 to 300 (increment = 100)
-        // Counter with factor 1.5: 100 * 1.5 = 150
-        // New amount: 300 + 150 = 450
-        val context = ConditionTestHelpers.createContextWithBidHistory(
+        val context2 = ConditionTestHelpers.createContextWithBidHistory(
             bidValues = listOf(BigDecimal("300.00"), BigDecimal("200.00")),
             bidders = listOf(TestUsers.competitor1, TestUsers.competitor2)
         )
-        val result = condition.modifyBidAmount(context, 1.5, BigDecimal("310.00"))
-        
-        assertNotNull(result)
-        assertEquals(0, BigDecimal("450").compareTo(result))
+        val result2 = condition.modifyBidAmount(context2, 1.5, BigDecimal("310.00"))
+        assertEquals(0, BigDecimal("450").compareTo(result2))
     }
 
     @Test
-    fun `modifyBidAmount should round to nearest integer`() {
-        // Opponent raised from 100 to 133 (increment = 33)
-        // Counter with factor 1.5: 33 * 1.5 = 49.5 -> rounds to 50
-        // New amount: 133 + 50 = 183
+    fun `rounds to nearest integer`() {
         val context = ConditionTestHelpers.createContextWithBidHistory(
             bidValues = listOf(BigDecimal("133.00"), BigDecimal("100.00")),
             bidders = listOf(TestUsers.competitor1, TestUsers.competitor2)
         )
         val result = condition.modifyBidAmount(context, 1.5, BigDecimal("143.00"))
-        
-        assertNotNull(result)
         assertEquals(0, BigDecimal("183").compareTo(result))
     }
 
     @Test
-    fun `modifyBidAmount should work with factor less than 1`() {
-        // Opponent raised from 100 to 200 (increment = 100)
-        // Counter with factor 0.5: 100 * 0.5 = 50
-        // New amount: 200 + 50 = 250
+    fun `works with factor less than 1`() {
         val context = ConditionTestHelpers.createContextWithBidHistory(
             bidValues = listOf(BigDecimal("200.00"), BigDecimal("100.00")),
             bidders = listOf(TestUsers.competitor1, TestUsers.competitor2)
         )
         val result = condition.modifyBidAmount(context, 0.5, BigDecimal("210.00"))
-        
-        assertNotNull(result)
         assertEquals(0, BigDecimal("250").compareTo(result))
     }
 }

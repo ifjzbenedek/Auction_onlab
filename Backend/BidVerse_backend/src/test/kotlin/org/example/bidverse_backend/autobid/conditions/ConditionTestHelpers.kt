@@ -5,13 +5,9 @@ import org.example.bidverse_backend.entities.*
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
-/**
- * Test helpers for condition tests.
- * Provides factory methods for creating test entities and contexts.
- */
+// Helper utilities for condition testing
 object ConditionTestHelpers {
 
-    // Predefined test users
     object TestUsers {
         val owner = createUser(1, "Owner")
         val bidder = createUser(2, "Bidder")
@@ -30,12 +26,8 @@ object ConditionTestHelpers {
         }
     }
 
-    // Predefined test category
     val testCategory = Category(id = 1, categoryName = "Electronics")
 
-    /**
-     * Create a test auction with sensible defaults
-     */
     fun createAuction(
         id: Int = 100,
         owner: User = TestUsers.owner,
@@ -74,9 +66,6 @@ object ConditionTestHelpers {
         )
     }
 
-    /**
-     * Create a test bid
-     */
     fun createBid(
         id: Int = 1,
         auction: Auction,
@@ -95,9 +84,6 @@ object ConditionTestHelpers {
         )
     }
 
-    /**
-     * Create a test autobid
-     */
     fun createAutoBid(
         id: Int = 1,
         user: User = TestUsers.bidder,
@@ -130,9 +116,7 @@ object ConditionTestHelpers {
         )
     }
 
-    /**
-     * Create a simple test context with minimal setup
-     */
+    // Simple context for basic tests
     fun createSimpleContext(
         user: User = TestUsers.bidder,
         currentPrice: BigDecimal = BigDecimal("100.00"),
@@ -175,9 +159,6 @@ object ConditionTestHelpers {
         )
     }
 
-    /**
-     * Create a context with a current highest bid
-     */
     fun createContextWithHighestBid(
         user: User = TestUsers.bidder,
         highestBidder: User = TestUsers.competitor1,
@@ -200,7 +181,6 @@ object ConditionTestHelpers {
             isWinning = true
         )
         
-        // If the user is winning, set lastBidByThisAutoBid to the highest bid
         val lastBidByUser = if (highestBidder.id == user.id) highestBid else null
         
         return AutoBidContext(
@@ -214,11 +194,7 @@ object ConditionTestHelpers {
         )
     }
 
-    /**
-     * Create a context with multiple bids (for testing bid history)
-     * bidValues: List of bid values in reverse chronological order (newest first)
-     * bidders: Optional list of bidders for each bid. If null, alternates between competitor1 and user
-     */
+    // Creates context with bid history - bidValues in reverse chronological order
     fun createContextWithBidHistory(
         user: User = TestUsers.bidder,
         bidValues: List<BigDecimal>,
@@ -259,9 +235,6 @@ object ConditionTestHelpers {
         )
     }
 
-    /**
-     * Create a context for time-based testing (exact control over time)
-     */
     fun createContextWithExactTime(
         user: User = TestUsers.bidder,
         currentTime: LocalDateTime,

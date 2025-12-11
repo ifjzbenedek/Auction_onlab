@@ -6,13 +6,13 @@ import java.time.LocalDateTime
 object AllAuctionUtils {
     
     /**
-     * Kiszámolja az aukció aktuális státuszát a dátumok alapján.
-     * Ez a fő függvény - a státusz mindig számított, sosem tárolt érték.
+     * Calculates the current status of the auction based on dates.
+     * This is the main function - status is always calculated, never stored.
      */
     fun calculateStatus(startDate: LocalDateTime?, expiredDate: LocalDateTime): String {
         val now = LocalDateTime.now()
         
-        // Ha nincs startDate, az aukció azonnal aktív (régi viselkedés)
+        // If no startDate, auction is immediately active (legacy behavior)
         val effectiveStartDate = startDate ?: LocalDateTime.MIN
         
         return when {
@@ -23,14 +23,14 @@ object AllAuctionUtils {
     }
     
     /**
-     * Extension function az Auction entitáshoz a könnyebb használatért
+     * Extension function for the Auction entity for easier usage
      */
     fun Auction.calculatedStatus(): String {
         return calculateStatus(this.startDate, this.expiredDate)
     }
     
     /**
-     * Ellenőrzi, hogy az aukció aktív-e (licitálható)
+     * Checks if the auction is active (biddable)
      */
     fun isAuctionActive(startDate: LocalDateTime?, expiredDate: LocalDateTime): Boolean {
         return calculateStatus(startDate, expiredDate) == "ACTIVE"

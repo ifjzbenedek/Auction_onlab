@@ -8,14 +8,14 @@ data class ChatMessageDTO(
 )
 
 data class AutoBidAgentConfigDTO(
-    val id: Int,
-    val auctionId: Int,
-    val userId: Int,
-    val maxBidAmount: BigDecimal?,
-    val startingBidAmount: BigDecimal?,
-    val incrementAmount: BigDecimal?,
-    val intervalMinutes: Int?,
-    val isActive: Boolean,
+    val id: Int = 0,
+    val auctionId: Int? = null,
+    val userId: Int = 0,
+    val maxBidAmount: BigDecimal? = null,
+    val startingBidAmount: BigDecimal? = null,
+    val incrementAmount: BigDecimal? = null,
+    val intervalMinutes: Int? = null,
+    val isActive: Boolean = true,
     val conditionsJson: Map<String, Any>? = null
 )
 

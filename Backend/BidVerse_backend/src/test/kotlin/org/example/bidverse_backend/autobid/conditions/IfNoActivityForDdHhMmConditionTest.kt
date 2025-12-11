@@ -50,78 +50,44 @@ class IfNoActivityForDdHhMmConditionTest {
     }
 
     @Test
-    fun `shouldBid should return true when conditionValue is null`() {
+    fun `null config allows bidding`() {
         val context = createTestContext(lastBidMinutesAgo = 30)
         assertTrue(condition.shouldBid(context, null))
     }
 
     @Test
-    fun `shouldBid should return false when conditionValue is not a string`() {
+    fun `invalid config blocks bidding`() {
         val context = createTestContext(lastBidMinutesAgo = 30)
         assertFalse(condition.shouldBid(context, 123))
+        assertFalse(condition.shouldBid(context, "invalid"))
+        assertFalse(condition.shouldBid(context, "1_2"))
+        assertFalse(condition.shouldBid(context, "a_b_c"))
     }
 
     @Test
-    fun `shouldBid should return true when no bids exist`() {
-        val context = createTestContext(lastBidMinutesAgo = null)
-        assertTrue(condition.shouldBid(context, "0_1_0"))
+    fun `bids when no activity or threshold exceeded`() {
+        val contextNoBids = createTestContext(lastBidMinutesAgo = null)
+        assertTrue(condition.shouldBid(contextNoBids, "0_1_0"))
+        
+        val context120min = createTestContext(lastBidMinutesAgo = 120)
+        assertTrue(condition.shouldBid(context120min, "0_1_30"))
+        
+        val context60min = createTestContext(lastBidMinutesAgo = 60)
+        assertTrue(condition.shouldBid(context60min, "0_1_0"))
     }
 
     @Test
-    fun `shouldBid should return true when duration threshold exceeded`() {
-        // Last bid was 2 hours ago (120 minutes)
-        // Threshold: 0 days, 1 hour, 30 minutes = 90 minutes
-        val context = createTestContext(lastBidMinutesAgo = 120)
-        assertTrue(condition.shouldBid(context, "0_1_30"))
-    }
-
-    @Test
-    fun `shouldBid should return false when duration threshold not exceeded`() {
-        // Last bid was 30 minutes ago
-        // Threshold: 0 days, 1 hour, 0 minutes = 60 minutes
+    fun `blocks bidding when threshold not met`() {
         val context = createTestContext(lastBidMinutesAgo = 30)
         assertFalse(condition.shouldBid(context, "0_1_0"))
     }
 
     @Test
-    fun `shouldBid should handle days correctly`() {
-        // Last bid was 3 days ago (4320 minutes)
-        // Threshold: 2 days, 0 hours, 0 minutes = 2880 minutes
-        val context = createTestContext(lastBidMinutesAgo = 4320)
-        assertTrue(condition.shouldBid(context, "2_0_0"))
-    }
-
-    @Test
-    fun `shouldBid should handle complex duration`() {
-        // Last bid was 2 days, 4 hours, 0 minutes ago = 3360 minutes
-        // Threshold: 2 days, 3 hours, 30 minutes = 3330 minutes
-        val context = createTestContext(lastBidMinutesAgo = 3360)
-        assertTrue(condition.shouldBid(context, "2_3_30"))
-    }
-
-    @Test
-    fun `shouldBid should return false for invalid format`() {
-        val context = createTestContext(lastBidMinutesAgo = 30)
-        assertFalse(condition.shouldBid(context, "invalid"))
-    }
-
-    @Test
-    fun `shouldBid should return false for incomplete format`() {
-        val context = createTestContext(lastBidMinutesAgo = 30)
-        assertFalse(condition.shouldBid(context, "1_2"))
-    }
-
-    @Test
-    fun `shouldBid should return false for non-numeric values`() {
-        val context = createTestContext(lastBidMinutesAgo = 30)
-        assertFalse(condition.shouldBid(context, "a_b_c"))
-    }
-
-    @Test
-    fun `shouldBid should handle exactly at threshold boundary`() {
-        // Last bid was exactly 60 minutes ago
-        // Threshold: 0 days, 1 hour, 0 minutes = 60 minutes
-        val context = createTestContext(lastBidMinutesAgo = 60)
-        assertTrue(condition.shouldBid(context, "0_1_0"))
+    fun `handles multi-day durations`() {
+        val context3days = createTestContext(lastBidMinutesAgo = 4320)
+        assertTrue(condition.shouldBid(context3days, "2_0_0"))
+        
+        val contextComplex = createTestContext(lastBidMinutesAgo = 3360)
+        assertTrue(condition.shouldBid(contextComplex, "2_3_30"))
     }
 }

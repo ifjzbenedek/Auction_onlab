@@ -87,8 +87,6 @@ class SecurityConfig(private val customOAuth2UserService: CustomOAuth2UserServic
                             newCookie.path = "/"
                             response.addCookie(newCookie)
                         }
-                        
-                        println("Custom logout handler executed for user: ${authentication?.name}")
                     }
             }
             .sessionManagement {

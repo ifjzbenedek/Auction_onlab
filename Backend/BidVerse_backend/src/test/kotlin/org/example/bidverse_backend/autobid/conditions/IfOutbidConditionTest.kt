@@ -10,19 +10,14 @@ class IfOutbidConditionTest {
     private val condition = IfOutbidCondition()
 
     @Test
-    fun `should return true when condition is disabled (null)`() {
+    fun `disabled condition returns true`() {
         val context = ConditionTestHelpers.createSimpleContext()
         assertTrue(condition.shouldBid(context, null))
-    }
-
-    @Test
-    fun `should return true when condition is disabled (false)`() {
-        val context = ConditionTestHelpers.createSimpleContext()
         assertTrue(condition.shouldBid(context, false))
     }
 
     @Test
-    fun `should return true when user is outbid`() {
+    fun `bids when user is outbid`() {
         val context = ConditionTestHelpers.createContextWithHighestBid(
             user = TestUsers.bidder,
             highestBidder = TestUsers.competitor1,
@@ -33,7 +28,7 @@ class IfOutbidConditionTest {
     }
 
     @Test
-    fun `should return false when user is currently winning`() {
+    fun `does not bid when user is winning`() {
         val context = ConditionTestHelpers.createContextWithHighestBid(
             user = TestUsers.bidder,
             highestBidder = TestUsers.bidder,
@@ -44,22 +39,21 @@ class IfOutbidConditionTest {
     }
 
     @Test
-    fun `should return true when user has never bid (isOutbid returns true for initial bid)`() {
+    fun `bids when user has never bid`() {
         val context = ConditionTestHelpers.createSimpleContext(
             user = TestUsers.bidder,
             currentPrice = BigDecimal("100.00")
         )
         
-        // isOutbid() returns true if user has never bid (should place initial bid)
         assertTrue(condition.shouldBid(context, true))
     }
 
     @Test
-    fun `should return true when user had winning bid but got outbid by competitor`() {
+    fun `bids after being outbid`() {
         val bidHistory = listOf(
-            BigDecimal("200.00"), // Competitor1 winning now
-            BigDecimal("180.00"), // Bidder was winning
-            BigDecimal("150.00")  // Competitor1 started
+            BigDecimal("200.00"),
+            BigDecimal("180.00"),
+            BigDecimal("150.00")
         )
         
         val context = ConditionTestHelpers.createContextWithBidHistory(
@@ -71,13 +65,12 @@ class IfOutbidConditionTest {
     }
 
     @Test
-    fun `should return true when no bids at all (isOutbid returns true for initial bid)`() {
+    fun `handles empty bid history`() {
         val context = ConditionTestHelpers.createContextWithBidHistory(
             user = TestUsers.bidder,
             bidValues = emptyList()
         )
         
-        // isOutbid() returns true if user has never bid
         assertTrue(condition.shouldBid(context, true))
     }
 }

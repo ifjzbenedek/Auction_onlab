@@ -7,10 +7,6 @@ import org.junit.jupiter.api.Assertions.*
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
-/**
- * Unit tests for LastMinuteRushCondition.
- * Tests time-based bid modification logic.
- */
 class LastMinuteRushConditionTest {
 
     private val condition = LastMinuteRushCondition()
@@ -74,7 +70,6 @@ class LastMinuteRushConditionTest {
             updatedAt = null
         )
         
-        // IMPORTANT: Create a real highest bid so getCurrentPrice() returns the currentPrice parameter
         val highestBid = if (currentPrice > auction.minimumPrice) {
             Bid(
                 id = 99,
@@ -97,122 +92,48 @@ class LastMinuteRushConditionTest {
     }
 
     @Test
-    fun `shouldBid should always return true`() {
-        // Given
+    fun `shouldBid is always true`() {
         val context = createTestContext(minutesUntilEnd = 5)
-        
-        // When
-        val result = condition.shouldBid(context, true)
-        
-        // Then
-        assertTrue(result)
+        assertTrue(condition.shouldBid(context, true))
     }
 
     @Test
-    fun `modifyBidAmount should increase by 25 percent when less than 1 minute left`() {
-        // Given
-        val context = createTestContext(
-            minutesUntilEnd = 0, // Less than 1 minute
-            currentPrice = BigDecimal("100.00"),
-            increment = BigDecimal("10.00")
+    fun `increases bid by 25 percent in last minute`() {
+        val context0 = createTestContext(
+            minutesUntilEnd = 0,
+            currentPrice = BigDecimal("100.00")
         )
-        val baseAmount = BigDecimal("110.00") // currentPrice + increment
+        val result0 = condition.modifyBidAmount(context0, true, BigDecimal("110.00"))
+        assertEquals(0, BigDecimal("125.00").compareTo(result0))
         
-        // When
-        val result = condition.modifyBidAmount(context, true, baseAmount)
-        
-        // Then
-        assertNotNull(result)
-        // New logic: currentPrice * 1.25 = 100 * 1.25 = 125
-        assertEquals(0, BigDecimal("125.00").compareTo(result))
-    }
-
-    @Test
-    fun `modifyBidAmount should increase by 25 percent exactly at 1 minute boundary`() {
-        // Given
-        val context = createTestContext(
+        val context1 = createTestContext(
             minutesUntilEnd = 1,
-            currentPrice = BigDecimal("200.00"),
-            increment = BigDecimal("20.00")
+            currentPrice = BigDecimal("200.00")
         )
-        val baseAmount = BigDecimal("220.00")
-        
-        // When
-        val result = condition.modifyBidAmount(context, true, baseAmount)
-        
-        // Then
-        assertNotNull(result)
-        // New logic: currentPrice * 1.25 = 200 * 1.25 = 250
-        assertEquals(0, BigDecimal("250.00").compareTo(result))
+        val result1 = condition.modifyBidAmount(context1, true, BigDecimal("220.00"))
+        assertEquals(0, BigDecimal("250.00").compareTo(result1))
     }
 
     @Test
-    fun `modifyBidAmount should return null when more than 1 minute left`() {
-        // Given
-        val context = createTestContext(
-            minutesUntilEnd = 5,
-            currentPrice = BigDecimal("100.00"),
-            increment = BigDecimal("10.00")
-        )
-        val baseAmount = BigDecimal("110.00")
-        
-        // When
-        val result = condition.modifyBidAmount(context, true, baseAmount)
-        
-        // Then
-        assertNull(result)
+    fun `no change when more than 1 minute left`() {
+        val context = createTestContext(minutesUntilEnd = 5, currentPrice = BigDecimal("100.00"))
+        assertNull(condition.modifyBidAmount(context, true, BigDecimal("110.00")))
     }
 
     @Test
-    fun `modifyBidAmount should return null when condition is false`() {
-        // Given
+    fun `disabled condition does nothing`() {
+        val context = createTestContext(minutesUntilEnd = 0, currentPrice = BigDecimal("100.00"))
+        assertNull(condition.modifyBidAmount(context, false, BigDecimal("110.00")))
+        assertNull(condition.modifyBidAmount(context, null, BigDecimal("110.00")))
+    }
+
+    @Test
+    fun `works with larger amounts`() {
         val context = createTestContext(
             minutesUntilEnd = 0,
-            currentPrice = BigDecimal("100.00"),
-            increment = BigDecimal("10.00")
+            currentPrice = BigDecimal("500.00")
         )
-        val baseAmount = BigDecimal("110.00")
-        
-        // When
-        val result = condition.modifyBidAmount(context, false, baseAmount)
-        
-        // Then
-        assertNull(result)
-    }
-
-    @Test
-    fun `modifyBidAmount should return null when conditionValue is null`() {
-        // Given
-        val context = createTestContext(
-            minutesUntilEnd = 0,
-            currentPrice = BigDecimal("100.00"),
-            increment = BigDecimal("10.00")
-        )
-        val baseAmount = BigDecimal("110.00")
-        
-        // When
-        val result = condition.modifyBidAmount(context, null, baseAmount)
-        
-        // Then
-        assertNull(result)
-    }
-
-    @Test
-    fun `modifyBidAmount should work with larger bid increments`() {
-        // Given
-        val context = createTestContext(
-            minutesUntilEnd = 0,
-            currentPrice = BigDecimal("500.00"),
-            increment = BigDecimal("50.00")
-        )
-        val baseAmount = BigDecimal("550.00")
-        
-        // When
-        val result = condition.modifyBidAmount(context, true, baseAmount)
-        
-        // Then
-        assertNotNull(result)
-        // New logic: currentPrice * 1.25 = 500 * 1.25 = 625
+        val result = condition.modifyBidAmount(context, true, BigDecimal("550.00"))
         assertEquals(0, BigDecimal("625.00").compareTo(result))
     }
 }

@@ -10,53 +10,29 @@ class MaxTotalBidsConditionTest {
     private val condition = MaxTotalBidsCondition()
 
     @Test
-    fun `should return true when condition is not configured (null)`() {
+    fun `null config allows unlimited bids`() {
         val context = ConditionTestHelpers.createSimpleContext()
         assertTrue(condition.shouldBid(context, null))
     }
 
     @Test
-    fun `should return true when no bids placed yet`() {
-        val context = ConditionTestHelpers.createContextWithBidHistory(
+    fun `allows bids when under limit`() {
+        val contextNoBids = ConditionTestHelpers.createContextWithBidHistory(
             user = TestUsers.bidder,
             bidValues = emptyList()
         )
+        assertTrue(condition.shouldBid(contextNoBids, 5))
         
-        assertTrue(condition.shouldBid(context, 5))
-    }
-
-    @Test
-    fun `should return true when current bids less than max`() {
-        val bidHistory = listOf(
-            BigDecimal("120.00"), // Bidder
-            BigDecimal("110.00"), // Competitor
-            BigDecimal("100.00")  // Bidder
-        )
-        val bidders = listOf(
-            TestUsers.bidder,
-            TestUsers.competitor1,
-            TestUsers.bidder
-        )
-        
-        val context = ConditionTestHelpers.createContextWithBidHistory(
+        val contextTwoBids = ConditionTestHelpers.createContextWithBidHistory(
             user = TestUsers.bidder,
-            bidValues = bidHistory,
-            bidders = bidders
+            bidValues = listOf(BigDecimal("120"), BigDecimal("110"), BigDecimal("100")),
+            bidders = listOf(TestUsers.bidder, TestUsers.competitor1, TestUsers.bidder)
         )
-        
-        // User has 2 bids (index 0 and 2), max is 5
-        assertTrue(condition.shouldBid(context, 5))
+        assertTrue(condition.shouldBid(contextTwoBids, 5))
     }
 
     @Test
-    fun `should return false when max bids reached`() {
-        val bidHistory = listOf(
-            BigDecimal("150.00"), // Competitor
-            BigDecimal("140.00"), // Bidder
-            BigDecimal("130.00"), // Bidder
-            BigDecimal("120.00"), // Bidder
-            BigDecimal("110.00")  // Competitor
-        )
+    fun `blocks bids when limit reached`() {
         val bidders = listOf(
             TestUsers.competitor1,
             TestUsers.bidder,
@@ -64,54 +40,18 @@ class MaxTotalBidsConditionTest {
             TestUsers.bidder,
             TestUsers.competitor1
         )
-        
         val context = ConditionTestHelpers.createContextWithBidHistory(
             user = TestUsers.bidder,
-            bidValues = bidHistory,
+            bidValues = listOf(BigDecimal("150"), BigDecimal("140"), BigDecimal("130"), BigDecimal("120"), BigDecimal("110")),
             bidders = bidders
         )
         
-        // User has 3 bids (index 1, 2, 3), max is 3
         assertFalse(condition.shouldBid(context, 3))
-    }
-
-    @Test
-    fun `should return false when bids exceed max`() {
-        val bidHistory = listOf(
-            BigDecimal("160.00"), // Bidder
-            BigDecimal("150.00"), // Competitor
-            BigDecimal("140.00"), // Bidder
-            BigDecimal("130.00"), // Bidder
-            BigDecimal("120.00")  // Bidder
-        )
-        val bidders = listOf(
-            TestUsers.bidder,
-            TestUsers.competitor1,
-            TestUsers.bidder,
-            TestUsers.bidder,
-            TestUsers.bidder
-        )
-        
-        val context = ConditionTestHelpers.createContextWithBidHistory(
-            user = TestUsers.bidder,
-            bidValues = bidHistory,
-            bidders = bidders
-        )
-        
-        // User has 4 bids, max is 2
         assertFalse(condition.shouldBid(context, 2))
     }
 
     @Test
-    fun `should count only user bids not all bids`() {
-        val bidHistory = listOf(
-            BigDecimal("170.00"), // Competitor
-            BigDecimal("160.00"), // Competitor
-            BigDecimal("150.00"), // Bidder
-            BigDecimal("140.00"), // Competitor
-            BigDecimal("130.00"), // Bidder
-            BigDecimal("120.00")  // Competitor
-        )
+    fun `counts only user bids`() {
         val bidders = listOf(
             TestUsers.competitor1,
             TestUsers.competitor1,
@@ -120,35 +60,23 @@ class MaxTotalBidsConditionTest {
             TestUsers.bidder,
             TestUsers.competitor1
         )
-        
         val context = ConditionTestHelpers.createContextWithBidHistory(
             user = TestUsers.bidder,
-            bidValues = bidHistory,
+            bidValues = listOf(BigDecimal("170"), BigDecimal("160"), BigDecimal("150"), BigDecimal("140"), BigDecimal("130"), BigDecimal("120")),
             bidders = bidders
         )
         
-        // User has 2 bids (index 2, 4), max is 3 → should allow
         assertTrue(condition.shouldBid(context, 3))
     }
 
     @Test
-    fun `should handle max of 1`() {
-        val bidHistory = listOf(
-            BigDecimal("110.00"), // Bidder
-            BigDecimal("100.00")  // Competitor
-        )
-        val bidders = listOf(
-            TestUsers.bidder,
-            TestUsers.competitor1
-        )
-        
+    fun `handles single bid limit`() {
         val context = ConditionTestHelpers.createContextWithBidHistory(
             user = TestUsers.bidder,
-            bidValues = bidHistory,
-            bidders = bidders
+            bidValues = listOf(BigDecimal("110"), BigDecimal("100")),
+            bidders = listOf(TestUsers.bidder, TestUsers.competitor1)
         )
         
-        // User has 1 bid, max is 1 → no more bids
         assertFalse(condition.shouldBid(context, 1))
     }
 }

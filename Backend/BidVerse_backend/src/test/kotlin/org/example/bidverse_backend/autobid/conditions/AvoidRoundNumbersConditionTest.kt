@@ -9,31 +9,22 @@ class AvoidRoundNumbersConditionTest {
     private val condition = AvoidRoundNumbersCondition()
 
     @Test
-    fun `should not modify when condition is disabled (null)`() {
+    fun `disabled condition does nothing`() {
         val context = ConditionTestHelpers.createSimpleContext()
-        val baseAmount = BigDecimal("1000.00")
         
-        assertNull(condition.modifyBidAmount(context, null, baseAmount))
+        assertNull(condition.modifyBidAmount(context, null, BigDecimal("1000.00")))
+        assertNull(condition.modifyBidAmount(context, false, BigDecimal("1000.00")))
     }
 
     @Test
-    fun `should not modify when condition is disabled (false)`() {
+    fun `non-round numbers unchanged`() {
         val context = ConditionTestHelpers.createSimpleContext()
-        val baseAmount = BigDecimal("1000.00")
-        
-        assertNull(condition.modifyBidAmount(context, false, baseAmount))
+        assertNull(condition.modifyBidAmount(context, true, BigDecimal("1234.00")))
+        assertNull(condition.modifyBidAmount(context, true, BigDecimal("150.00")))
     }
 
     @Test
-    fun `should not modify when amount is not a round number`() {
-        val context = ConditionTestHelpers.createSimpleContext()
-        val baseAmount = BigDecimal("1234.00")
-        
-        assertNull(condition.modifyBidAmount(context, true, baseAmount))
-    }
-
-    @Test
-    fun `should modify when amount is round hundred (1000)`() {
+    fun `modifies round hundreds`() {
         val context = ConditionTestHelpers.createSimpleContext()
         val baseAmount = BigDecimal("1000.00")
         
@@ -41,56 +32,26 @@ class AvoidRoundNumbersConditionTest {
         
         assertNotNull(result)
         assertTrue(result!! > baseAmount)
-        // Should add one of the odd offsets (7, 11, 13, 17, 23, 29, 37, 47)
         assertTrue(result in BigDecimal("1007")..BigDecimal("1047"))
     }
 
     @Test
-    fun `should modify when amount is round hundred (500)`() {
+    fun `works with different round numbers`() {
         val context = ConditionTestHelpers.createSimpleContext()
-        val baseAmount = BigDecimal("500.00")
         
-        val result = condition.modifyBidAmount(context, true, baseAmount)
+        val result500 = condition.modifyBidAmount(context, true, BigDecimal("500.00"))
+        assertNotNull(result500)
+        assertTrue(result500!! in BigDecimal("507")..BigDecimal("547"))
         
-        assertNotNull(result)
-        assertTrue(result!! > baseAmount)
-        assertTrue(result in BigDecimal("507")..BigDecimal("547"))
+        val result10k = condition.modifyBidAmount(context, true, BigDecimal("10000.00"))
+        assertNotNull(result10k)
+        assertTrue(result10k!! in BigDecimal("10007")..BigDecimal("10047"))
     }
 
     @Test
-    fun `should modify when amount is large round number (10000)`() {
+    fun `shouldBid is always true`() {
         val context = ConditionTestHelpers.createSimpleContext()
-        val baseAmount = BigDecimal("10000.00")
-        
-        val result = condition.modifyBidAmount(context, true, baseAmount)
-        
-        assertNotNull(result)
-        assertTrue(result!! > baseAmount)
-        assertTrue(result in BigDecimal("10007")..BigDecimal("10047"))
-    }
-
-    @Test
-    fun `should not modify 150 (not divisible by 100)`() {
-        val context = ConditionTestHelpers.createSimpleContext()
-        val baseAmount = BigDecimal("150.00")
-        
-        assertNull(condition.modifyBidAmount(context, true, baseAmount))
-    }
-
-    @Test
-    fun `should not modify 250 (not divisible by 100)`() {
-        val context = ConditionTestHelpers.createSimpleContext()
-        val baseAmount = BigDecimal("250.00")
-        
-        assertNull(condition.modifyBidAmount(context, true, baseAmount))
-    }
-
-    @Test
-    fun `shouldBid always returns true`() {
-        val context = ConditionTestHelpers.createSimpleContext()
-        
         assertTrue(condition.shouldBid(context, null))
-        assertTrue(condition.shouldBid(context, false))
         assertTrue(condition.shouldBid(context, true))
     }
 }

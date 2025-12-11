@@ -16,11 +16,11 @@ class UserService(private val userRepository: UserRepository,
 ) {
 
     fun updateUserContact(userBasic: UserBasicDTO): User {
-        // Megkeressük a bejelentkezett felhasználót
+        // Find the logged in user
         val user = userRepository.findById(securityUtils.getCurrentUserId())
             .orElseThrow { UserNotFoundException("User not found.") }
 
-        // Frissítjük a felhasználó adatait
+        // Update user data
         user.userName = userBasic.userName
         user.emailAddress = userBasic.emailAddress
         user.phoneNumber = userBasic.phoneNumber
@@ -57,13 +57,13 @@ class UserService(private val userRepository: UserRepository,
 
     @Transactional
     fun register(userRegistrationDTO: UserRegistrationDTO): User {
-        // Ellenőrizzük, hogy a jelszavak megegyeznek-e
+        // Check if passwords match
         /*
         require(userRegistrationDTO.password == userRegistrationDTO.rePassword) {
             throw IllegalArgumentException("Passwords don't match.")
         }*/
 
-        // Ellenőrizzük, hogy az email vagy a felhasználónév már foglalt-e
+        // Check if email or username is already taken
         if (userRepository.existsByEmailAddress(userRegistrationDTO.emailAddress)) {
             throw IllegalArgumentException("Email address already in use.")
         }
@@ -75,7 +75,7 @@ class UserService(private val userRepository: UserRepository,
         val user = User(
             userName = userRegistrationDTO.userName,
             emailAddress = userRegistrationDTO.emailAddress,
-            phoneNumber = "", // Opcionális érték
+            phoneNumber = "", // Optional value
             auctions = mutableListOf(),
             bids = mutableListOf()
         )

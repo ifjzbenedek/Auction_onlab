@@ -10,57 +10,38 @@ class AvoidUserIdsConditionTest {
     private val condition = AvoidUserIdsCondition()
 
     @Test
-    fun `shouldBid should return true when conditionValue is null`() {
+    fun `null or invalid config returns true`() {
         val context = ConditionTestHelpers.createContextWithHighestBid(
             highestBidder = TestUsers.competitor1,
             currentPrice = BigDecimal("150.00")
         )
         assertTrue(condition.shouldBid(context, null))
-    }
-
-    @Test
-    fun `shouldBid should return true when conditionValue is not a list`() {
-        val context = ConditionTestHelpers.createContextWithHighestBid(
-            highestBidder = TestUsers.competitor1,
-            currentPrice = BigDecimal("150.00")
-        )
         assertTrue(condition.shouldBid(context, "not a list"))
     }
 
     @Test
-    fun `shouldBid should return false when current bidder is in avoid list`() {
+    fun `avoids bidding against specific users`() {
         val context = ConditionTestHelpers.createContextWithHighestBid(
             highestBidder = TestUsers.competitor1,
             currentPrice = BigDecimal("150.00")
         )
-        val avoidList = listOf(3, 5, 7)
-        assertFalse(condition.shouldBid(context, avoidList))
+        
+        assertFalse(condition.shouldBid(context, listOf(3, 5, 7)))
+        assertTrue(condition.shouldBid(context, listOf(4, 6, 8)))
     }
 
     @Test
-    fun `shouldBid should return true when current bidder is not in avoid list`() {
-        val context = ConditionTestHelpers.createContextWithHighestBid(
-            highestBidder = TestUsers.competitor1,
-            currentPrice = BigDecimal("150.00")
-        )
-        val avoidList = listOf(4, 6, 8)
-        assertTrue(condition.shouldBid(context, avoidList))
-    }
-
-    @Test
-    fun `shouldBid should return true when there is no current highest bid`() {
+    fun `bids when no current highest bid`() {
         val context = ConditionTestHelpers.createSimpleContext()
-        val avoidList = listOf(3, 5, 7)
-        assertTrue(condition.shouldBid(context, avoidList))
+        assertTrue(condition.shouldBid(context, listOf(3, 5, 7)))
     }
 
     @Test
-    fun `shouldBid should handle empty avoid list`() {
+    fun `empty avoid list allows all bids`() {
         val context = ConditionTestHelpers.createContextWithHighestBid(
             highestBidder = TestUsers.competitor1,
             currentPrice = BigDecimal("150.00")
         )
-        val avoidList = emptyList<Int>()
-        assertTrue(condition.shouldBid(context, avoidList))
+        assertTrue(condition.shouldBid(context, emptyList<Int>()))
     }
 }

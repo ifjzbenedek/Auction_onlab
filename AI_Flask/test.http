@@ -1,9 +1,0 @@
-POST http://localhost:5000/generate-description
-Content-Type: multipart/form-data; boundary=WebAppBoundary
-
---WebAppBoundary
-Content-Disposition: form-data; name="images"; filename="test_1.jpg"
-Content-Type: image/jpeg
-
-< ./test_images/test_1.jpg
---WebAppBoundary--

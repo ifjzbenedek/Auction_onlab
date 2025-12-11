@@ -29,6 +29,8 @@ class AuctionServiceAITest {
     private lateinit var categoryRepository: CategoryRepository
     private lateinit var securityUtils: SecurityUtils
     private lateinit var restTemplate: RestTemplate
+    private lateinit var imageService: ImageService
+    private lateinit var imageRepository: ImageRepository
     private lateinit var auctionService: AuctionService
 
     @BeforeEach
@@ -39,6 +41,8 @@ class AuctionServiceAITest {
         categoryRepository = mock(CategoryRepository::class.java)
         securityUtils = mock(SecurityUtils::class.java)
         restTemplate = mock(RestTemplate::class.java)
+        imageService = mock(ImageService::class.java)
+        imageRepository = mock(ImageRepository::class.java)
         
         auctionService = AuctionService(
             auctionRepository,
@@ -46,12 +50,12 @@ class AuctionServiceAITest {
             bidRepository,
             categoryRepository,
             securityUtils,
-            restTemplate
+            restTemplate,
+            imageService,
+            imageRepository
         )
     }
-
-    // ==================== generateAuctionDescription Tests ====================
-
+    
     @Test
     fun `generateAuctionDescription should call AI service and return description`() {
         // Mock image files
@@ -133,8 +137,6 @@ class AuctionServiceAITest {
             auctionService.generateAuctionDescription(listOf(image))
         }
     }
-
-    // ==================== smartSearch Tests ====================
 
     @Test
     fun `smartSearch should call AI service and return auction cards`() {
@@ -317,8 +319,6 @@ class AuctionServiceAITest {
         assertEquals(1, results[1].id)
         assertEquals(2, results[2].id)
     }
-
-    // ==================== Helper Methods ====================
 
     private fun createMockAuction(id: Int, itemName: String): org.example.bidverse_backend.entities.Auction {
         val owner = org.example.bidverse_backend.entities.User(

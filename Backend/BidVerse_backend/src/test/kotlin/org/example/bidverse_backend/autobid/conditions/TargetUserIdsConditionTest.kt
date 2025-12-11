@@ -10,75 +10,49 @@ class TargetUserIdsConditionTest {
     private val condition = TargetUserIdsCondition()
 
     @Test
-    fun `should return true when condition is not configured (null)`() {
+    fun `null config allows bidding`() {
         val context = ConditionTestHelpers.createSimpleContext()
         assertTrue(condition.shouldBid(context, null))
     }
 
     @Test
-    fun `should return true when highest bidder is in target list`() {
+    fun `only bids against target users`() {
         val context = ConditionTestHelpers.createContextWithHighestBid(
             user = TestUsers.bidder,
             highestBidder = TestUsers.competitor1,
             currentPrice = BigDecimal("150.00")
         )
         
-        val targetIds = listOf(3, 4, 5) // competitor1 is id=3
-        assertTrue(condition.shouldBid(context, targetIds))
+        assertTrue(condition.shouldBid(context, listOf(3, 4, 5)))
+        assertFalse(condition.shouldBid(context, listOf(5, 6, 7)))
     }
 
     @Test
-    fun `should return false when highest bidder is not in target list`() {
-        val context = ConditionTestHelpers.createContextWithHighestBid(
-            user = TestUsers.bidder,
-            highestBidder = TestUsers.competitor1,
-            currentPrice = BigDecimal("150.00")
-        )
-        
-        val targetIds = listOf(5, 6, 7) // competitor1 (id=3) is not in list
-        assertFalse(condition.shouldBid(context, targetIds))
-    }
-
-    @Test
-    fun `should return false when no bids yet (no highest bidder)`() {
+    fun `does not bid when no current bidder`() {
         val context = ConditionTestHelpers.createSimpleContext()
-        
-        val targetIds = listOf(3, 4, 5)
-        assertFalse(condition.shouldBid(context, targetIds))
+        assertFalse(condition.shouldBid(context, listOf(3, 4, 5)))
     }
 
     @Test
-    fun `should return true for single target user`() {
+    fun `works with single target`() {
         val context = ConditionTestHelpers.createContextWithHighestBid(
             user = TestUsers.bidder,
-            highestBidder = TestUsers.friend, // id=5
+            highestBidder = TestUsers.friend,
             currentPrice = BigDecimal("150.00")
         )
         
-        val targetIds = listOf(5)
-        assertTrue(condition.shouldBid(context, targetIds))
-    }
-
-    @Test
-    fun `should return false when empty target list`() {
-        val context = ConditionTestHelpers.createContextWithHighestBid(
-            user = TestUsers.bidder,
-            highestBidder = TestUsers.competitor1,
-            currentPrice = BigDecimal("150.00")
-        )
-        
+        assertTrue(condition.shouldBid(context, listOf(5)))
         assertFalse(condition.shouldBid(context, emptyList<Int>()))
     }
 
     @Test
-    fun `should work with multiple target users`() {
+    fun `handles multiple targets`() {
         val context = ConditionTestHelpers.createContextWithHighestBid(
             user = TestUsers.bidder,
-            highestBidder = TestUsers.competitor2, // id=4
+            highestBidder = TestUsers.competitor2,
             currentPrice = BigDecimal("150.00")
         )
         
-        val targetIds = listOf(3, 4, 5) // competitor2 is id=4
-        assertTrue(condition.shouldBid(context, targetIds))
+        assertTrue(condition.shouldBid(context, listOf(3, 4, 5)))
     }
 }

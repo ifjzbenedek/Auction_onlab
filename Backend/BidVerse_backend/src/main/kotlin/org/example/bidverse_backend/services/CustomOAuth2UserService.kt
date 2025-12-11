@@ -16,9 +16,6 @@ class CustomOAuth2UserService(
     private val logger = LoggerFactory.getLogger(CustomOAuth2UserService::class.java)
 
     init {
-        println("========================================")
-        println("CustomOAuth2UserService INITIALIZED!")
-        println("========================================")
         logger.warn("CustomOAuth2UserService INITIALIZED!")
     }
 
