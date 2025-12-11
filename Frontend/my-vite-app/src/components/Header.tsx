@@ -1,10 +1,12 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import TollIcon from "@mui/icons-material/Toll"
 import AccountCircleIcon from "@mui/icons-material/AccountCircle"
-import { Search, Plus, X, ChevronDown, RefreshCw, Image, User, LogOut, Package, DollarSign, Heart } from "lucide-react"
+import { Search, Plus, X, ChevronDown, RefreshCw, Image, User, LogOut, Package, DollarSign, Heart, Mail, Bot } from "lucide-react"
+import { authService } from "../services/auth-service"
+import { AgentPanel } from "./AgentPanel"
 import {
   Box,
   Typography,
@@ -84,7 +86,7 @@ const CategorySearchInput = styled(InputBase)(() => ({
 
 interface HeaderProps {
   onFilterChange: (newFilters: string[]) => void;
-  onSearch: (term: string, imageSearch: boolean) => void;
+  onSearch: (term: string, imageSearch: boolean, smartSearch?: boolean) => void;
   onNewAuction?: () => void; 
   onCategoryChange?: (category: string | null) => void;
   categories?: string[];
@@ -108,6 +110,12 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
   const categoryMenuOpen = Boolean(categoryAnchorEl)
   const [categorySearchTerm, setCategorySearchTerm] = useState("")
 
+  // Agent panel state
+  const [agentPanelOpen, setAgentPanelOpen] = useState(false)
+
+  // Debounce timer ref for search
+  const searchDebounceTimer = useRef<NodeJS.Timeout | null>(null)
+
   const filteredCategories = (categories || []).filter(
     (cat) =>
       cat.toLowerCase().includes(categorySearchTerm.toLowerCase()) && // cat már string
@@ -117,35 +125,88 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setSearchTerm(value)
-    if (onSearch) {
-      onSearch(value, isImageSearch)
+    
+    // Clear previous timer
+    if (searchDebounceTimer.current) {
+      clearTimeout(searchDebounceTimer.current)
+    }
+    
+    // Only trigger regular search when smart search is disabled
+    if (onSearch && !smartSearch) {
+      // Wait 500ms before triggering search
+      searchDebounceTimer.current = setTimeout(() => {
+        onSearch(value, isImageSearch)
+      }, 500)
+    }
+  }
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (searchDebounceTimer.current) {
+        clearTimeout(searchDebounceTimer.current)
+      }
+    }
+  }, [])
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && onSearch) {
+      // Clear debounce timer on Enter
+      if (searchDebounceTimer.current) {
+        clearTimeout(searchDebounceTimer.current)
+      }
+      
+      const trimmedTerm = searchTerm.trim()
+      
+      if (trimmedTerm === '') {
+        // Empty search - reset to show all auctions
+        onSearch('', isImageSearch, false)
+      } else if (smartSearch) {
+        // Trigger smart search on Enter with non-empty term
+        onSearch(trimmedTerm, isImageSearch, true)
+      } else {
+        // Regular search on Enter
+        onSearch(trimmedTerm, isImageSearch)
+      }
     }
   }
 
   const toggleSearchType = () => {
     setIsImageSearch(!isImageSearch)
-    if (onSearch) {
-      onSearch(searchTerm, !isImageSearch)
+    
+    // Clear previous timer
+    if (searchDebounceTimer.current) {
+      clearTimeout(searchDebounceTimer.current)
+    }
+    
+    // Only trigger search when smart search is disabled
+    if (onSearch && !smartSearch && searchTerm) {
+      // Wait 500ms before triggering search with new type
+      searchDebounceTimer.current = setTimeout(() => {
+        onSearch(searchTerm, !isImageSearch)
+      }, 500)
     }
   }
 
   const toggleFilter = (filter: string) => {
     const newFilters = activeFilters.includes(filter)
-      ? activeFilters.filter((f) => f !== filter) // Távolítsd el a szűrőt
-      : [...activeFilters, filter]; // Add hozzá a szűrőt
+      ? activeFilters.filter((f) => f !== filter)
+      : [...activeFilters, filter];
   
     setActiveFilters(newFilters);
-    onFilterChange(newFilters); // Küldd el a frissített szűrőket
+    onFilterChange(newFilters);
   };
 
-  const removeCategory = (category: string) => {
+   const removeCategory = (category: string) => {
     const newCategories = selectedCategories.filter(c => c !== category)
     setSelectedCategories(newCategories)
+    // Send all selected categories as comma-separated string or null if empty
     onCategoryChange?.(newCategories.length > 0 ? newCategories.join(',') : null)
   }
 
   const addCategory = (category: string) => {
     if (!selectedCategories.includes(category)) {
+      // Add to existing categories instead of replacing
       const newCategories = [...selectedCategories, category]
       setSelectedCategories(newCategories)
       onCategoryChange?.(newCategories.join(','))
@@ -160,15 +221,18 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
     setProfileAnchorEl(null)
   }
 
-  const handleProfileMenuItemClick = (action: string) => {
+  const handleProfileMenuItemClick = async (action: string) => {
     handleProfileClose()
     if (action === "profile") {
       navigate("/users/me")
     } else if (action === "logout") {
-      // Handle logout
-      console.log("Logging out...")
-      // Egyszerűsített logout - valós alkalmazásban API hívás lenne
-      navigate("/users/login")
+      try {
+        await authService.logout()
+      } catch {
+        // Logout failed silently
+      }
+    } else if (action === "mailbox") {
+      navigate("/mailbox")
     } else if (action === "myAuctions") {
       navigate("/my-auctions")
     } else if (action === "myBids") {
@@ -188,7 +252,6 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
   }
 
   const handleNewAuctionClick = () => {
-    console.log("Navigating to upload auction")
     navigate("/upload-auction")
   }
 
@@ -222,7 +285,6 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
             cursor: "pointer",
           }}
           onClick={() => {
-            console.log("Navigating to home")
             navigate("/")
           }}
         >
@@ -251,19 +313,23 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
             display: "flex",
             alignItems: "center",
             gap: 1.5,
-            flex: { xs: "1 1 100%", md: "0 1 auto" },
+            flex: { xs: "1 1 100%", md: "1 1 auto" },
             order: { xs: 3, md: 2 },
             width: { xs: "100%", md: "auto" },
-            maxWidth: { md: 400 },
+            maxWidth: { md: 600 }, 
+            minWidth: { md: 450 }, 
           }}
         >
-          <Box sx={{ position: "relative", flex: 1 }}>
+          <Box sx={{ position: "relative", flex: 1, minWidth: 0 }}> {/* Added minWidth: 0 for proper flex shrinking */}
             <TextField
               fullWidth
               size="small"
-              placeholder={isImageSearch ? "Image search..." : "Name..."}
+              placeholder={smartSearch 
+                ? (isImageSearch ? "Image search... (Press Enter)" : "Smart search... (Press Enter)") 
+                : (isImageSearch ? "Image search..." : "Name...")}
               value={searchTerm}
               onChange={handleSearchChange}
+              onKeyPress={handleKeyPress}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -294,14 +360,20 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
                 ),
                 sx: {
                   borderRadius: 30,
-                  height: 40,
+                  height: 42, // Increased from 40 to 42
                   pr: 1,
                 },
               }}
             />
           </Box>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Box sx={{ 
+            display: "flex", 
+            alignItems: "center", 
+            gap: 0.5, 
+            flexShrink: 0, // Prevent shrinking of the toggle
+            minWidth: "fit-content" // Ensure toggle doesn't get compressed
+          }}>
             <Typography variant="body2" sx={{ fontSize: 12, color: "#5b7c99" }}>
               Smart search
             </Typography>
@@ -323,10 +395,11 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
             order: { xs: 2, md: 3 },
           }}
         >
+          {/* Profile Icon */}
           <Box
             sx={{
-              width: 40,
-              height: 40,
+              width: 60,
+              height: 60,
               border: "1px solid #e0e0e0",
               borderRadius: "50%",
               display: "flex",
@@ -342,7 +415,7 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
             }}
             onClick={handleProfileClick}
           >
-            <AccountCircleIcon style={{ fontSize: "40px" }} />          
+            <AccountCircleIcon style={{ fontSize: "60px" }} />          
           </Box>
           <Popover
             open={profileMenuOpen}
@@ -378,6 +451,12 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
                 </ListItemIcon>
                 <ListItemText primary="Log Out" />
               </ProfileMenuItem>
+              <ProfileMenuItem onClick={() => handleProfileMenuItemClick("mailbox")}>
+                <ListItemIcon sx={{ minWidth: 36 }}>
+                  <Mail size={18} />
+                </ListItemIcon>
+                <ListItemText primary="Mailbox" />
+              </ProfileMenuItem>
               <ProfileMenuItem onClick={() => handleProfileMenuItemClick("myAuctions")}>
                 <ListItemIcon sx={{ minWidth: 36 }}>
                   <Package size={18} />
@@ -399,11 +478,13 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
             </List>
           </Popover>
           <Box sx={{ display: "flex", gap: 1 }}>
+            {/* Agent/AutoBid Button */}
             <Box
               sx={{
-                width: 32,
-                height: 32,
+                width: 50,
+                height: 50,
                 border: "1px solid #e0e0e0",
+                borderRadius: "8px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -412,16 +493,19 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
                 transition: "all 0.2s ease",
                 "&:hover": {
                   borderColor: "#3498db",
+                  backgroundColor: "#f0f8ff",
                   transform: "scale(1.05)",
                 },
               }}
+              onClick={() => setAgentPanelOpen(true)}
+              title="AutoBid Agent"
             >
-              <X size={20} />
+              <Bot size={24} />
             </Box>
             <Box
               sx={{
-                width: 32,
-                height: 32,
+                width: 50,
+                height: 50,
                 border: "1px solid #e0e0e0",
                 display: "flex",
                 alignItems: "center",
@@ -435,7 +519,7 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
                 },
               }}
             >
-              <X size={20} />
+              <X size={24} />
             </Box>
           </Box>
         </Box>
@@ -454,9 +538,9 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
         {/* Filter buttons */}
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
           {[
-            { id: "ACTIVE", label: "Ongoing", color: "#2ecc71" },   // Zöld
-            { id: "CLOSED", label: "Finished", color: "#e74c3c" },  // Piros
-            { id: "PENDING", label: "Upcoming", color: "#f39c12" }, // Narancs
+            { id: "ongoing", label: "Ongoing", color: "#2ecc71" },   // Zöld
+            { id: "finished", label: "Finished", color: "#e74c3c" },  // Piros
+            { id: "upcoming", label: "Upcoming", color: "#f39c12" }, // Narancs
           ].map((filter) => (
             <FilterButton
               key={filter.id}
@@ -602,6 +686,9 @@ const Header: React.FC<HeaderProps> = ({ onFilterChange, onSearch, onCategoryCha
           </Box>
         </Box>
       </Box>
+
+      {/* Agent Panel */}
+      <AgentPanel open={agentPanelOpen} onClose={() => setAgentPanelOpen(false)} />
     </Box>
   )
 }

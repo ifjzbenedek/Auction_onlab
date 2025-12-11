@@ -1,5 +1,6 @@
 package org.example.bidverse_backend.services
 
+import org.springframework.transaction.annotation.Transactional
 import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionBasicDTO
 import org.example.bidverse_backend.DTOs.AuctionDTOs.AuctionCardDTO
 import org.example.bidverse_backend.DTOs.BidDTOs.BidBasicDTO
@@ -11,9 +12,20 @@ import org.example.bidverse_backend.Security.SecurityUtils
 import org.example.bidverse_backend.entities.Auction
 import org.example.bidverse_backend.entities.Bid
 import org.example.bidverse_backend.repositories.*
+import org.example.bidverse_backend.services.AuctionUtils.AllAuctionUtils
+import org.springframework.dao.OptimisticLockingFailureException
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
+import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDateTime
+import org.springframework.retry.annotation.Backoff
+import org.springframework.util.LinkedMultiValueMap
+import org.springframework.web.client.RestTemplate
+import org.springframework.web.multipart.MultipartFile
+
 
 @Service
 class AuctionService(
@@ -21,17 +33,35 @@ class AuctionService(
     private val userRepository: UserRepository,
     private val bidRepository: BidRepository,
     private val categoryRepository: CategoryRepository,
-    private val watchRepository: WatchRepository,
-    private val securityUtils: SecurityUtils
-
+    private val securityUtils: SecurityUtils,
+    private val restTemplate: RestTemplate,
+    private val imageService: ImageService,
+    private val imageRepository: ImageRepository
 ) {
-    fun getAllAuctions(statuses: String?, categories: String?): List<AuctionCardDTO> {
+    fun getAllAuctions(statuses: String?, categories: String?, search: String?): List<AuctionCardDTO> {
         val statusList = statuses?.split(",") ?: emptyList()
         val categoryList = categories?.split(",") ?: emptyList()
 
         return auctionRepository.findAll().filter { auction ->
-            (statusList.isEmpty() || auction.status in statusList) &&
-                    (categoryList.isEmpty() || auction.category.categoryName in categoryList)
+            val calculatedStatus = AllAuctionUtils.calculateStatus(auction.startDate, auction.expiredDate)
+            
+            val statusFilter = if (statusList.isEmpty()) {
+                calculatedStatus != "CLOSED"
+            } else {
+                calculatedStatus in statusList
+            }
+            val categoryFilter = categoryList.isEmpty() || auction.category.categoryName in categoryList
+            
+            val searchFilter = if (search.isNullOrBlank()) {
+                true
+            } else {
+                val searchLower = search.lowercase()
+                auction.itemName.lowercase().contains(searchLower) ||
+                auction.description.lowercase().contains(searchLower) ||
+                auction.tags?.lowercase()?.contains(searchLower) == true
+            }
+
+            statusFilter && categoryFilter && searchFilter
         }.map { it.toAuctionCardDTO() }
     }
 
@@ -44,12 +74,28 @@ class AuctionService(
         val category = categoryRepository.findById(categoryId)
             .orElseThrow { CategoryNotFoundException("Category not found.") }
 
+        // Validate dates
+        val now = LocalDateTime.now()
+        val startDate = auctionBasic.startDate ?: now
+        val expiredDate = auctionBasic.expiredDate
+        
+        if (startDate.isBefore(now.minusMinutes(1))) {
+            throw IllegalArgumentException("Start date cannot be in the past.")
+        }
+        
+        if (expiredDate.isBefore(now)) {
+            throw IllegalArgumentException("End date cannot be in the past.")
+        }
+        
+        if (expiredDate.isBefore(startDate)) {
+            throw IllegalArgumentException("End date must be after start date.")
+        }
+
         val auction = Auction(
             owner = user,
             category = category,
             itemName = auctionBasic.itemName,
             minimumPrice = auctionBasic.minimumPrice,
-            status = "ACTIVE",
             createDate = LocalDateTime.now(),
             expiredDate = auctionBasic.expiredDate,
             description = auctionBasic.description,
@@ -59,15 +105,40 @@ class AuctionService(
             minStep = auctionBasic.minStep,
             extraTime = auctionBasic.extraTime,
             lastBid = auctionBasic.lastBid,
-            condition = auctionBasic.condition
+            condition = auctionBasic.condition,
+            startDate = auctionBasic.startDate
         )
 
-        return auctionRepository.save(auction).toAuctionBasicDTO()
+        val savedAuction = auctionRepository.save(auction)
+        
+        // Index the auction for search with rollback on failure
+        try {
+            indexAuctionForSearch(savedAuction)
+        } catch (e: Exception) {
+            
+            // Rollback: Get images before deleting auction
+            val images = imageRepository.findByAuctionIdOrderByOrderIndexAsc(savedAuction.id!!)
+            
+            // Rollback: Delete auction from DB (cascades to auction_images via JPA)
+            auctionRepository.delete(savedAuction)
+            
+            // Rollback: Delete images from Cloudinary
+            try {
+                imageService.rollbackCloudinaryUploads(images)
+            } catch (cloudinaryError: Exception) {
+                // Silently continue - main error will be thrown below
+            }
+            
+            // Re-throw with clear message
+            throw SearchIndexingException("Failed to create auction: search indexing failed. All changes rolled back.")
+        }
+
+        return savedAuction.toAuctionBasicDTO()
     }
 
     fun getAuctionById(auctionId: Int): AuctionBasicDTO {
         val auction = auctionRepository.findById(auctionId)
-            .orElseThrow { UserNotFoundException("Auction not found.") }
+            .orElseThrow { AuctionNotFoundException("Auction not found.") }
 
         return auction.toAuctionBasicDTO()
     }
@@ -80,12 +151,14 @@ class AuctionService(
         if(auction.owner.id != securityUtils.getCurrentUserId())
             throw PermissionDeniedException("Permission denied.")
 
-        auction.expiredDate = auctionBasic.expiredDate
-        auction.description = auctionBasic.description
-        auction.tags = auctionBasic.tags
+        if(auctionBasic.description.contains(auction.description))
+            auction.description = auctionBasic.description
+        else
+            throw NotOnlyExtraDescriptionException("Original description can only be extended.")
 
         return auctionRepository.save(auction).toAuctionBasicDTO()
     }
+
 
     fun deleteAuction(auctionId: Int) {
         val auction = auctionRepository.findById(auctionId)
@@ -103,16 +176,6 @@ class AuctionService(
             .orElseThrow { UserNotFoundException("User not found.") }
 
         return auctionRepository.findByOwner(user).map { it.toAuctionBasicDTO() }
-    }
-
-    fun getWatchedAuctions(): List<AuctionCardDTO> {
-        val user = userRepository.findById(securityUtils.getCurrentUserId())
-            .orElseThrow { UserNotFoundException("User not found.") }
-
-        val watchedAuctions = watchRepository.findByUserId(user.id!!) // Nem lehet null, mert autogenerált az id a Userhez, és már megtaláltuk a usert
-            .map { it.auction }
-
-        return watchedAuctions.map { it.toAuctionCardDTO() }
     }
 
     fun getBiddedAuctions(): List<AuctionBasicDTO>
@@ -134,35 +197,48 @@ class AuctionService(
         return bidRepository.findByAuctionId(auctionId).map { it.toBidBasicDTO() }
     }
 
-    fun placeBid(auctionId: Int, bidValue: BigDecimal): Bid {
-        val auction = auctionRepository.findById(auctionId)
-            .orElseThrow { AuctionNotFoundException("Auction not found.") }
 
-        if (auction.status != "ACTIVE") {
+    @Retryable(
+        value = [OptimisticLockingFailureException::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 100)
+    )
+    @Transactional
+    fun placeBid(auctionId: Int, bidValue: BigDecimal): Bid {
+
+        // 1. Pessimistic lock on the auction
+        val auction = auctionRepository.findAuctionWithLock(auctionId)
+            ?: throw AuctionNotFoundException("Auction not found.")
+
+        // Check if the auction is active based on dates
+        if (!AllAuctionUtils.isAuctionActive(auction.startDate, auction.expiredDate)) {
             throw InvalidAuctionDataException("Auction is not active.")
         }
 
+        // 2. Pessimistic lock on the current winning bid
+        val currentWinningBid = bidRepository.findCurrentWinningBidWithLock(auctionId)
+
+        // 3. Validations
         val currentUserId = securityUtils.getCurrentUserId()
         if (auction.owner.id == currentUserId) {
             throw InvalidBidException("You cannot bid on your own auction.")
         }
 
-        val bids = bidRepository.findByAuctionId(auctionId)
+        val minStep = auction.minStep?.toBigDecimal() ?: BigDecimal.ZERO
+        val requiredMinimum = currentWinningBid?.value?.add(minStep) ?: auction.minimumPrice.add(minStep)
 
-        val currentWinningBid = bids.find { it.isWinning }
-
-        if (currentWinningBid != null && bidValue <= currentWinningBid.value + (auction.minStep?.toBigDecimal() ?: BigDecimal.ZERO)) {
-            throw InvalidBidException("Bid amount must be higher than the current highest bid plus the minimum increment.")
+        if (bidValue < requiredMinimum) {
+            throw InvalidBidException("Bid amount must be higher than ${requiredMinimum}.")
         }
 
-        // Jelenlegi nyerőt átállítjuk false-ra
+        // 4. Update current winner (using optimistic locking)
         currentWinningBid?.let {
             it.isWinning = false
-            bidRepository.save(it)
+            // No explicit save needed, transaction will flush automatically
         }
 
-        val bidder = userRepository.findById(currentUserId)
-            .orElseThrow { UserNotFoundException("User not found.") }
+        // 5. Create new bid
+        val bidder = userRepository.getReferenceById(currentUserId)
 
         val newBid = Bid(
             auction = auction,
@@ -172,10 +248,106 @@ class AuctionService(
             isWinning = true
         )
 
+        // 6. Update auction
         auction.lastBid = bidValue
-        auctionRepository.save(auction)
 
         return bidRepository.save(newBid)
+    }
+
+    fun generateAuctionDescription(images: List<MultipartFile>): String {
+        if (images.isEmpty()) throw DescriptionGenerationException("No images provided")
+        images.forEach { file ->
+            if (file.isEmpty || file.contentType?.startsWith("image/") != true) {
+                throw DescriptionGenerationException("Invalid image file: ${file.originalFilename}")
+            }
+        }
+
+        val headers = HttpHeaders().apply {
+            contentType = MediaType.MULTIPART_FORM_DATA
+        }
+
+        val body = LinkedMultiValueMap<String, Any>().apply {
+            images.forEach { add("images", it.resource) }
+        }
+
+        return restTemplate.postForObject(
+            "http://localhost:5000/generate-description",
+            HttpEntity(body, headers),
+            String::class.java
+        ) ?: throw IllegalStateException("Empty response from AI service")
+    }
+
+    fun smartSearch(query: String): List<AuctionCardDTO> {
+        if (query.isBlank()) {
+            throw InvalidSearchQueryException("Search query cannot be empty")
+        }
+
+        val headers = HttpHeaders().apply {
+            contentType = MediaType.APPLICATION_JSON
+        }
+
+        val requestBody = mapOf("query" to query)
+        val httpEntity = HttpEntity(requestBody, headers)
+
+        val response = try {
+            restTemplate.postForObject(
+                "http://localhost:8001/search",
+                httpEntity,
+                Map::class.java
+            ) ?: throw SearchServiceUnavailableException("Empty response from search service")
+        } catch (e: org.springframework.web.client.ResourceAccessException) {
+            throw SearchServiceTimeoutException("Search service is not responding: ${e.message}")
+        } catch (e: org.springframework.web.client.HttpClientErrorException) {
+            throw SearchServiceUnavailableException("Search service returned error: ${e.message}")
+        } catch (e: org.springframework.web.client.HttpServerErrorException) {
+            throw SearchServiceUnavailableException("Search service internal error: ${e.message}")
+        }
+
+        val auctionIds = (response["auction_ids"] as? List<String>)?.mapNotNull { 
+            it.toIntOrNull() 
+        } ?: return emptyList()
+        
+        if (auctionIds.isEmpty()) {
+            return emptyList()
+        }
+
+        val auctions = auctionRepository.findByIdIn(auctionIds)
+        val auctionMap = auctions.associateBy { it.id }
+        return auctionIds.mapNotNull { id -> 
+            auctionMap[id]?.toAuctionCardDTO() 
+        }
+    }
+
+    private fun indexAuctionForSearch(auction: Auction) {
+        val headers = HttpHeaders().apply {
+            contentType = MediaType.APPLICATION_JSON
+        }
+
+        val requestBody = mapOf(
+            "product_id" to auction.id,
+            "title" to auction.itemName,
+            "description" to auction.description,
+            "category" to auction.category.categoryName,
+            "price" to auction.minimumPrice.toDouble()
+        )
+
+        val httpEntity = HttpEntity(requestBody, headers)
+
+        try {
+            restTemplate.postForObject(
+                "http://localhost:8001/index",
+                httpEntity,
+                Map::class.java
+            )
+        } catch (e: org.springframework.web.client.ResourceAccessException) {
+            throw SearchIndexingException("Failed to index auction: timeout connecting to search service")
+        } catch (e: org.springframework.web.client.HttpClientErrorException) {
+            throw SearchIndexingException("Failed to index auction: client error ${e.statusCode}")
+        } catch (e: org.springframework.web.client.HttpServerErrorException) {
+            throw SearchIndexingException("Failed to index auction: server error ${e.statusCode}")
+        } catch (e: Exception) {
+            throw SearchIndexingException("Failed to index auction: ${e.message}")
+        }
     }
 }
 

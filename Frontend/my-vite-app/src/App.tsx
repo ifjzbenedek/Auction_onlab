@@ -1,5 +1,4 @@
-import type React from "react"
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { BrowserRouter, Routes, Route } from "react-router-dom"
 import Profile from "./pages/Profile.tsx"
 import Login from "./pages/Login.tsx"
 import BidVerseLanding from "./pages/BidVerseLanding.tsx"
@@ -7,69 +6,29 @@ import AuctionDetails from "./pages/AuctionDetails.tsx"
 import UploadAuction from "./pages/UploadAuction.tsx"
 import SetDetailsAuction from "./pages/SetDetailsAuction.tsx"
 import UserAuctions from "./pages/UserAuctions.tsx"
-import authService from "./auth/auth-service"
+import Mailbox from "./pages/Mailbox.tsx"
+import AuthGuard from "./components/AuthGuard.tsx"
+import { AuctionCreationProvider } from "./contexts/AuctionCreationContext.tsx"
 
-// Protected route component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const isAuthenticated = authService.isLoggedIn()
-
-  if (!isAuthenticated) {
-    // Redirect to login with return URL
-    const returnUrl = encodeURIComponent(window.location.pathname)
-    return <Navigate to={`/users/login?returnUrl=${returnUrl}`} />
-  }
-
-  return <>{children}</>
-}
-
-const App: React.FC = () => {
+const App = () => {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<BidVerseLanding />} />
-        <Route path="/auction/:id" element={<AuctionDetails />} />
-        <Route path="/users/login" element={<Login />} />
-
-        {/* Protected routes - require authentication */}
-        <Route
-          path="/upload-auction"
-          element={
-            <ProtectedRoute>
-              <UploadAuction />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/set-details-auction"
-          element={
-            <ProtectedRoute>
-              <SetDetailsAuction />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/my-auctions"
-          element={
-            <ProtectedRoute>
-              <UserAuctions />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/users/me"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Fallback route */}
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+      <AuctionCreationProvider>
+        <Routes>
+          <Route path="/" element={<BidVerseLanding />} />
+          <Route path="/auction/:id" element={<AuctionDetails />} />
+          <Route path="/users/login" element={<Login />} />
+          
+          <Route path="/upload-auction" element={<AuthGuard><UploadAuction /></AuthGuard>} />
+          <Route path="/set-details-auction" element={<AuthGuard><SetDetailsAuction /></AuthGuard>} />
+          <Route path="/my-auctions" element={<AuthGuard><UserAuctions /></AuthGuard>} />
+          <Route path="/users/me" element={<AuthGuard><Profile /></AuthGuard>} />
+          <Route path="/mailbox" element={<AuthGuard><Mailbox /></AuthGuard>} />
+        </Routes>
+      </AuctionCreationProvider>
     </BrowserRouter>
   )
 }
 
-export default App;
+export default App
+

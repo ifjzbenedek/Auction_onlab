@@ -1,81 +1,176 @@
 "use client"
 
-import type React from "react"
 import { useState, useEffect } from "react"
-import { Box, Typography, Grid, CircularProgress, Alert } from "@mui/material"
+import { Box, Typography, CircularProgress, Alert, Grid2 } from "@mui/material"
 import Header from "../components/Header"
 import AuctionCard from "../components/AuctionCard"
-import { auctionApi } from "../services/api.ts"
+import { auctionApi, imageApi } from "../services/api.ts" 
 import { AuctionCardDTO } from "../types/auction"
+import { AuctionImageDTO } from "../types/image"
 import { CategoryDTO } from "../types/category"
 
-const BidVerseLanding: React.FC = () => {
+function BidVerseLanding() {
   const [auctions, setAuctions] = useState<AuctionCardDTO[]>([])
   const [filters, setFilters] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isImageSearch, setIsImageSearch] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [categories, setCategories] = useState<CategoryDTO[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [isSmartSearchActive, setIsSmartSearchActive] = useState(false)
+  const [categories, setCategories] = useState<CategoryDTO[]>([])
 
-  // Aukciók lekérése
-  useEffect(() => {
-    const fetchAuctions = async () => {
-      setLoading(true)
-      setError(null)
-  
-      try {
-        const params = {
-          ...(filters.length > 0 && { status: filters.join(",") }),
-          category: selectedCategory || undefined,
-          search: searchTerm || undefined,
-          imageSearch: isImageSearch ? "true" : undefined,
-        }
-
-        const filteredParams = Object.fromEntries(
-          Object.entries(params).filter(([, value]) => value !== undefined)
-        );
-
-        const response = await auctionApi.getAuctions(filteredParams as Record<string, string | number>)
-        setAuctions(response.data)
-      } catch (err) {
-        setError("Failed to fetch auctions")
-        console.error("Error fetching auctions:", err)
-      } finally {
-        setLoading(false)
-      }
-    }
-  
-    fetchAuctions()
-  }, [filters, searchTerm, isImageSearch, selectedCategory])
-
-  // Kategóriák lekérése
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await auctionApi.getCategories()
-        setCategories(response.data)
-      } catch (err) {
-        console.error("Hiba a kategóriák lekérésekor:", err)
-        setCategories([])
-      }
-    }
-    fetchCategories()
-  }, [])
+        const response = await auctionApi.getCategories();
+        setCategories(response.data);
+      } catch { /* empty */ }
+    };
 
-  // Szűrők kezelése
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (isSmartSearchActive) {
+      return
+    }
+
+    const fetchAuctionsAndImages = async () => {
+      try {
+        setLoading(true);
+        
+        const params: Record<string, string | number> = {};
+        
+        if (filters.length > 0) {
+          const statusMapping: Record<string, string> = {
+            'ongoing': 'ACTIVE',
+            'finished': 'CLOSED', 
+            'upcoming': 'UPCOMING'
+          };
+          
+          const backendStatuses = filters
+            .map(filter => statusMapping[filter])
+            .filter(status => status)
+            .join(',');
+            
+          if (backendStatuses) {
+            params.status = backendStatuses;
+          }
+        }
+        
+        if (selectedCategory) {
+          params.category = selectedCategory;
+        }
+        
+        if (searchTerm.trim()) {
+          params.search = searchTerm.trim();
+        }
+
+        const auctionsResponse = await auctionApi.getAuctions(params);
+        const auctionsData: AuctionCardDTO[] = auctionsResponse.data;
+
+        const auctionsWithImages = await Promise.all(
+          auctionsData.map(async (auction) => {
+            try {
+              const imagesResponse = await imageApi.getAuctionImages(auction.id!);
+              const images: AuctionImageDTO[] = imagesResponse.data || [];
+              
+              const imageUrls = images.map(img => img.cloudinaryUrl);
+              
+              return {
+                id: auction.id!,
+                itemName: auction.itemName,
+                createDate: auction.createDate!,
+                expiredDate: auction.expiredDate,
+                startDate: auction.startDate, 
+                lastBid: auction.lastBid,
+                status: auction.status,
+                images: imageUrls.length > 0 ? imageUrls : undefined,
+                imageUrl: imageUrls.length > 0 ? imageUrls[0] : undefined
+              } as AuctionCardDTO;
+            } catch {
+              return {
+                id: auction.id!,
+                itemName: auction.itemName,
+                createDate: auction.createDate!,
+                expiredDate: auction.expiredDate,
+                startDate: auction.startDate, 
+                lastBid: auction.lastBid,
+                status: auction.status,
+                images: undefined,
+                imageUrl: undefined
+              } as AuctionCardDTO;
+            }
+          })
+        );
+
+        setAuctions(auctionsWithImages);
+      } catch {
+        setError("Failed to load auctions");
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchAuctionsAndImages()
+  }, [filters, searchTerm, isImageSearch, selectedCategory, isSmartSearchActive])
+
   const handleFilterChange = (newFilters: string[]) => {
     setFilters(newFilters)
   }
 
-  // Keresés kezelése
-  const handleSearch = (term: string, imageSearch: boolean) => {
+  const handleSearch = async (term: string, imageSearch: boolean, smartSearch?: boolean) => {
     setSearchTerm(term)
     setIsImageSearch(imageSearch)
+    
+    if (!term.trim()) {
+      setIsSmartSearchActive(false)
+      return
+    }
+    
+    if (smartSearch && term.trim()) {
+      try {
+        setIsSmartSearchActive(true)
+        setLoading(true)
+        
+        const response = await auctionApi.smartSearch(term)
+        const smartResults: AuctionCardDTO[] = response.data
+        
+        const auctionsWithImages = await Promise.all(
+          smartResults.map(async (auction) => {
+            try {
+              const imagesResponse = await imageApi.getAuctionImages(auction.id!)
+              const images: AuctionImageDTO[] = imagesResponse.data || []
+              const imageUrls = images.map(img => img.cloudinaryUrl)
+              
+              return {
+                ...auction,
+                images: imageUrls.length > 0 ? imageUrls : undefined,
+                imageUrl: imageUrls.length > 0 ? imageUrls[0] : undefined
+              } as AuctionCardDTO
+            } catch {
+              return {
+                ...auction,
+                images: undefined,
+                imageUrl: undefined
+              } as AuctionCardDTO
+            }
+          })
+        )
+        
+        setAuctions(auctionsWithImages)
+        setLoading(false)
+      } catch {
+        setError('Smart search failed')
+        setLoading(false)
+        setIsSmartSearchActive(false)
+      }
+    } else {
+      setIsSmartSearchActive(false)
+    }
   }
 
-  // Kategória váltás
   const handleCategoryChange = (category: string | null) => {
     setSelectedCategory(category)
   }
@@ -110,17 +205,20 @@ const BidVerseLanding: React.FC = () => {
               Nincs találat
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Próbálj más szűrőket vagy keresési feltételeket
+              Próbálj más szűrőket vagy keresési feltételeket.
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
+              Filters: {JSON.stringify(filters)}, Category: {selectedCategory}, Search: {searchTerm}
             </Typography>
           </Box>
         ) : (
-          <Grid container spacing={3}>
+          <Grid2 container spacing={3}>
             {auctions.map((auction) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={auction.id}>
+              <Grid2 size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={auction.id}>
                 <AuctionCard {...auction} />
-              </Grid>
+              </Grid2>
             ))}
-          </Grid>
+          </Grid2>
         )}
       </Box>
     </Box>

@@ -9,6 +9,7 @@ import org.example.bidverse_backend.services.*
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 
 
 @RestController
@@ -18,10 +19,11 @@ class AuctionController(private val auctionService: AuctionService) {
     @GetMapping
     fun getAllAuctions(
         @RequestParam status: String?,
-        @RequestParam category: String?
+        @RequestParam category: String?,
+        @RequestParam search: String?
     ): ResponseEntity<List<AuctionCardDTO>> {
         return try {
-            val auctions = auctionService.getAllAuctions(status, category)
+            val auctions = auctionService.getAllAuctions(status, category, search)
             ResponseEntity.ok(auctions)
         } catch (e: Exception) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
@@ -58,6 +60,8 @@ class AuctionController(private val auctionService: AuctionService) {
         return try {
             val auction = auctionService.updateAuction(auctionId, auctionBasic)
             ResponseEntity.ok(auction)
+        } catch (e: NotOnlyExtraDescriptionException){
+            ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.message)
         } catch (e: AuctionNotFoundException) {
             ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message)
         } catch (e: PermissionDeniedException) {
@@ -87,16 +91,6 @@ class AuctionController(private val auctionService: AuctionService) {
         }
     }
 
-    @GetMapping("/my/watchedAuctions")
-    fun getWatchedAuctions(): ResponseEntity<Any> {
-        return try {
-            val auctions = auctionService.getWatchedAuctions()
-            ResponseEntity.ok(auctions)
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error retrieving auctions.")
-        }
-    }
-
     @GetMapping("/my/biddedAuctions")
     fun getBiddedAuctions(): ResponseEntity<Any> {
         return try {
@@ -106,8 +100,6 @@ class AuctionController(private val auctionService: AuctionService) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error retrieving auctions.")
         }
     }
-
-    //Később kell majd followedAuctions
 
     @GetMapping("/{auctionId}/bids")
     fun getBidsForAuction(@PathVariable auctionId: Int): ResponseEntity<Any> {
@@ -139,4 +131,30 @@ class AuctionController(private val auctionService: AuctionService) {
 
     }
 
+    @PostMapping("/generate-description")
+    fun generateDescription(
+        @RequestParam("images") images: Array<MultipartFile>
+    ): ResponseEntity<Any> {
+        return try {
+            ResponseEntity.ok(auctionService.generateAuctionDescription(images.toList()))
+        } catch (e: DescriptionGenerationException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message)
+        }
+    }
+
+    @GetMapping("/smart-search")
+    fun smartSearch(@RequestParam query: String): ResponseEntity<Any> {
+        return try {
+            val auctions = auctionService.smartSearch(query)
+            ResponseEntity.ok(auctions)
+        } catch (e: InvalidSearchQueryException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message)
+        } catch (e: SearchServiceTimeoutException) {
+            ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT).body(e.message)
+        } catch (e: SearchServiceUnavailableException) {
+            ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(e.message)
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error performing search.")
+        }
+    }
 }

@@ -8,6 +8,7 @@ import org.example.bidverse_backend.Security.SecurityUtils
 import org.example.bidverse_backend.entities.User
 import org.example.bidverse_backend.repositories.UserRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class UserService(private val userRepository: UserRepository,
@@ -15,11 +16,11 @@ class UserService(private val userRepository: UserRepository,
 ) {
 
     fun updateUserContact(userBasic: UserBasicDTO): User {
-        // Megkeressük a bejelentkezett felhasználót
+        // Find the logged in user
         val user = userRepository.findById(securityUtils.getCurrentUserId())
             .orElseThrow { UserNotFoundException("User not found.") }
 
-        // Frissítjük a felhasználó adatait
+        // Update user data
         user.userName = userBasic.userName
         user.emailAddress = userBasic.emailAddress
         user.phoneNumber = userBasic.phoneNumber
@@ -54,28 +55,29 @@ class UserService(private val userRepository: UserRepository,
             .orElseThrow { UserNotFoundException("User not found.") }
     }
 
+    @Transactional
     fun register(userRegistrationDTO: UserRegistrationDTO): User {
-        // Ellenőrizzük, hogy a jelszavak megegyeznek-e
+        // Check if passwords match
         /*
         require(userRegistrationDTO.password == userRegistrationDTO.rePassword) {
             throw IllegalArgumentException("Passwords don't match.")
         }*/
 
-        // Ellenőrizzük, hogy az email vagy a felhasználónév már foglalt-e
-        require(!userRepository.existsByEmailAddress(userRegistrationDTO.emailAddress)){
-            throw IllegalArgumentException("Email address already in use.")}
+        // Check if email or username is already taken
+        if (userRepository.existsByEmailAddress(userRegistrationDTO.emailAddress)) {
+            throw IllegalArgumentException("Email address already in use.")
+        }
 
-        require (!userRepository.existsByUserName(userRegistrationDTO.userName)) {
+        if (userRepository.existsByUserName(userRegistrationDTO.userName)) {
             throw IllegalArgumentException("Username already in use.")
         }
 
         val user = User(
             userName = userRegistrationDTO.userName,
             emailAddress = userRegistrationDTO.emailAddress,
-            phoneNumber = "", // Opcionális érték
+            phoneNumber = "", // Optional value
             auctions = mutableListOf(),
-            bids = mutableListOf(),
-            watches = mutableListOf()
+            bids = mutableListOf()
         )
 
         return userRepository.save(user)

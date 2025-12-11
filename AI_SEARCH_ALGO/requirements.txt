@@ -1,0 +1,5 @@
+flask
+qdrant-client
+requests
+google-generativeai
+python-dotenv

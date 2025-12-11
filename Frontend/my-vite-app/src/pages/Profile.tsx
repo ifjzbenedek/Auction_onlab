@@ -1,9 +1,13 @@
 "use client"
 
-import type React from "react"
 import { useEffect, useState } from "react"
-import { Box, Typography, Paper, CircularProgress, useTheme } from "@mui/material"
+import { useNavigate } from "react-router-dom"
+import { Box, Typography, Paper, CircularProgress, useTheme, Button, Grid2, Card, CardContent, CardActions } from "@mui/material"
 import { styled } from "@mui/material/styles"
+import GavelIcon from "@mui/icons-material/Gavel"
+import FavoriteIcon from "@mui/icons-material/Favorite"
+import LocalOfferIcon from "@mui/icons-material/LocalOffer"
+import MailIcon from "@mui/icons-material/Mail"
 
 interface User {
   userName: string
@@ -11,7 +15,7 @@ interface User {
   phoneNumber: string
 }
 
-// Styled Paper komponens animációval és árnyékkal
+// Styled Paper component with animation and shadow
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
   borderRadius: theme.shape.borderRadius * 2,
@@ -23,28 +27,33 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   },
 }))
 
-const Profile: React.FC = () => {
+function Profile() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const theme = useTheme()
+  const navigate = useNavigate()
 
   useEffect(() => {
-    // Felhasználó adatainak lekérése a backendtől
-    fetch("/users/me", { credentials: "include" })
-      .then((response) => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch('/users/me', {
+          credentials: 'include'
+        })
+        
         if (!response.ok) {
-          throw new Error("Failed to fetch user data")
+          throw new Error(`HTTP error! status: ${response.status}`)
         }
-        return response.json()
-      })
-      .then((data) => {
-        setUser(data)
+        
+        const userData = await response.json()
+        setUser(userData)
+      } catch {
+        setUser(null)
+      } finally {
         setLoading(false)
-      })
-      .catch((error) => {
-        console.error(error)
-        setLoading(false)
-      })
+      }
+    }
+
+    fetchUserData()
   }, [])
 
   return (
@@ -62,16 +71,13 @@ const Profile: React.FC = () => {
                 mb: 3,
                 fontWeight: "bold",
                 color: theme.palette.text.primary,
-                userSelect: "none", 
+                userSelect: "none",
               }}
             >
               Profile
             </Typography>
             <Box sx={{ mb: 2 }}>
-              <Typography
-                variant="subtitle1"
-                sx={{ color: theme.palette.text.secondary, mb: 1, userSelect: "none" }}
-              >
+              <Typography variant="subtitle1" sx={{ color: theme.palette.text.secondary, mb: 1, userSelect: "none" }}>
                 Username
               </Typography>
               <Typography
@@ -82,10 +88,7 @@ const Profile: React.FC = () => {
               </Typography>
             </Box>
             <Box sx={{ mb: 2 }}>
-              <Typography
-                variant="subtitle1"
-                sx={{ color: theme.palette.text.secondary, mb: 1, userSelect: "none" }}
-              >
+              <Typography variant="subtitle1" sx={{ color: theme.palette.text.secondary, mb: 1, userSelect: "none" }}>
                 Email
               </Typography>
               <Typography
@@ -96,10 +99,7 @@ const Profile: React.FC = () => {
               </Typography>
             </Box>
             <Box>
-              <Typography
-                variant="subtitle1"
-                sx={{ color: theme.palette.text.secondary, mb: 1, userSelect: "none" }}
-              >
+              <Typography variant="subtitle1" sx={{ color: theme.palette.text.secondary, mb: 1, userSelect: "none" }}>
                 Phone
               </Typography>
               <Typography
@@ -110,11 +110,135 @@ const Profile: React.FC = () => {
               </Typography>
             </Box>
           </StyledPaper>
-        ) : (
-          <Typography
-            variant="h6"
-            sx={{ textAlign: "center", color: theme.palette.error.main, userSelect: "none" }}
-          >
+        ) : null}
+
+        {user && (
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="h5" sx={{ mb: 3, fontWeight: "bold", color: theme.palette.text.primary }}>
+              Quick Access
+            </Typography>
+            <Grid2 container spacing={3}>
+              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                <Card
+                  sx={{
+                    cursor: "pointer",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                    "&:hover": {
+                      transform: "translateY(-5px)",
+                      boxShadow: theme.shadows[8],
+                    },
+                  }}
+                  onClick={() => navigate("/my-auctions")}
+                >
+                  <CardContent sx={{ textAlign: "center", py: 3 }}>
+                    <GavelIcon sx={{ fontSize: 48, color: theme.palette.primary.main, mb: 2 }} />
+                    <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
+                      My Auctions
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      View and manage your auctions
+                    </Typography>
+                  </CardContent>
+                  <CardActions sx={{ justifyContent: "center", pb: 2 }}>
+                    <Button size="small" color="primary">
+                      Go to Auctions
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid2>
+
+              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                <Card
+                  sx={{
+                    cursor: "pointer",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                    "&:hover": {
+                      transform: "translateY(-5px)",
+                      boxShadow: theme.shadows[8],
+                    },
+                  }}
+                  onClick={() => navigate("/my-auctions?tab=bids")}
+                >
+                  <CardContent sx={{ textAlign: "center", py: 3 }}>
+                    <LocalOfferIcon sx={{ fontSize: 48, color: theme.palette.secondary.main, mb: 2 }} />
+                    <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
+                      My Bids
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Track your active bids
+                    </Typography>
+                  </CardContent>
+                  <CardActions sx={{ justifyContent: "center", pb: 2 }}>
+                    <Button size="small" color="primary">
+                      View Bids
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid2>
+
+              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                <Card
+                  sx={{
+                    cursor: "pointer",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                    "&:hover": {
+                      transform: "translateY(-5px)",
+                      boxShadow: theme.shadows[8],
+                    },
+                  }}
+                  onClick={() => navigate("/my-auctions?tab=followed")}
+                >
+                  <CardContent sx={{ textAlign: "center", py: 3 }}>
+                    <FavoriteIcon sx={{ fontSize: 48, color: theme.palette.error.main, mb: 2 }} />
+                    <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
+                      Followed
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Your favorite auctions
+                    </Typography>
+                  </CardContent>
+                  <CardActions sx={{ justifyContent: "center", pb: 2 }}>
+                    <Button size="small" color="primary">
+                      View Followed
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid2>
+
+              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                <Card
+                  sx={{
+                    cursor: "pointer",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                    "&:hover": {
+                      transform: "translateY(-5px)",
+                      boxShadow: theme.shadows[8],
+                    },
+                  }}
+                  onClick={() => navigate("/mailbox")}
+                >
+                  <CardContent sx={{ textAlign: "center", py: 3 }}>
+                    <MailIcon sx={{ fontSize: 48, color: theme.palette.info.main, mb: 2 }} />
+                    <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
+                      Mailbox
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Check your messages
+                    </Typography>
+                  </CardContent>
+                  <CardActions sx={{ justifyContent: "center", pb: 2 }}>
+                    <Button size="small" color="primary">
+                      Open Mailbox
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid2>
+            </Grid2>
+          </Box>
+        )}
+
+        {!loading && !user && (
+          <Typography variant="h6" sx={{ textAlign: "center", color: theme.palette.error.main, userSelect: "none" }}>
             User not found
           </Typography>
         )}
@@ -122,5 +246,5 @@ const Profile: React.FC = () => {
     </Box>
   )
 }
- 
+
 export default Profile;

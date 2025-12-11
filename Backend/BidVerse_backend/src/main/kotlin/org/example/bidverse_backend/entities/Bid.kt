@@ -5,12 +5,12 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 
 @Entity
-@Table(name = "Bid", schema="dbo")
+@Table(name = "Bid")
 class Bid(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "bidId", nullable = false)
-    var id: Int? = 0,
+    var id: Int? = null,
 
     @ManyToOne
     @JoinColumn(name= "auctionId", nullable = false)
@@ -27,5 +27,8 @@ class Bid(
     var timeStamp: LocalDateTime,
 
     @Column(name = "isWinning", nullable = false)
-    var isWinning: Boolean
+    var isWinning: Boolean,
+
+    @Version
+    val version: Long = 0
 )

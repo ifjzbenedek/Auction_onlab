@@ -9,7 +9,6 @@ import {
   Button,
   TextField,
   Paper,
-  Grid,
   IconButton,
   Stepper,
   Step,
@@ -19,14 +18,17 @@ import {
   useTheme,
   alpha,
   Chip,
+  Grid2,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import { Upload, Plus, ArrowRight, Sparkles, X, ImageIcon, FileText, Camera, Info } from "lucide-react"
+import auctionApi from "../services/api.ts"
+import { useAuctionCreation } from "../contexts/AuctionCreationContext";
 
 interface UploadedImage {
-  id: string
-  file: File
-  preview: string
+  id: string;
+  file: File;
+  preview: string;
 }
 
 // Styled components
@@ -34,7 +36,7 @@ const PageContainer = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.background.default,
   minHeight: "100vh",
   paddingBottom: theme.spacing(5),
-}))
+}));
 
 const StepContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -43,7 +45,7 @@ const StepContainer = styled(Paper)(({ theme }) => ({
   marginBottom: theme.spacing(4),
   position: "relative",
   overflow: "hidden",
-}))
+}));
 
 const StepTitle = styled(Typography)(({ theme }) => ({
   marginBottom: theme.spacing(3),
@@ -60,7 +62,7 @@ const StepTitle = styled(Typography)(({ theme }) => ({
     backgroundColor: theme.palette.primary.main,
     borderRadius: 2,
   },
-}))
+}));
 
 const UploadBox = styled(Box)(({ theme }) => ({
   border: `2px dashed ${alpha(theme.palette.primary.main, 0.3)}`,
@@ -74,13 +76,13 @@ const UploadBox = styled(Box)(({ theme }) => ({
     backgroundColor: alpha(theme.palette.primary.main, 0.05),
     borderColor: alpha(theme.palette.primary.main, 0.5),
   },
-}))
+}));
 
 const ImagePreviewContainer = styled(Box)(({ theme }) => ({
   border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
   borderRadius: theme.shape.borderRadius,
   padding: theme.spacing(2),
-}))
+}));
 
 const ImagePreview = styled(Box)(({ theme }) => ({
   position: "relative",
@@ -88,7 +90,7 @@ const ImagePreview = styled(Box)(({ theme }) => ({
   height: 100,
   borderRadius: theme.shape.borderRadius,
   overflow: "hidden",
-}))
+}));
 
 const AddImageBox = styled(Box)(({ theme }) => ({
   width: "100%",
@@ -105,7 +107,7 @@ const AddImageBox = styled(Box)(({ theme }) => ({
     backgroundColor: alpha(theme.palette.primary.main, 0.05),
     borderColor: alpha(theme.palette.primary.main, 0.6),
   },
-}))
+}));
 
 const ActionButton = styled(Button)(({ theme }) => ({
   borderRadius: 30,
@@ -118,7 +120,7 @@ const ActionButton = styled(Button)(({ theme }) => ({
     transform: "translateY(-2px)",
     boxShadow: "0 6px 16px rgba(0, 0, 0, 0.15)",
   },
-}))
+}));
 
 const StepIcon = styled(Box)(({ theme }) => ({
   position: "absolute",
@@ -129,30 +131,37 @@ const StepIcon = styled(Box)(({ theme }) => ({
   opacity: 0.07,
   zIndex: 0,
   color: theme.palette.primary.main,
-}))
+}));
 
-const UploadAuction: React.FC = () => {
+
+function UploadAuction() {
   const navigate = useNavigate()
   const theme = useTheme()
-  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
-  const [description, setDescription] = useState("")
+  const { 
+    auctionData, 
+    setAuctionDescription, 
+    setAuctionImages, 
+    setAuctionCategory, 
+    setAuctionItemState, 
+    setAuctionCondition 
+  } = useAuctionCreation();
+
+  const [localUploadedImages, setLocalUploadedImages] = useState<UploadedImage[]>(auctionData.images);
+  const [localDescription, setLocalDescription] = useState<string>(auctionData.description);
+
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isProcessingContinue, setIsProcessingContinue] = useState(false)
 
-  // Check session storage for previously uploaded data when coming back from SetDetailsAuction
   useEffect(() => {
-    const savedData = sessionStorage.getItem("auctionUploadData")
-    if (savedData) {
-      try {
-        const { description } = JSON.parse(savedData)
-        setDescription(description)
-        // Note: We can't restore image File objects from session storage
-        // In a real app, you would need to handle this differently (e.g., temporary server storage)
-      } catch (e) {
-        console.error("Error parsing saved auction data", e)
-      }
-    }
-  }, [])
+    setAuctionDescription(localDescription);
+  }, [localDescription, setAuctionDescription]);
+
+  useEffect(() => {
+    setAuctionImages(localUploadedImages);
+  }, [localUploadedImages, setAuctionImages]);
+
+
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -164,44 +173,63 @@ const UploadAuction: React.FC = () => {
         preview: URL.createObjectURL(file),
       }))
 
-      setUploadedImages([...uploadedImages, ...newImages])
+      setLocalUploadedImages(prevImages => [...prevImages, ...newImages].slice(0, 10));
     }
   }
 
   const handleRemoveImage = (id: string) => {
-    const updatedImages = uploadedImages.filter((img) => img.id !== id)
-    setUploadedImages(updatedImages)
+    const updatedImages = localUploadedImages.filter((img) => img.id !== id)
+    setLocalUploadedImages(updatedImages);
   }
 
-  const handleAutogenerateDescription = () => {
-    setIsGeneratingDescription(true)
-
-    // Simulate AI description generation
-    setTimeout(() => {
-      const generatedText =
-        "This is an automatically generated description based on your uploaded images. " +
-        "This item appears to be in excellent condition and would make a great addition to any collection. " +
-        "The item shows minimal signs of wear and comes from a smoke-free environment. " +
-        "Please review the photos carefully and feel free to ask any questions before bidding."
-
-      setDescription(generatedText)
-      setIsGeneratingDescription(false)
-    }, 1500)
-  }
-
-  const handleContinue = () => {
-    if (uploadedImages.length >= 1 && description.trim().length > 0) {
-      // Save current data to session storage before navigating
-      const dataToSave = {
-        description,
-        imageCount: uploadedImages.length,
+  const handleAutogenerateDescription = async () => {
+    if (localUploadedImages.length === 0) return;
+  
+    setIsGeneratingDescription(true);
+  
+    try {
+      const formData = new FormData();
+      localUploadedImages.forEach((img) => {
+        formData.append('images', img.file);
+      });
+  
+       const response = await auctionApi.post('/auctions/generate-description', formData);
+      
+      if (response.data) {
+        if (typeof response.data === 'object') {
+          const generatedDesc = response.data.description || '';
+          const category = response.data.category || '';
+          const itemState = response.data.itemState || 'Brand new';
+          const condition = response.data.condition || 50;
+          
+          setLocalDescription(generatedDesc);
+          setAuctionCategory(category);
+          setAuctionItemState(itemState);
+          setAuctionCondition(condition);
+        } else if (typeof response.data === 'string') {
+          setLocalDescription(response.data);
+        }
       }
-      sessionStorage.setItem("auctionUploadData", JSON.stringify(dataToSave))
-
-      // Navigate to the second step
-      navigate("/set-details-auction")
+    } catch {
+      alert("Failed to generate description. Please check your connection or try again later.");
+    } finally {
+      setIsGeneratingDescription(false);
     }
-  }
+  };
+
+  const handleContinue = async () => {
+    if (localUploadedImages.length < 1) {
+      alert("Please upload at least one image.");
+      return;
+    }
+    if (localDescription.trim().length === 0) {
+      alert("Please provide a description for the item.");
+      return;
+    }
+    
+    setIsProcessingContinue(true); 
+    navigate("/set-details-auction");
+  };
 
   return (
     <PageContainer>
@@ -270,7 +298,7 @@ const UploadAuction: React.FC = () => {
                 Drag & Drop your images here
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                or click to browse your files
+                or click to browse your files (max 10)
               </Typography>
             </Box>
 
@@ -288,7 +316,7 @@ const UploadAuction: React.FC = () => {
               color="primary"
               startIcon={<Upload size={18} />}
               onClick={(e) => {
-                e.stopPropagation()
+                e.stopPropagation() 
                 fileInputRef.current?.click()
               }}
             >
@@ -298,7 +326,7 @@ const UploadAuction: React.FC = () => {
 
           <Box sx={{ mt: 4 }}>
             <Typography variant="h6" fontWeight="medium" sx={{ mb: 2 }}>
-              Uploaded Photos ({uploadedImages.length})
+              Uploaded Photos ({localUploadedImages.length})
             </Typography>
 
             <ImagePreviewContainer>
@@ -308,13 +336,13 @@ const UploadAuction: React.FC = () => {
                 more bidders.
               </Typography>
 
-              <Grid container spacing={2}>
-                {uploadedImages.map((img) => (
-                  <Grid item xs={6} sm={4} md={3} key={img.id}>
+              <Grid2 container spacing={2}>
+                {localUploadedImages.map((img) => (
+                  <Grid2 size={{ xs: 6, sm: 4, md: 3 }} key={img.id}>
                     <ImagePreview>
                       <Box
                         component="img"
-                        src={img.preview || "/placeholder.svg"}
+                        src={img.preview} // preview URL használata
                         alt="Uploaded preview"
                         sx={{
                           width: "100%",
@@ -341,19 +369,19 @@ const UploadAuction: React.FC = () => {
                         <X size={14} />
                       </IconButton>
                     </ImagePreview>
-                  </Grid>
+                  </Grid2>
                 ))}
 
-                {uploadedImages.length < 10 && (
-                  <Grid item xs={6} sm={4} md={3}>
+                {localUploadedImages.length < 10 && (
+                  <Grid2 size={{ xs: 6, sm: 4, md: 3 }}>
                     <AddImageBox onClick={() => fileInputRef.current?.click()}>
                       <Plus size={24} color={alpha(theme.palette.primary.main, 0.7)} />
                     </AddImageBox>
-                  </Grid>
+                  </Grid2>
                 )}
-              </Grid>
+              </Grid2>
 
-              {uploadedImages.length < 1 && (
+              {localUploadedImages.length < 1 && (
                 <Alert
                   severity="warning"
                   sx={{
@@ -387,7 +415,7 @@ const UploadAuction: React.FC = () => {
                 isGeneratingDescription ? <CircularProgress size={18} color="inherit" /> : <Sparkles size={18} />
               }
               onClick={handleAutogenerateDescription}
-              disabled={isGeneratingDescription || uploadedImages.length === 0}
+              disabled={isGeneratingDescription || localUploadedImages.length === 0}
               sx={{ mr: 2 }}
             >
               {isGeneratingDescription ? "Generating..." : "Auto-Generate Description"}
@@ -402,8 +430,8 @@ const UploadAuction: React.FC = () => {
             multiline
             rows={6}
             fullWidth
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={localDescription} 
+            onChange={(e) => setLocalDescription(e.target.value)} 
             placeholder="Describe your item in detail. Include condition, features, history, and any other relevant information that would interest potential buyers."
             sx={{
               "& .MuiOutlinedInput-root": {
@@ -412,7 +440,7 @@ const UploadAuction: React.FC = () => {
             }}
           />
 
-          {description.trim().length === 0 && (
+          {localDescription.trim().length === 0 && (
             <Alert
               severity="info"
               sx={{
@@ -433,12 +461,12 @@ const UploadAuction: React.FC = () => {
           <ActionButton
             variant="contained"
             color="primary"
-            endIcon={<ArrowRight size={18} />}
+            endIcon={isProcessingContinue ? <CircularProgress size={18} color="inherit" /> : <ArrowRight size={18} />}
             onClick={handleContinue}
-            disabled={uploadedImages.length < 1 || description.trim().length === 0}
+            disabled={localUploadedImages.length < 1 || localDescription.trim().length === 0 || isProcessingContinue}
             size="large"
           >
-            Continue to Details
+            {isProcessingContinue ? "Processing..." : "Continue to Details"}
           </ActionButton>
         </Box>
       </Box>
@@ -447,4 +475,3 @@ const UploadAuction: React.FC = () => {
 }
 
 export default UploadAuction;
-

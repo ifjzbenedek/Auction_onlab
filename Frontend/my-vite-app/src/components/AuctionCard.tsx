@@ -1,144 +1,105 @@
-"use client"
-
-import type React from "react"
-import { Box, Typography, Paper } from "@mui/material"
-import { styled } from "@mui/material/styles"
-import { X } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { Card, CardContent, Typography, Box, Chip } from "@mui/material"
+import { AuctionCardDTO } from "../types/auction"
+import TimeDisplay from './TimeDisplay'
+import { calculateAuctionStatus, getStatusColor, getStatusLabel } from '../utils/auctionStatusUtils'
 
-// Styled components
-const StyledAuctionCard = styled(Paper)(({ theme }) => ({
-  display: "flex",
-  flexDirection: "column",
-  borderRadius: theme.shape.borderRadius,
-  boxShadow: "0 5px 15px rgba(0,0,0,0.1)",
-  overflow: "hidden",
-  height: "100%",
-  cursor: "pointer",
-  '&:hover': {
-    transform: 'translateY(-5px) scale(1.02)',
-    boxShadow: '0 12px 28px rgba(0,0,0,0.15)'
-  },
-  transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)'
-}))
-
-const CardImage = styled(Box)(({ theme }) => ({
-  position: "relative",
-  backgroundColor: theme.palette.grey[100],
-  aspectRatio: "1/1",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-}))
-
-const StatusBadge = styled(Box)<{ statuscolor: string }>(({ theme, statuscolor }) => ({
-  position: "absolute",
-  top: 0,
-  right: 0,
-  backgroundColor: statuscolor,
-  color: "white",
-  padding: theme.spacing(0.5),
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-}))
-
-const CardContent = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(1.5),
-}))
-
-const BidInfo = styled(Box)(({ theme }) => ({
-  backgroundColor: theme.palette.primary.main,
-  color: "white",
-  padding: theme.spacing(1),
-  marginTop: theme.spacing(0.5),
-}))
-
-export interface AuctionCardProps {
-  id: number
-  itemName: string
-  createDate: string
-  expiredDate: string
-  lastBid: number | null
-  status: string
-  imageUrl?: string
-}
-
-const AuctionCard: React.FC<AuctionCardProps> = ({ id, itemName, expiredDate, lastBid, status, imageUrl }) => {
+const AuctionCard = ({ 
+  id, 
+  itemName, 
+  expiredDate,
+  lastBid, 
+  imageUrl,
+  images,
+  startDate
+}: AuctionCardDTO) => {
   const navigate = useNavigate()
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ending":
-        return "#f39c12" // orange
-      case "upcoming":
-        return "#2ecc71" // green
-      case "finished":
-        return "#e74c3c" // red
-      default:
-        return "#3498db" // default blue
-    }
-  }
-
-  // Calculate time left
-  const calculateTimeLeft = (expiredDate: string): string => {
-    const now = new Date()
-    const end = new Date(expiredDate)
-    const diff = end.getTime() - now.getTime()
-
-    if (diff <= 0) return "00:00:00"
-
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000)
-
-    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
-  }
-
-  const timeLeft = calculateTimeLeft(expiredDate)
 
   const handleCardClick = () => {
     navigate(`/auction/${id}`)
   }
 
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('hu-HU').format(price)
+  }
+
+  const displayImage = imageUrl || (images && images.length > 0 ? images[0] : null)
+  const { status: currentStatus } = calculateAuctionStatus(startDate, expiredDate)
+
   return (
-    <StyledAuctionCard onClick={handleCardClick}>
-      <CardImage>
-        {imageUrl ? (
-          <Box
-            component="img"
-            src={imageUrl}
-            alt={itemName}
-            sx={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
+    <Card 
+      sx={{ 
+        height: "100%", 
+        display: "flex", 
+        flexDirection: "column",
+        cursor: "pointer",
+        transition: "transform 0.2s, box-shadow 0.2s",
+        "&:hover": {
+          transform: "translateY(-4px)",
+          boxShadow: 3
+        }
+      }}
+      onClick={handleCardClick}
+    >
+      <Box sx={{ position: "relative", height: 200, overflow: "hidden" }}>
+        <img
+          src={displayImage || "/placeholder-image.jpg"}
+          alt={itemName}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover"
+          }}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement
+            target.src = "/placeholder-image.jpg"
+          }}
+        />
+      </Box>
+      
+      <CardContent sx={{ flexGrow: 1, p: 2 }}>
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            fontWeight: "bold", 
+            mb: 1,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap"
+          }}
+        >
+          {itemName}
+        </Typography>
+
+        <Box sx={{ mb: 2 }}>
+          <TimeDisplay 
+            expiredDate={expiredDate}
+            startDate={startDate}
+            variant="compact" 
+            size="small"
           />
-        ) : (
-          <X size={96} color="#666" />
-        )}
-        <StatusBadge statuscolor={getStatusColor(status)}>
-          <Typography variant="caption" sx={{ textTransform: "capitalize" }}>
-            {status}
+        </Box>
+
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            Actual price:
           </Typography>
-          <Typography variant="caption">{timeLeft}</Typography>
-        </StatusBadge>
-      </CardImage>
-      <CardContent>
-        <Typography sx={{ color: "#2c3e50", fontWeight: 500, mb: 0.5 }}>{itemName}</Typography>
-        <BidInfo>
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography variant="body2">Top Bid</Typography>
-            <Typography variant="body2" fontWeight="bold">
-              ${lastBid ? lastBid.toFixed(2) : "No bids"}
-            </Typography>
-          </Box>
-        </BidInfo>
+          <Typography variant="h6" color="primary" sx={{ fontWeight: "bold" }}>
+            {lastBid ? `$${formatPrice(lastBid)}` : "No bid yet"}
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Chip
+            label={getStatusLabel(currentStatus)}
+            size="small"
+            color={getStatusColor(currentStatus)}
+            sx={{ fontWeight: "bold" }}
+          />
+        </Box>
       </CardContent>
-    </StyledAuctionCard>
+    </Card>
   )
 }
 
-export default AuctionCard;
-
+export default AuctionCard

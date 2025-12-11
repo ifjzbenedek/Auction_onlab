@@ -5,13 +5,13 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 
 @Entity
-@Table(name="Auction", schema="dbo")
+@Table(name="Auction")
 class Auction(
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "itemId", nullable = false)
-    var id: Int? = 0,
+    var id: Int? = null,
 
     @ManyToOne
     @JoinColumn(name= "ownerId", nullable = false)
@@ -25,16 +25,13 @@ class Auction(
     var bids: MutableList<Bid> = mutableListOf(),
 
     @OneToMany(mappedBy = "auction", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    var watchedAuctions: MutableList<Watch> = mutableListOf(),
+    val images: MutableList<AuctionImage> = mutableListOf(),
 
     @Column(nullable = false, length = 50)
     var itemName: String,
 
     @Column(nullable = false, precision = 12, scale = 2)
     var minimumPrice: BigDecimal,
-
-    @Column(nullable = false, length = 20)
-    var status: String,
 
     @Column(nullable = false)
     var createDate: LocalDateTime,
@@ -51,7 +48,7 @@ class Auction(
     @Column(nullable = false, length = 20)
     var type: String,
 
-    var extraTime: LocalDateTime?,
+    var extraTime: Int?,
 
     @Column(nullable = false, length = 20)
     var itemState: String,
@@ -61,5 +58,11 @@ class Auction(
     var minStep: Int?,
 
     @Column(nullable = false)
-    var condition: Int
+    var condition: Int,
+
+    @Version
+    val version: Long = 0,
+
+    var startDate: LocalDateTime?
+
 )

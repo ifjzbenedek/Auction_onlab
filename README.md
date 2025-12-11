@@ -42,3 +42,20 @@ v0.dev segítségével elkészítettem a korábban JustInMind-ban elkészített 
 Erre a hétre a leírás automatizált generálása és az eddig mock-olt backend kérések megvalósítása volt.
 Sikerült megvalósítani a kategóriák elérését, az összes aukció megjelenítését, a szűrést (kategóriák és státusz szerint), illetve az aukciós kártyákra törénő kattintás esetén az adott kártya részletes oldalának megnyitását is. Közben rájöttem, hogy még szükségem lesz pár DTO-ra, illetve vannak meglévő DTO-k, amik rosszak (mert vannak entity tagváltozóik, így a json formátumú üzeneteik rekurzívan egymásban vannak). Ezeket javítottam.
 A leírás generálóval még nem tudtam foglalkozni sajnos.
+
+9.hét
+Elkészítettem az adott aukcióhoz tartozó bid-ek lekérdezését frontendről. Ezután az authorizációs problémát próbáltam megoldani, mert attól még, hogy egy felhasználó autentikálva lett google segítségével, később ezt nem jegyezte meg és az azt igénylő (authentikált felhasználóhoz kötött) kérések nem működtek (a backendben mindig AnonymousUser-t kapott a felhasználó beazonosító függvény). Ezt sikerült megoldani, viszont a Bid-elés még mindig nem működik. Debug-olásból arra következtetek, hogy valami ugyanahhoz a táblához történő egyszerre hozzáférs lehet a gond, még dolgozok rajta.
+
+Tavaszi szünet
+Sikerült rájönni, hogy mi volt a gond a Bid POST-olása esetén. Az ID-t alapvetően 0-ra inicializáltam, majd ennek egyből megváltoztatása okozott problémát az adatbázisban. Ezt fixáltam azzal, hogy most már null-ra inicializálom az újonnan létrehozott rekordok id-it a backendben.
+Ezen kívül megvalósítottam az összes többi alapfunkciót. Már lehet új aukciót létrehozni, megnézni a saját aukciókat, illetve listázni azokat az aukciókat, melyekre már licitált a felhasználó. Lehet törölni a saját aukciókat, illetve updatelni is (de ahogy a specifikációban is le van írva, csak hozzáadni lehet a leíráshoz, elvenni belőle nem).
+
+11.hét
+Ezen a héten a leírásgenerálás elkészítése volt a kitűzött cél, és ezt sikerült is megvalósítani. A kommunikáció a frontend és a flask között (ami a Gemini-2.0-flash-t promptolja) a backenden keresztül történik. Így be is vezettem ugye egy plusz végpontot a backendbe, ennek megfelelően.
+
+12.hét
+Erre a hétre a képek bevezetése volt a cél a programban. Ezt habár lehetett volna blob-okban is tárolni az adatbázisban végül Cloudinary segítségével akarom megoldani, az sokkal letisztultabb és skálázhatóbb megoldás. Így adatbázisban elég az Url-eket tárolni (több kiegészítő információ között). Létrehoztam egy új táblát az adatbázisban és egy új entity-DTO-Repository-Service-Controller kombinációt a backendben. Ezután frontenden folytatom a megvalósítást. Egyelőre még hibás.
+
+Jún eleje
+Ebben az időszakban igyekeztem kijavítani a képek megjelenítését, illetve megírni a dokumentációt. A dokumentáció egyes részeit (pl architektúra) kibővítettem, megírtam a technológiák részt, illetve kifejtettem a leírás generátor működését.
+A képek kezelését is sikerült kijavítanom, kiderült, hogy a fő probléma a sorrendezéssel volt a backendben (konverziós hiba, véletlen Auction-t akartam int-re konvertálni). Ezen kívül a frontenden nem volt megfelelő az interface, amiben a backendtől kapott adatot fogadta, ezt is javítottam és most már rendesen működik.

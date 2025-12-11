@@ -3,7 +3,7 @@ package org.example.bidverse_backend.entities
 import jakarta.persistence.*
 
 @Entity
-@Table(name = "User", schema="dbo")
+@Table(name = "User")
 class User(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,13 +16,13 @@ class User(
     @OneToMany(mappedBy = "bidder", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     var bids: MutableList<Bid> = mutableListOf(),
 
-    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    var watches: MutableList<Watch> = mutableListOf(),
+    @OneToMany(mappedBy = "uploadedBy", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    val uploadedImages: List<AuctionImage> = mutableListOf(),
 
     @Column(nullable = false, length = 25)
     var userName: String,
 
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 50, unique = true)
     var emailAddress: String,
 
     @Column(nullable = false, length = 16)

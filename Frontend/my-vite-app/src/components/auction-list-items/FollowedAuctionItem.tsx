@@ -7,10 +7,9 @@ import { Eye, Heart } from "lucide-react"
 interface FollowedAuctionItemProps {
   auction: {
     id: number
-    name: string
+    itemName: string
     remainingTime: string
     highestBid: number
-    image: string
   }
   onView: (id: number) => void
   onUnfollow: (id: number) => void
@@ -20,26 +19,17 @@ const FollowedAuctionItem: React.FC<FollowedAuctionItemProps> = ({ auction, onVi
   return (
     <TableRow hover sx={{ "& .MuiTableCell-root": { userSelect: "none" } }}>
       <TableCell>
-        <Box
-          component="img"
-          src={auction.image}
-          alt={auction.name}
-          sx={{
-            width: 60,
-            height: 60,
-            objectFit: "cover",
-            border: "1px solid #eee",
-            cursor: "pointer",
-          }}
-        />
-      </TableCell>
-      <TableCell>
-        <Typography variant="body1" fontWeight="medium" sx={{ userSelect: "none", cursor: "pointer" }}>
-          {auction.name}
+        <Typography
+          variant="body1"
+          fontWeight="medium"
+          sx={{ userSelect: "none", cursor: "pointer" }}
+          onClick={() => onView(auction.id)}
+        >
+          {auction.itemName}
         </Typography>
       </TableCell>
       <TableCell>{auction.remainingTime}</TableCell>
-      <TableCell>${auction.highestBid}</TableCell>
+      <TableCell>${auction.highestBid.toFixed(2)}</TableCell>
       <TableCell align="right">
         <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
           <Tooltip title="View">
@@ -59,4 +49,3 @@ const FollowedAuctionItem: React.FC<FollowedAuctionItemProps> = ({ auction, onVi
 }
 
 export default FollowedAuctionItem;
-

@@ -1,31 +1,29 @@
-import { CategoryDTO } from "./category"
-import { UserBasicDTO } from "./user"
-import { BidDTO } from "./bid" 
+import type { CategoryDTO } from "./category"
+import type { UserBasicDTO } from "./user"
 
-// Kotlin: AuctionBasicDTO.kt
+// Main auction interface
 export interface AuctionBasicDTO {
-  id: number
-  user: UserBasicDTO
-  category: CategoryDTO
-  itemName: string
-  minimumPrice: number
-  status: string // Példa enum helyettesítés
-  createDate: string // ISO dátum string
-  expiredDate: string // ISO dátum string
-  lastBid: number | null
-  description: string
-  type: string
-  extraTime: string | null
-  itemState: string
-  tags: string | null
-  minStep: number | null
-  condition: number
-  images: string[]
-  bids?: BidDTO[] // Opcionális tömb, ha nincsenek licitek
-
+  id?: number; // Optional for creation
+  user?: UserBasicDTO; // Optional for creation
+  category: CategoryDTO;
+  itemName: string;
+  minimumPrice: number;
+  status?: string; // Optional for creation
+  createDate?: string;
+  expiredDate: string;
+  lastBid?: number | null;
+  description: string;
+  type: "FIXED" | "EXTENDED";
+  extraTime?: string | null;
+  itemState: string;
+  tags: string | null;
+  minStep: number;
+  condition: number;
+  images?: string[];
+  startDate?: string | null;
 }
 
-// Kotlin: AuctionCardDTO.kt
+// For the card view
 export interface AuctionCardDTO {
   id: number
   itemName: string
@@ -33,4 +31,39 @@ export interface AuctionCardDTO {
   expiredDate: string
   lastBid: number | null
   status: string
+  images?: string[] // Optional, if handled separately
+  imageUrl?: string // Add this line for the primary image URL
+  startDate?: string | null
+}
+
+// For the auction details form
+export interface AuctionDetailsDTO {
+  name: string
+  status: string
+  condition: number
+  category: string
+  minimumPrice: number
+  minStep: number
+  expiredDate: string
+  startDate?: string | null
+  extraTime?: string // Optional, only for EXTENDED type
+}
+
+// Type for form state management
+export interface AuctionFormState {
+  // Step 1 data (from UploadAuction)
+  description: string
+  images: File[] // Temporary files before upload
+
+  // Step 2 data (from SetDetailsAuction)
+  itemName: string
+  categoryId: number
+  condition: number
+  itemState: string
+  auctionType: "FIXED" | "EXTENDED"
+  minimumPrice: number
+  minStep: number
+  expiredDate: string
+  extraTime?: string
+  startDate?: string | null
 }
