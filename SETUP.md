@@ -12,19 +12,24 @@ Ez a dokumentum leírja a rendszer nulláról való felépítését és indítá
 
 ---
 
-## 1. Adatbázisok előkészítése
+## 1. Adatbázisok előkészítése 
+### SQL Server A rendszer alapértelmezetten a `localhost:1433` címen keresi az adatbázist. 
 
-### SQL Server
-A rendszer alapértelmezetten a `localhost:1433` címen keresi az adatbázist, amennyiben telepítéskor a NAMED INSTANCE mezőnek adtál.
-Amennyiben adtál, akkor a 'spring.datasource.url=jdbc:sqlserver://localhost\\{named_instance}crypt=true;trustServerCertificate=true'-ra cseréld ki ezt a sort,
- ahol a 'named_instance' helyére az általad megadott érték kerül.
-Felhasználó: `SA`, Jelszó: `n5m_35z3m_A_73117` (ezeket állítsd át az `application.properties`-ben a saját felhasználó-jelszó kombinációdra).
+**Ha Named Instance-t használsz**(pl. `BIDVERSE`, `SQLEXPRESS`):
+- Az `application.properties` fájlban cseréld ezt a sort:```properties  spring.datasource.url=jdbc:sqlserver://localhost\\{named_instance};databaseName=BidVerse;encrypt=true;trustServerCertificate=true```   ahol a `{named_instance}` helyére az általad megadott instance név kerül (pl. `BIDVERSE`).
 
-1.  Indítsd el az SQL Servert.
-2.  Hozdd létre BidVerse névvel adatbázist.
-3.  Futtasd le a létrehozó szkripteket az `installers` mappából:
-    *   `installers/structure.sql` (Táblák létrehozása)
-    *   `installers/mintaadat.sql` (Tesztadatok betöltése)
+**Ha Default Instance-t használsz** (1433-as port):
+- Az `application.properties` maradhat alapértelmezetten:```properties  spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=BidVerse;encrypt=true;trustServerCertificate=true```
+
+**Felhasználónév és jelszó beállítása:** 
+- Alapértelmezett felhasználó: `sa`, Jelszó: `n5m_35z3m_A_73137` - Állítsd át az `application.properties`-ben a saját felhasználó-jelszó kombinációdra:```properties  spring.datasource.username=sa  spring.datasource.password=a_te_jelszavad``` 
+
+**Lépések:** 
+1. Indítsd el az SQL Server service-t (`services.msc` → SQL Server)
+2. Csatlakozz SQL Server Management Studio-val és hozd létre a `BidVerse` adatbázist.
+3. Futtasd le a létrehozó szkripteket az `installers` mappából:
+ - `installers/structure.sql` (Táblák létrehozása)
+ - `installers/mintaadat.sql` (Tesztadatok betöltése)
 
 ### Qdrant (Vektor adatbázis)
 A legegyszerűbb Dockerrel futtatni:
